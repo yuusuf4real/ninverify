@@ -8,7 +8,7 @@ export type SessionPayload = {
   userId: string;
   email: string;
   fullName: string;
-  role?: "user";
+  role: "admin" | "super_admin";
 };
 
 function getSecret() {

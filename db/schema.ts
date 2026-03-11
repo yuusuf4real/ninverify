@@ -41,6 +41,33 @@ export const verificationPurpose = pgEnum("verification_purpose", [
   "government_service",
   "other"
 ]);
+export const adminRole = pgEnum("admin_role", [
+  "admin",
+  "super_admin"
+]);
+
+export const ticketStatus = pgEnum("ticket_status", [
+  "open",
+  "assigned",
+  "in_progress",
+  "resolved",
+  "closed"
+]);
+
+export const ticketPriority = pgEnum("ticket_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent"
+]);
+
+export const ticketCategory = pgEnum("ticket_category", [
+  "payment_issue",
+  "verification_problem",
+  "account_access",
+  "technical_support",
+  "general_inquiry"
+]);
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -48,9 +75,15 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
   passwordHash: text("password_hash").notNull(),
-
+  role: adminRole("role").default("admin").notNull(),
+  isSuspended: boolean("is_suspended").default(false).notNull(),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspendedReason: text("suspended_reason"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
-});
+}, (table) => ({
+  roleIdx: index("idx_users_role").on(table.role),
+  suspendedIdx: index("idx_users_suspended").on(table.isSuspended)
+}));
 
 export const wallets = pgTable("wallets", {
   id: text("id").primaryKey(),
@@ -142,3 +175,71 @@ export const auditLogs = pgTable("audit_logs", {
 
 
 
+// Support Tickets
+export const supportTickets = pgTable("support_tickets", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  category: ticketCategory("category").notNull(),
+  status: ticketStatus("status").default("open").notNull(),
+  priority: ticketPriority("priority").default("medium").notNull(),
+  subject: text("subject").notNull(),
+  description: text("description").notNull(),
+  paymentReference: text("payment_reference"),
+  verificationId: text("verification_id")
+    .references(() => ninVerifications.id),
+  assignedTo: text("assigned_to")
+    .references(() => users.id),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true })
+}, (table) => ({
+  userIdx: index("idx_tickets_user").on(table.userId),
+  statusIdx: index("idx_tickets_status").on(table.status),
+  priorityIdx: index("idx_tickets_priority").on(table.priority),
+  assignedIdx: index("idx_tickets_assigned").on(table.assignedTo),
+  createdIdx: index("idx_tickets_created").on(table.createdAt)
+}));
+
+// Ticket Messages
+export const ticketMessages = pgTable("ticket_messages", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id")
+    .notNull()
+    .references(() => supportTickets.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  message: text("message").notNull(),
+  isAdmin: boolean("is_admin").default(false).notNull(),
+  isInternal: boolean("is_internal").default(false).notNull(),
+  attachments: jsonb("attachments"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+}, (table) => ({
+  ticketIdx: index("idx_ticket_messages_ticket").on(table.ticketId, table.createdAt),
+  userIdx: index("idx_ticket_messages_user").on(table.userId)
+}));
+
+// Admin Actions Log
+export const adminActions = pgTable("admin_actions", {
+  id: text("id").primaryKey(),
+  adminId: text("admin_id")
+    .notNull()
+    .references(() => users.id),
+  actionType: text("action_type").notNull(),
+  targetUserId: text("target_user_id")
+    .references(() => users.id),
+  targetResource: text("target_resource"),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+}, (table) => ({
+  adminIdx: index("idx_admin_actions_admin").on(table.adminId, table.createdAt),
+  typeIdx: index("idx_admin_actions_type").on(table.actionType),
+  targetIdx: index("idx_admin_actions_target").on(table.targetUserId),
+  createdIdx: index("idx_admin_actions_created").on(table.createdAt)
+}));

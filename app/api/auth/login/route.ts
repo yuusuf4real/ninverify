@@ -100,7 +100,8 @@ export async function POST(request: Request) {
     await setSessionCookie({
       userId: user.id,
       email: user.email,
-      fullName: user.fullName
+      fullName: user.fullName,
+      role: user.role
     });
 
     // Log successful login
