@@ -1,0 +1,17 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shield" x1="20" y1="8" x2="100" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F8B4C"/>
+      <stop offset="1" stop-color="#0F6B3A"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <path d="M60 8L100 24V58C100 82 82 103 60 112C38 103 20 82 20 58V24L60 8Z" fill="url(#shield)"/>
+    <path d="M38 30C38 26.6863 40.6863 24 44 24H52V92H44C40.6863 92 38 89.3137 38 86V30Z" fill="#F97316"/>
+    <path d="M46 60L56 70L78 48" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g>
+    <text x="132" y="70" font-family="Sora, system-ui, sans-serif" font-size="34" font-weight="600" fill="#0F172A">VerifyNIN</text>
+    <text x="132" y="95" font-family="Space Grotesk, system-ui, sans-serif" font-size="16" font-weight="500" fill="#1F8B4C">NIN Verification</text>
+  </g>
+</svg>

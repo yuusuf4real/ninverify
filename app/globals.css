@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 36 100% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 148 64% 32%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 24 91% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 38 60% 94%;
+  --muted-foreground: 215 25% 35%;
+  --accent: 196 74% 50%;
+  --accent-foreground: 222 47% 11%;
+  --border: 210 30% 88%;
+  --input: 210 30% 88%;
+  --ring: 148 64% 32%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-background text-foreground;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 20% 10%, rgba(34, 197, 94, 0.12), transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.18), transparent 45%),
+    radial-gradient(circle at 40% 80%, rgba(251, 146, 60, 0.10), transparent 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(34, 197, 94, 0.25);
+  color: inherit;
+}
+
+/* Smooth scrolling for anchor links */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8);
+}
+
+.container-grid {
+  @apply grid gap-6;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Perspective for 3D transforms */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Shimmer animation for gradient text */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Pulse glow animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
+/* Bounce animation */
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+/* Print Styles */
+@media print {
+  /* Reset page margins and background */
+  @page {
+    margin: 0.5cm;
+    size: A4 portrait;
+  }
+
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Remove background colors and images */
+  body {
+    background: white !important;
+    background-image: none !important;
+  }
+
+  /* Show only the receipt content */
+  .print\:block,
+  .print\:block * {
+    visibility: visible;
+  }
+
+  /* Ensure receipt takes full width */
+  .print\:block {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Remove shadows and borders for cleaner print */
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  /* Ensure colors print correctly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide navigation, headers, and other UI elements */
+  header,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Optimize text for print */
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Prevent page breaks inside elements */
+  .print\:break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Force page breaks where needed */
+  .print\:break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print\:break-after {
+    break-after: page;
+    page-break-after: always;
+  }
+}
