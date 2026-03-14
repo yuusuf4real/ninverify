@@ -16,13 +16,17 @@
     "test:integration:security": "jest tests/integration/security --verbose",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:accessibility": "pa11y http://localhost:3000",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "admin:create": "tsx scripts/create-super-admin.ts",
     "security:audit": "npm audit --audit-level=moderate",
     "security:scan": "npm run lint:security && npm run test:security",
     "pre-commit": "npm run lint:security && npm run format:check && npm run type-check && npm run test:security",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "ci:full": "npm run lint && npm run lint:security && npm run format:check && npm run type-check && npm run test && npm run test:security && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -85,6 +89,9 @@
     "tailwindcss": "^3.4.17",
     "ts-jest": "^29.1.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "@playwright/test": "^1.40.0",
+    "pa11y": "^8.0.0",
+    "depcheck": "^1.4.7"
   }
 }

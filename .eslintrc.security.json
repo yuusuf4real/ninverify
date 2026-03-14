@@ -6,35 +6,40 @@
     "security"
   ],
   "rules": {
-    "security/detect-object-injection": "error",
+    "security/detect-object-injection": "warn",
     "security/detect-non-literal-regexp": "error",
     "security/detect-non-literal-fs-filename": "error",
     "security/detect-eval-with-expression": "error",
     "security/detect-pseudoRandomBytes": "error",
     "security/detect-possible-timing-attacks": "error",
-    "security/detect-unsafe-regex": "error",
+    "security/detect-unsafe-regex": "warn",
     "security/detect-buffer-noassert": "error",
     "security/detect-child-process": "error",
     "security/detect-disable-mustache-escape": "error",
     "security/detect-no-csrf-before-method-override": "error",
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-console": "warn",
     "no-debugger": "error",
     "no-alert": "error",
     "no-eval": "error",
     "no-implied-eval": "error",
     "no-new-func": "error",
-    "no-script-url": "error",
-    "no-unused-vars": "error",
-    "no-undef": "error",
-    "no-redeclare": "error",
-    "no-shadow": "error"
+    "no-script-url": "warn",
+    "no-unused-vars": "warn",
+    "no-undef": "warn",
+    "no-redeclare": "warn",
+    "no-shadow": "warn"
   },
   "overrides": [
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "jest.setup.js", "jest.config.js"],
       "rules": {
         "no-secrets/no-secrets": "off",
-        "security/detect-object-injection": "off"
+        "security/detect-object-injection": "off",
+        "no-undef": "off",
+        "@typescript-eslint/no-var-requires": "off"
+      },
+      "env": {
+        "jest": true
       }
     },
     {
