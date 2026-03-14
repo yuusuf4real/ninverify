@@ -1,4 +1,4 @@
-# JAMB Verification System - Developer Guide
+# VerifyNIN - Developer Guide
 
 ## Table of Contents
 1. [Quick Start](#quick-start)
@@ -9,16 +9,17 @@
 6. [Payment System](#payment-system)
 7. [Admin System](#admin-system)
 8. [Component Architecture](#component-architecture)
-9. [Development Workflow](#development-workflow)
+9. [External Services Setup](#external-services-setup)
 10. [Testing & Debugging](#testing--debugging)
-11. [Deployment](#deployment)
-12. [Troubleshooting](#troubleshooting)
+11. [Production Deployment](#production-deployment)
+12. [Security Guidelines](#security-guidelines)
+13. [Troubleshooting](#troubleshooting)
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database
+- PostgreSQL database (Neon recommended)
 - Paystack account (for payments)
 - YouVerify account (for NIN verification)
 
@@ -26,7 +27,7 @@
 ```bash
 # Clone and install
 git clone <repository>
-cd jamb-verify
+cd verifynin
 npm install
 
 # Copy environment file
@@ -47,7 +48,11 @@ npm run dev
 ```bash
 DATABASE_URL="postgresql://user:password@host:5432/database"
 AUTH_SECRET="your-secret-key-minimum-32-characters"
+ENCRYPTION_KEY="your-base64-encoded-32-byte-encryption-key"
 PAYSTACK_SECRET_KEY="sk_live_..."
+PAYSTACK_PUBLIC_KEY="pk_live_..."
+YOUVERIFY_API_KEY="your-youverify-api-key"
+YOUVERIFY_BASE_URL="https://api.youverify.co"
 YOUVERIFY_TOKEN="your-live-api-token"
 ```
 
@@ -1366,7 +1371,147 @@ function DashboardSkeleton() {
   <AdminDashboardMetrics />
 </Suspense>
 ```
-## Development Workflow
+## External Services Setup
+
+### YouVerify API Setup
+1. **Create Account**: Sign up at [YouVerify](https://youverify.co)
+2. **Get API Key**: Navigate to API settings and generate your API key
+3. **Configure Environment**:
+   ```bash
+   YOUVERIFY_API_KEY="your-api-key"
+   YOUVERIFY_BASE_URL="https://api.youverify.co"
+   ```
+4. **Test Connection**:
+   ```bash
+   curl -H "Authorization: Bearer YOUR_API_KEY" \
+        https://api.youverify.co/v2/api/identity/nin/12345678901
+   ```
+
+### Paystack Setup
+1. **Create Account**: Sign up at [Paystack](https://paystack.com)
+2. **Get API Keys**: Go to Settings > API Keys & Webhooks
+3. **Configure Environment**:
+   ```bash
+   PAYSTACK_SECRET_KEY="sk_live_..." # Use sk_test_ for testing
+   PAYSTACK_PUBLIC_KEY="pk_live_..." # Use pk_test_ for testing
+   ```
+4. **Setup Webhooks**: Add webhook URL: `https://yourdomain.com/api/paystack/webhook`
+
+### Database Setup (Neon)
+1. **Create Account**: Sign up at [Neon](https://neon.tech)
+2. **Create Database**: Create a new PostgreSQL database
+3. **Get Connection String**: Copy the connection string
+4. **Configure Environment**:
+   ```bash
+   DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
+   ```
+
+## Production Deployment
+
+### Vercel Deployment
+1. **Connect Repository**: Link your GitHub repository to Vercel
+2. **Environment Variables**: Add all production environment variables
+3. **Build Settings**:
+   ```bash
+   Build Command: npm run build
+   Output Directory: .next
+   Install Command: npm install
+   ```
+4. **Domain Setup**: Configure custom domain if needed
+
+### Environment Variables Checklist
+- [ ] `DATABASE_URL` - Production database connection
+- [ ] `AUTH_SECRET` - Secure random string (64+ characters)
+- [ ] `ENCRYPTION_KEY` - Base64 encoded 32-byte key
+- [ ] `PAYSTACK_SECRET_KEY` - Live Paystack secret key
+- [ ] `PAYSTACK_PUBLIC_KEY` - Live Paystack public key
+- [ ] `YOUVERIFY_API_KEY` - Production YouVerify API key
+- [ ] `NODE_ENV=production`
+- [ ] `NEXT_PUBLIC_APP_URL` - Your production domain
+
+### Security Checklist
+- [ ] Enable HTTPS/SSL
+- [ ] Configure security headers
+- [ ] Set up rate limiting
+- [ ] Enable audit logging
+- [ ] Configure monitoring and alerts
+- [ ] Set up backup and recovery
+- [ ] Implement proper error handling
+- [ ] Secure API endpoints
+- [ ] Validate all inputs
+- [ ] Encrypt sensitive data
+
+## Security Guidelines
+
+### Data Protection
+- All PII data is encrypted at rest using AES-256-GCM
+- Passwords are hashed using bcrypt with 12 salt rounds
+- JWT tokens have short expiration times (15 minutes)
+- Session management with automatic timeout
+- Rate limiting on all API endpoints
+
+### Input Validation
+- All inputs are validated using Zod schemas
+- SQL injection prevention through parameterized queries
+- XSS protection through input sanitization
+- File upload restrictions and validation
+- CSRF protection on all forms
+
+### Authentication & Authorization
+- Multi-factor authentication for admin accounts
+- Role-based access control (RBAC)
+- Account lockout after failed login attempts
+- Device fingerprinting for suspicious activity detection
+- Audit logging for all authentication events
+
+### API Security
+- All API routes use security middleware
+- Request validation and sanitization
+- Rate limiting per endpoint
+- Bot detection and prevention
+- Comprehensive error handling without data leakage
+
+## Testing & Debugging
+
+### Test Data
+Use these test credentials for development:
+
+**Admin User**:
+- Email: `admin@verifynin.ng`
+- Password: `YourSecurePassword123!`
+
+**Test User**:
+- Email: `test.user@example.com`
+- Password: `TestPassword123!`
+
+**Test NIN**: `12345678901` (for development only)
+
+### Running Tests
+```bash
+# Run all tests
+npm test
+
+# Run security tests
+npm run test:security
+
+# Run with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- user.test.ts
+```
+
+### Debugging
+```bash
+# Enable debug logging
+NODE_ENV=development npm run dev
+
+# Database debugging
+npm run db:studio
+
+# Check database health
+npm run db:health
+```
 
 ### Getting Started
 
