@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { db } from "@/db/client";
+import { supportTickets, ticketMessages, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
+import { eq, desc, and, or, like, count, sql } from "drizzle-orm";
 
 export const runtime = "nodejs";
 
@@ -29,109 +32,120 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const query = querySchema.parse(Object.fromEntries(searchParams));
 
-    // Return mock data for now since support tickets table might not be fully set up
-    const mockTickets = [
-      {
-        id: "ticket_1",
-        userId: "user_1",
-        category: "payment_issue",
-        status: "open",
-        priority: "high",
-        subject: "Payment not processed",
-        description: "My payment was deducted but verification failed",
-        paymentReference: "PAY_123456789",
-        assignedTo: null,
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        resolvedAt: null,
-        userEmail: "user@example.com",
-        userFullName: "John Doe",
-        assignedAdminEmail: null,
-        assignedAdminName: null,
-        messageCount: 3
-      },
-      {
-        id: "ticket_2",
-        userId: "user_2",
-        category: "verification_problem",
-        status: "in_progress",
-        priority: "medium",
-        subject: "NIN verification failed",
-        description: "Getting error when trying to verify my NIN",
-        paymentReference: null,
-        assignedTo: session.userId,
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        resolvedAt: null,
-        userEmail: "jane@example.com",
-        userFullName: "Jane Smith",
-        assignedAdminEmail: session.email,
-        assignedAdminName: "Admin User",
-        messageCount: 5
-      },
-      {
-        id: "ticket_3",
-        userId: "user_3",
-        category: "account_access",
-        status: "resolved",
-        priority: "low",
-        subject: "Cannot login to account",
-        description: "Forgot password and reset link not working",
-        paymentReference: null,
-        assignedTo: session.userId,
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        resolvedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        userEmail: "bob@example.com",
-        userFullName: "Bob Johnson",
-        assignedAdminEmail: session.email,
-        assignedAdminName: "Admin User",
-        messageCount: 2
-      }
-    ];
-
-    // Apply filters to mock data
-    let filteredTickets = mockTickets;
+    // Build where conditions
+    const conditions = [];
 
     if (query.status !== "all") {
-      filteredTickets = filteredTickets.filter(ticket => ticket.status === query.status);
+      conditions.push(eq(supportTickets.status, query.status as "open" | "assigned" | "in_progress" | "resolved" | "closed"));
     }
 
     if (query.priority !== "all") {
-      filteredTickets = filteredTickets.filter(ticket => ticket.priority === query.priority);
+      conditions.push(eq(supportTickets.priority, query.priority as "low" | "medium" | "high" | "urgent"));
     }
 
     if (query.category !== "all") {
-      filteredTickets = filteredTickets.filter(ticket => ticket.category === query.category);
+      conditions.push(eq(supportTickets.category, query.category as "payment_issue" | "verification_problem" | "account_access" | "technical_support" | "general_inquiry"));
+    }
+
+    if (query.assignedTo) {
+      conditions.push(eq(supportTickets.assignedTo, query.assignedTo));
     }
 
     if (query.search) {
-      const searchLower = query.search.toLowerCase();
-      filteredTickets = filteredTickets.filter(ticket => 
-        ticket.subject.toLowerCase().includes(searchLower) ||
-        ticket.description.toLowerCase().includes(searchLower) ||
-        ticket.userEmail.toLowerCase().includes(searchLower) ||
-        ticket.userFullName.toLowerCase().includes(searchLower)
+      const searchTerm = `%${query.search.toLowerCase()}%`;
+      conditions.push(
+        or(
+          like(sql`LOWER(${supportTickets.subject})`, searchTerm),
+          like(sql`LOWER(${supportTickets.description})`, searchTerm),
+          like(sql`LOWER(${users.email})`, searchTerm),
+          like(sql`LOWER(${users.fullName})`, searchTerm)
+        )
       );
     }
 
-    // Apply pagination
-    const total = filteredTickets.length;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get total count
+    const totalResult = await db
+      .select({ count: count() })
+      .from(supportTickets)
+      .leftJoin(users, eq(supportTickets.userId, users.id))
+      .where(whereClause);
+
+    const total = totalResult[0]?.count || 0;
+
+    // Fetch tickets with pagination
     const offset = (query.page - 1) * query.limit;
-    const paginatedTickets = filteredTickets.slice(offset, offset + query.limit);
+    
+    const tickets = await db
+      .select({
+        id: supportTickets.id,
+        userId: supportTickets.userId,
+        category: supportTickets.category,
+        status: supportTickets.status,
+        priority: supportTickets.priority,
+        subject: supportTickets.subject,
+        description: supportTickets.description,
+        paymentReference: supportTickets.paymentReference,
+        assignedTo: supportTickets.assignedTo,
+        createdAt: supportTickets.createdAt,
+        updatedAt: supportTickets.updatedAt,
+        resolvedAt: supportTickets.resolvedAt,
+        userEmail: users.email,
+        userFullName: users.fullName,
+        assignedAdminName: sql<string>`assigned_admin.full_name`
+      })
+      .from(supportTickets)
+      .leftJoin(users, eq(supportTickets.userId, users.id))
+      .leftJoin(
+        sql`${users} as assigned_admin`,
+        eq(supportTickets.assignedTo, sql`assigned_admin.id`)
+      )
+      .where(whereClause)
+      .orderBy(
+        query.order === "desc" 
+          ? desc(supportTickets[query.sort as keyof typeof supportTickets])
+          : supportTickets[query.sort as keyof typeof supportTickets]
+      )
+      .limit(query.limit)
+      .offset(offset);
+
+    // Get message counts for each ticket
+    const ticketsWithCounts = await Promise.all(
+      tickets.map(async (ticket) => {
+        const messageCountResult = await db
+          .select({ count: count() })
+          .from(ticketMessages)
+          .where(eq(ticketMessages.ticketId, ticket.id));
+
+        return {
+          ...ticket,
+          messageCount: messageCountResult[0]?.count || 0
+        };
+      })
+    );
 
     // Calculate summary statistics
+    const summaryResult = await db
+      .select({
+        status: supportTickets.status,
+        priority: supportTickets.priority,
+        count: count()
+      })
+      .from(supportTickets)
+      .groupBy(supportTickets.status, supportTickets.priority);
+
     const summary = {
-      openCount: mockTickets.filter(t => t.status === 'open').length,
-      assignedCount: mockTickets.filter(t => t.status === 'assigned').length,
-      inProgressCount: mockTickets.filter(t => t.status === 'in_progress').length,
-      resolvedCount: mockTickets.filter(t => t.status === 'resolved').length,
-      urgentCount: mockTickets.filter(t => t.priority === 'urgent').length,
-      highCount: mockTickets.filter(t => t.priority === 'high').length
+      openCount: summaryResult.filter(s => s.status === 'open').reduce((acc, s) => acc + s.count, 0),
+      assignedCount: summaryResult.filter(s => s.status === 'assigned').reduce((acc, s) => acc + s.count, 0),
+      inProgressCount: summaryResult.filter(s => s.status === 'in_progress').reduce((acc, s) => acc + s.count, 0),
+      resolvedCount: summaryResult.filter(s => s.status === 'resolved').reduce((acc, s) => acc + s.count, 0),
+      urgentCount: summaryResult.filter(s => s.priority === 'urgent').reduce((acc, s) => acc + s.count, 0),
+      highCount: summaryResult.filter(s => s.priority === 'high').reduce((acc, s) => acc + s.count, 0)
     };
 
     return NextResponse.json({
-      tickets: paginatedTickets,
+      tickets: ticketsWithCounts,
       pagination: {
         page: query.page,
         limit: query.limit,

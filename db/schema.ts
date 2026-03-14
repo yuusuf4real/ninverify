@@ -184,25 +184,52 @@ export const supportTickets = pgTable("support_tickets", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   category: ticketCategory("category").notNull(),
+  subcategory: text("subcategory"),
   status: ticketStatus("status").default("open").notNull(),
   priority: ticketPriority("priority").default("medium").notNull(),
   subject: text("subject").notNull(),
   description: text("description").notNull(),
-  paymentReference: text("payment_reference"),
+  
+  // Context Fields
+  transactionId: text("transaction_id")
+    .references(() => walletTransactions.id),
   verificationId: text("verification_id")
     .references(() => ninVerifications.id),
+  paymentReference: text("payment_reference"),
+  
+  // Routing & Assignment
   assignedTo: text("assigned_to")
     .references(() => users.id),
+  department: text("department").default("general"), // 'general', 'technical', 'financial', 'management'
+  
+  // SLA Tracking
+  slaTier: text("sla_tier").default("medium"), // 'critical', 'high', 'medium', 'low'
+  firstResponseDue: timestamp("first_response_due", { withTimezone: true }),
+  resolutionDue: timestamp("resolution_due", { withTimezone: true }),
+  firstResponseAt: timestamp("first_response_at", { withTimezone: true }),
+  
+  // Satisfaction
+  satisfactionRating: integer("satisfaction_rating"), // 1-5 scale
+  satisfactionFeedback: text("satisfaction_feedback"),
+  
+  // Metadata
+  sourceChannel: text("source_channel").default("web"), // 'web', 'email', 'whatsapp', 'phone'
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
   metadata: jsonb("metadata"),
+  
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  resolvedAt: timestamp("resolved_at", { withTimezone: true })
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  closedAt: timestamp("closed_at", { withTimezone: true })
 }, (table) => ({
   userIdx: index("idx_tickets_user").on(table.userId),
   statusIdx: index("idx_tickets_status").on(table.status),
   priorityIdx: index("idx_tickets_priority").on(table.priority),
   assignedIdx: index("idx_tickets_assigned").on(table.assignedTo),
-  createdIdx: index("idx_tickets_created").on(table.createdAt)
+  createdIdx: index("idx_tickets_created").on(table.createdAt),
+  slaIdx: index("idx_tickets_sla").on(table.slaTier, table.firstResponseDue),
+  departmentIdx: index("idx_tickets_department").on(table.department)
 }));
 
 // Ticket Messages
@@ -211,17 +238,29 @@ export const ticketMessages = pgTable("ticket_messages", {
   ticketId: text("ticket_id")
     .notNull()
     .references(() => supportTickets.id, { onDelete: "cascade" }),
-  userId: text("user_id")
+  senderId: text("sender_id")
     .notNull()
     .references(() => users.id),
+  senderType: text("sender_type").default("user").notNull(), // 'user', 'agent', 'system'
+  
   message: text("message").notNull(),
-  isAdmin: boolean("is_admin").default(false).notNull(),
+  messageType: text("message_type").default("text").notNull(), // 'text', 'image', 'file', 'system_note'
+  
+  // Internal Notes
   isInternal: boolean("is_internal").default(false).notNull(),
+  isSystemGenerated: boolean("is_system_generated").default(false).notNull(),
+  
+  // Attachments
   attachments: jsonb("attachments"),
+  
+  // Metadata
+  readAt: timestamp("read_at", { withTimezone: true }),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 }, (table) => ({
   ticketIdx: index("idx_ticket_messages_ticket").on(table.ticketId, table.createdAt),
-  userIdx: index("idx_ticket_messages_user").on(table.userId)
+  senderIdx: index("idx_ticket_messages_sender").on(table.senderId),
+  typeIdx: index("idx_ticket_messages_type").on(table.senderType, table.messageType)
 }));
 
 // Admin Actions Log
