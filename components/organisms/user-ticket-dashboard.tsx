@@ -12,7 +12,8 @@ import {
   Star,
   RotateCcw,
   Calendar,
-  User
+  User,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,21 +50,39 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
   const router = useRouter();
   const [tickets, setTickets] = useState<UserTicket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     fetchTickets();
   }, []);
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (retryCount = 0) => {
     try {
+      setError(null);
       const response = await fetch("/api/support/tickets");
-      if (!response.ok) throw new Error("Failed to fetch tickets");
+      if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 401) {
+          throw new Error("Please log in to view your tickets");
+        } else if (response.status >= 500) {
+          // If it's a server error and we haven't retried yet, try again
+          if (retryCount < 2) {
+            console.log(`Server error, retrying in ${(retryCount + 1) * 2} seconds...`);
+            setTimeout(() => fetchTickets(retryCount + 1), (retryCount + 1) * 2000);
+            return;
+          }
+          throw new Error("Server is starting up, please refresh the page in a moment");
+        } else {
+          throw new Error("Failed to fetch tickets");
+        }
+      }
       
       const data = await response.json();
       setTickets(data.tickets || []);
     } catch (error) {
       console.error("Error fetching tickets:", error);
+      setError(error instanceof Error ? error.message : "Failed to load tickets");
     } finally {
       setLoading(false);
     }
@@ -158,6 +177,15 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
             <div key={i} className="h-32 bg-gray-100 rounded animate-pulse" />
           ))}
         </div>
+        {error && (
+          <div className="text-center py-4">
+            <p className="text-amber-600 mb-2">{error}</p>
+            <Button variant="outline" onClick={() => fetchTickets()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -192,7 +220,19 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
       </div>
 
       {/* Tickets List */}
-      {tickets.length === 0 ? (
+      {error && !loading ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Unable to load tickets</h3>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <Button onClick={() => fetchTickets()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      ) : tickets.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { supportTickets, ticketMessages, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
+import { withDatabaseHealth } from "@/lib/db-health";
 import { 
   detectIssueType, 
   calculateSLADeadlines, 
@@ -39,26 +40,28 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Fetch user's tickets with message counts
-    const userTickets = await db
-      .select({
-        id: supportTickets.id,
-        category: supportTickets.category,
-        status: supportTickets.status,
-        priority: supportTickets.priority,
-        subject: supportTickets.subject,
-        description: supportTickets.description,
-        createdAt: supportTickets.createdAt,
-        updatedAt: supportTickets.updatedAt,
-        resolvedAt: supportTickets.resolvedAt,
-        assignedAdminName: users.fullName,
-        satisfactionRating: supportTickets.satisfactionRating
-      })
-      .from(supportTickets)
-      .leftJoin(users, eq(supportTickets.assignedTo, users.id))
-      .where(eq(supportTickets.userId, session.userId))
-      .orderBy(desc(supportTickets.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const userTickets = await withDatabaseHealth(async () => {
+      return await db
+        .select({
+          id: supportTickets.id,
+          category: supportTickets.category,
+          status: supportTickets.status,
+          priority: supportTickets.priority,
+          subject: supportTickets.subject,
+          description: supportTickets.description,
+          createdAt: supportTickets.createdAt,
+          updatedAt: supportTickets.updatedAt,
+          resolvedAt: supportTickets.resolvedAt,
+          assignedAdminName: users.fullName,
+          satisfactionRating: supportTickets.satisfactionRating
+        })
+        .from(supportTickets)
+        .leftJoin(users, eq(supportTickets.assignedTo, users.id))
+        .where(eq(supportTickets.userId, session.userId))
+        .orderBy(desc(supportTickets.createdAt))
+        .limit(limit)
+        .offset(offset);
+    });
 
     // Get message counts for each ticket
     const ticketsWithCounts = await Promise.all(

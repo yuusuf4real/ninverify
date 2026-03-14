@@ -44,7 +44,7 @@ export function verifyPaystackSignature(
       console.error("[PAYSTACK] Expected (first 20 chars):", hash.substring(0, 20));
       console.error("[PAYSTACK] Received (first 20 chars):", signature.substring(0, 20));
     } else {
-      console.log("[PAYSTACK] Signature verified successfully");
+  console.log("[PAYSTACK] Signature verified successfully");
     }
 
     return isValid;

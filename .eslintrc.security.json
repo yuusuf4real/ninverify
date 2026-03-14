@@ -1,0 +1,56 @@
+{
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "plugins": [
+    "security"
+  ],
+  "rules": {
+    "security/detect-object-injection": "error",
+    "security/detect-non-literal-regexp": "error",
+    "security/detect-non-literal-fs-filename": "error",
+    "security/detect-eval-with-expression": "error",
+    "security/detect-pseudoRandomBytes": "error",
+    "security/detect-possible-timing-attacks": "error",
+    "security/detect-unsafe-regex": "error",
+    "security/detect-buffer-noassert": "error",
+    "security/detect-child-process": "error",
+    "security/detect-disable-mustache-escape": "error",
+    "security/detect-no-csrf-before-method-override": "error",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-debugger": "error",
+    "no-alert": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-script-url": "error",
+    "no-unused-vars": "error",
+    "no-undef": "error",
+    "no-redeclare": "error",
+    "no-shadow": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
+      "rules": {
+        "no-secrets/no-secrets": "off",
+        "security/detect-object-injection": "off"
+      }
+    },
+    {
+      "files": ["scripts/**/*.ts", "scripts/**/*.js"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
+  "env": {
+    "node": true,
+    "browser": true,
+    "es2022": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  }
+}
