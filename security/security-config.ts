@@ -58,7 +58,9 @@ export const SECURITY_CONFIG = {
       /<object/gi,
       /<embed/gi,
       /<link/gi,
-      /<meta/gi
+      /<meta/gi,
+      /<svg\b[^>]*>/gi,
+      /<img\b[^>]*>/gi
     ]
   },
 

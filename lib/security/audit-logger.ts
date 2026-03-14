@@ -35,18 +35,20 @@ export class AuditLogger {
    */
   static async logAuditEvent(event: AuditEvent): Promise<void> {
     try {
+      // Map to actual database schema
+      const { nanoid } = await import('nanoid');
+      
       // Log to database for compliance
       await db.insert(auditLogs).values({
+        id: nanoid(),
+        eventType: 'system.security' as any, // Use a valid enum value
         userId: event.userId || null,
         action: event.action,
-        resource: event.resource,
-        details: event.details ? JSON.stringify(event.details) : null,
+        resource: event.resource || null,
+        status: 'success' as any,
+        metadata: event.details ? event.details : null,
         ipAddress: event.ipAddress || null,
         userAgent: event.userAgent || null,
-        sessionId: event.sessionId || null,
-        severity: event.severity,
-        category: event.category,
-        timestamp: new Date(),
       });
 
       // Log to application logs

@@ -164,7 +164,7 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
     const config = priorityConfig[priority as keyof typeof priorityConfig] || 
                   { className: "bg-gray-100 text-gray-800", label: priority };
 
-    return <Badge variant="outline" className={config.className}>{config.label}</Badge>;
+    return <Badge variant="default" className={config.className}>{config.label}</Badge>;
   };
 
   if (loading || !ticket) {

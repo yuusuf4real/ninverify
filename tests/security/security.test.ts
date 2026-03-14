@@ -3,7 +3,7 @@
  * Tests all security measures and compliance requirements
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, beforeAll } from '@jest/globals';
 import { AuthSecurity, AccessControl } from '@/lib/security/auth-security';
 import { DataEncryption, PIIProtection } from '@/lib/security/encryption';
 import { containsSQLInjection, containsXSS } from '@/lib/security/input-validation';
@@ -106,6 +106,11 @@ describe('Security Test Suite', () => {
   });
 
   describe('Data Encryption', () => {
+    // Set up test environment variable
+    beforeAll(() => {
+      process.env.ENCRYPTION_KEY = 'test-key-for-encryption-testing';
+    });
+
     it('should encrypt and decrypt data correctly', () => {
       const plaintext = 'Sensitive information';
       const encrypted = DataEncryption.encrypt(plaintext);
@@ -142,6 +147,11 @@ describe('Security Test Suite', () => {
   });
 
   describe('PII Protection', () => {
+    // Set up test environment
+    beforeAll(() => {
+      process.env.ENCRYPTION_KEY = 'test-key-for-encryption-testing';
+    });
+
     const testData = {
       id: '123',
       email: 'test@example.com',

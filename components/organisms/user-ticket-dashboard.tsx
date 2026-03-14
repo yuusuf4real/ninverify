@@ -40,7 +40,7 @@ interface UserTicket {
 
 interface UserTicketDashboardProps {
   user: {
-    id: string;
+    userId: string;
     email: string;
     fullName: string;
   };
@@ -128,7 +128,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                   { className: "bg-gray-100 text-gray-800", label: priority };
 
     return (
-      <Badge variant="outline" className={config.className}>
+      <Badge variant="default" className={config.className}>
         {config.label}
       </Badge>
     );

@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 // GET /api/support/tickets/[id] - Get ticket details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -17,7 +17,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
 
     // Fetch ticket with user and admin details
     const ticket = await db
@@ -81,7 +82,7 @@ export async function GET(
 // PATCH /api/support/tickets/[id] - Update ticket (admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -89,7 +90,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
     const body = await request.json();
 
     const allowedUpdates = [

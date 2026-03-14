@@ -6,7 +6,7 @@ import { TicketConversation } from "@/components/organisms/ticket-conversation";
 interface DashboardTicketClientProps {
   ticketId: string;
   user: {
-    id: string;
+    userId: string;
     email: string;
     fullName: string;
   };

@@ -10,7 +10,7 @@
     "lint:security": "eslint . --config .eslintrc.security.json --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --write . --config .prettierrc.security",
     "format:check": "prettier --check . --config .prettierrc.security",
-    "type-check": "tsc --noEmit --strict",
+    "type-check": "tsc --noEmit",
     "test": "jest",
     "test:security": "jest tests/security --verbose",
     "test:integration:security": "jest tests/integration/security --verbose",

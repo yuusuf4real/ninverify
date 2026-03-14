@@ -17,7 +17,7 @@ const createMessageSchema = z.object({
 // GET /api/support/tickets/[id]/messages - Get ticket messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -25,7 +25,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
 
     // Verify ticket access
     const ticket = await db
@@ -101,7 +102,7 @@ export async function GET(
 // POST /api/support/tickets/[id]/messages - Add message to ticket
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -109,7 +110,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
     const body = await request.json();
     const data = createMessageSchema.parse(body);
 
