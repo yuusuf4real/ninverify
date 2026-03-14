@@ -113,7 +113,7 @@ export async function POST(request: Request) {
       userId,
       email: data.email,
       fullName: data.fullName,
-      role: "admin"
+      role: "user"
     });
 
     // Log successful registration

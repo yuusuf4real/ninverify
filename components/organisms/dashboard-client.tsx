@@ -23,9 +23,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatNaira } from "@/lib/format";
+import { NIN_VERIFICATION_COST_KOBO } from "@/lib/constants";
+
 import { getFriendlyErrorMessage } from "@/lib/utils";
 
-const feeKobo = 50000;
+const feeKobo = NIN_VERIFICATION_COST_KOBO;
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },

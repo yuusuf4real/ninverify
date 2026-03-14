@@ -8,7 +8,7 @@ export type SessionPayload = {
   userId: string;
   email: string;
   fullName: string;
-  role: "admin" | "super_admin";
+  role: "admin" | "super_admin" | "user";
 };
 
 function getSecret() {
@@ -28,7 +28,7 @@ export async function signSession(payload: SessionPayload) {
     .sign(secret);
 }
 
-export async function getSession() {
+export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -36,7 +36,9 @@ export async function getSession() {
     const secret = getSecret();
     const { payload } = await jwtVerify<SessionPayload>(token, secret);
     return payload;
-  } catch {
+  } catch (error) {
+    // If session parsing fails, clear the invalid session
+    await clearSessionCookie();
     return null;
   }
 }

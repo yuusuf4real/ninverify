@@ -7,7 +7,7 @@ type SessionPayload = {
   userId: string;
   email: string;
   fullName: string;
-  role: "admin" | "super_admin";
+  role: "admin" | "super_admin" | "user";
 };
 
 // In-memory rate limit store for admin endpoints
@@ -71,12 +71,18 @@ export async function middleware(request: NextRequest) {
   
   // Check if this is an admin route
   const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminLoginPage = false; // Admin login is now handled by route groups
+  
+  // Skip middleware for admin login page
+  if (isAdminLoginPage) {
+    return NextResponse.next();
+  }
   
   // Require authentication for dashboard and admin routes
   if (pathname.startsWith("/dashboard") || isAdminRoute) {
     if (!token) {
       const url = request.nextUrl.clone();
-      url.pathname = isAdminRoute ? "/admin/login" : "/login";
+      url.pathname = isAdminRoute ? "/admin-login" : "/login";
       return NextResponse.redirect(url);
     }
     
@@ -85,7 +91,7 @@ export async function middleware(request: NextRequest) {
     
     if (!session) {
       const url = request.nextUrl.clone();
-      url.pathname = isAdminRoute ? "/admin/login" : "/login";
+      url.pathname = isAdminRoute ? "/admin-login" : "/login";
       return NextResponse.redirect(url);
     }
     

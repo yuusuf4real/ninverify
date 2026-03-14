@@ -41,7 +41,9 @@ export const verificationPurpose = pgEnum("verification_purpose", [
   "government_service",
   "other"
 ]);
+
 export const adminRole = pgEnum("admin_role", [
+  "user",
   "admin",
   "super_admin"
 ]);
@@ -75,7 +77,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
   passwordHash: text("password_hash").notNull(),
-  role: adminRole("role").default("admin").notNull(),
+  role: adminRole("role").default("user").notNull(),
   isSuspended: boolean("is_suspended").default(false).notNull(),
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   suspendedReason: text("suspended_reason"),

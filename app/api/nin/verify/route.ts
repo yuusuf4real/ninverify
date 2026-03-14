@@ -10,6 +10,7 @@ import { getFriendlyErrorMessage } from "@/lib/utils";
 import { eq, sql } from "drizzle-orm";
 import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 import { logNINVerification, logAPIError } from "@/lib/audit-log";
+import { NIN_VERIFICATION_COST_KOBO } from "@/lib/constants";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,7 @@ const schema = z.object({
   consent: z.boolean()
 });
 
-const VERIFICATION_FEE = 50000; // kobo
+const VERIFICATION_FEE = NIN_VERIFICATION_COST_KOBO; // kobo
 
 async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
   let lastError: unknown;

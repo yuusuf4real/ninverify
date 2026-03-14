@@ -22,10 +22,11 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
+  // Skip authentication check for login page - it has its own layout
   const session = await getSession();
 
   if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
-    redirect("/admin/login");
+    redirect("/admin-login");
   }
 
   const displayName = session.fullName || session.email;
