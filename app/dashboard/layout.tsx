@@ -12,6 +12,7 @@ import {
 
 import { getSession } from "@/lib/auth";
 import { LogoutButton } from "@/components/organisms/logout-button";
+import { ActiveNavigation, MobileNavigation } from "@/components/ui/active-navigation";
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +26,13 @@ export default async function DashboardLayout({
   }
 
   const displayName = session.fullName || session.email;
+
+  const navigationItems = [
+    { name: "Dashboard", href: "/dashboard", icon: Wallet },
+    { name: "History", href: "/dashboard/transactions", icon: History },
+    { name: "Recovery", href: "/dashboard/recovery", icon: RefreshCw },
+    { name: "Support", href: "/dashboard/support", icon: MessageSquare },
+  ];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -58,36 +66,9 @@ export default async function DashboardLayout({
               </div>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-2 rounded-full border border-border/70 bg-white/90 px-3 py-2 shadow-sm">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
-              >
-                <Wallet className="h-4 w-4" />
-                Dashboard
-              </Link>
-              <Link
-                href="/dashboard/transactions"
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
-              >
-                <History className="h-4 w-4" />
-                History
-              </Link>
-              <Link
-                href="/dashboard/recovery"
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Recovery
-              </Link>
-              <Link
-                href="/dashboard/support"
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70"
-              >
-                <MessageSquare className="h-4 w-4" />
-                Support
-              </Link>
-            </nav>
+            <div className="hidden md:block">
+              <ActiveNavigation items={navigationItems} variant="horizontal" />
+            </div>
 
             <div className="flex items-center gap-3">
               <div className="hidden lg:flex items-center gap-3 rounded-full border border-border/70 bg-white/90 px-4 py-2 shadow-sm">
@@ -106,40 +87,9 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <nav className="md:hidden border-b border-border/70 bg-white/80 backdrop-blur print:hidden">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 py-3">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm"
-            >
-              <Wallet className="h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/transactions"
-              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm"
-            >
-              <History className="h-4 w-4" />
-              History
-            </Link>
-            <Link
-              href="/dashboard/recovery"
-              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Recovery
-            </Link>
-            <Link
-              href="/dashboard/support"
-              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Support
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <div className="md:hidden">
+        <MobileNavigation items={navigationItems} />
+      </div>
 
       <main className="relative z-10 container mx-auto px-4 pb-12 pt-8 max-w-6xl print:p-0 print:max-w-none">
         <div className="mb-6 flex items-center gap-3 lg:hidden print:hidden">

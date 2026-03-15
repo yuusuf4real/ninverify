@@ -16,6 +16,7 @@ import {
 
 import { getSession } from "@/lib/auth";
 import { AdminLogoutButton } from "@/components/organisms/admin-logout-button";
+import { ActiveNavigation } from "@/components/ui/active-navigation";
 
 export default async function AdminLayout({
   children,
@@ -68,20 +69,9 @@ export default async function AdminLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-3">
-          <div className="space-y-1">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-              >
-                <item.icon className="h-5 w-5" />
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        </nav>
+        <div className="mt-6 px-3">
+          <ActiveNavigation items={navigation} variant="sidebar" />
+        </div>
 
         {/* User Profile */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-4">
