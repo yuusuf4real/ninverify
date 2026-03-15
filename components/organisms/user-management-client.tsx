@@ -32,6 +32,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  useConfirmationModal,
+  confirmationActions,
+} from "@/components/ui/confirmation-modal";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -64,6 +68,7 @@ interface UserListResponse {
 
 export function UserManagementClient() {
   const searchParams = useSearchParams();
+  const { showConfirmation, ConfirmationModal } = useConfirmationModal();
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,25 +151,42 @@ export function UserManagementClient() {
     userId: string,
     action: "suspend" | "activate",
   ) => {
-    try {
-      const response = await fetch(
-        `/api/admin/users/${userId}?action=${action}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            reason: action === "suspend" ? "Administrative action" : undefined,
-          }),
-        },
-      );
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
 
-      if (!response.ok) throw new Error(`Failed to ${action} user`);
+    const confirmationAction =
+      action === "suspend"
+        ? confirmationActions.suspendUser(user.fullName)
+        : {
+            type: "success" as const,
+            title: "Activate User Account",
+            description: `Are you sure you want to activate ${user.fullName}'s account? They will regain access to all features.`,
+            confirmText: "Activate User",
+            cancelText: "Cancel",
+          };
 
-      // Refresh users list
-      fetchUsers();
-    } catch (error) {
-      console.error(`Error ${action}ing user:`, error);
-    }
+    showConfirmation(confirmationAction, async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/users/${userId}?action=${action}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reason:
+                action === "suspend" ? "Administrative action" : undefined,
+            }),
+          },
+        );
+
+        if (!response.ok) throw new Error(`Failed to ${action} user`);
+
+        // Refresh users list
+        fetchUsers();
+      } catch (error) {
+        console.error(`Error ${action}ing user:`, error);
+      }
+    });
   };
 
   const handleViewUser = (userId: string) => {
@@ -451,6 +473,9 @@ export function UserManagementClient() {
           onUserUpdated={fetchUsers}
         />
       )}
+
+      {/* Confirmation Modal */}
+      {ConfirmationModal}
     </>
   );
 }

@@ -26,6 +26,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  useConfirmationModal,
+  confirmationActions,
+} from "@/components/ui/confirmation-modal";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -77,6 +81,7 @@ interface TicketListResponse {
 export function SupportTicketManagementClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { showConfirmation, ConfirmationModal } = useConfirmationModal();
 
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [summary, setSummary] = useState<TicketSummary | null>(null);
@@ -153,39 +158,61 @@ export function SupportTicketManagementClient() {
   };
 
   const handleAssignToMe = async (ticketId: string) => {
-    try {
-      const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assignToMe: true,
-        }),
-      });
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (!ticket) return;
 
-      if (!response.ok) throw new Error("Failed to assign ticket");
+    showConfirmation(
+      {
+        type: "info",
+        title: "Assign Ticket to Yourself",
+        description: `Are you sure you want to assign ticket #${ticket.id} to yourself? You will become responsible for resolving this ticket.`,
+        confirmText: "Assign to Me",
+        cancelText: "Cancel",
+      },
+      async () => {
+        try {
+          const response = await fetch(
+            `/api/admin/support/tickets/${ticketId}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                assignToMe: true,
+              }),
+            },
+          );
 
-      await fetchTickets();
-    } catch (error) {
-      console.error("Error assigning ticket:", error);
-    }
+          if (!response.ok) throw new Error("Failed to assign ticket");
+
+          await fetchTickets();
+        } catch (error) {
+          console.error("Error assigning ticket:", error);
+        }
+      },
+    );
   };
 
   const handleMarkResolved = async (ticketId: string) => {
-    try {
-      const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "resolved",
-        }),
-      });
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (!ticket) return;
 
-      if (!response.ok) throw new Error("Failed to resolve ticket");
+    showConfirmation(confirmationActions.resolveTicket(ticket.id), async () => {
+      try {
+        const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "resolved",
+          }),
+        });
 
-      await fetchTickets();
-    } catch (error) {
-      console.error("Error resolving ticket:", error);
-    }
+        if (!response.ok) throw new Error("Failed to resolve ticket");
+
+        await fetchTickets();
+      } catch (error) {
+        console.error("Error resolving ticket:", error);
+      }
+    });
   };
 
   const handleSearch = (value: string) => {
@@ -571,6 +598,9 @@ export function SupportTicketManagementClient() {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirmation Modal */}
+      {ConfirmationModal}
     </div>
   );
 }
