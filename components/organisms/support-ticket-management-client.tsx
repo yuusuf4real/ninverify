@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
   Download,
@@ -76,6 +76,7 @@ interface TicketListResponse {
 
 export function SupportTicketManagementClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [summary, setSummary] = useState<TicketSummary | null>(null);
@@ -145,6 +146,46 @@ export function SupportTicketManagementClient() {
     setRefreshing(true);
     await fetchTickets();
     setRefreshing(false);
+  };
+
+  const handleViewDetails = (ticketId: string) => {
+    router.push(`/admin/support/${ticketId}`);
+  };
+
+  const handleAssignToMe = async (ticketId: string) => {
+    try {
+      const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignToMe: true,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to assign ticket");
+
+      await fetchTickets();
+    } catch (error) {
+      console.error("Error assigning ticket:", error);
+    }
+  };
+
+  const handleMarkResolved = async (ticketId: string) => {
+    try {
+      const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "resolved",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to resolve ticket");
+
+      await fetchTickets();
+    } catch (error) {
+      console.error("Error resolving ticket:", error);
+    }
   };
 
   const handleSearch = (value: string) => {
@@ -453,20 +494,28 @@ export function SupportTicketManagementClient() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleViewDetails(ticket.id)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleAssignToMe(ticket.id)}
+                            >
                               <User className="h-4 w-4 mr-2" />
                               Assign to Me
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleViewDetails(ticket.id)}
+                            >
                               <MessageSquare className="h-4 w-4 mr-2" />
                               Add Response
                             </DropdownMenuItem>
                             {ticket.status !== "resolved" && (
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleMarkResolved(ticket.id)}
+                              >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Mark Resolved
                               </DropdownMenuItem>
