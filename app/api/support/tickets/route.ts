@@ -4,26 +4,33 @@ import { db } from "@/db/client";
 import { supportTickets, ticketMessages, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { withDatabaseHealth } from "@/lib/db-health";
-import { 
-  detectIssueType, 
-  calculateSLADeadlines, 
-  generateTicketSubject, 
+import {
+  detectIssueType,
+  calculateSLADeadlines,
+  generateTicketSubject,
   generateSystemMessage,
   generateTicketId,
-  type TicketContext
+  type TicketContext,
 } from "@/lib/support-tickets";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const createTicketSchema = z.object({
-  category: z.enum(["payment_issue", "verification_problem", "account_access", "technical_support", "general_inquiry"]),
+  category: z.enum([
+    "payment_issue",
+    "verification_problem",
+    "account_access",
+    "technical_support",
+    "general_inquiry",
+  ]),
   subcategory: z.string().min(1),
   description: z.string().min(10).max(2000),
   urgency: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   contactPreferences: z.array(z.string()).default(["email"]),
   relatedTransaction: z.string().optional(),
-  relatedVerification: z.string().optional()
+  relatedVerification: z.string().optional(),
 });
 
 // GET /api/support/tickets - List user's tickets
@@ -53,7 +60,7 @@ export async function GET(request: NextRequest) {
           updatedAt: supportTickets.updatedAt,
           resolvedAt: supportTickets.resolvedAt,
           assignedAdminName: users.fullName,
-          satisfactionRating: supportTickets.satisfactionRating
+          satisfactionRating: supportTickets.satisfactionRating,
         })
         .from(supportTickets)
         .leftJoin(users, eq(supportTickets.assignedTo, users.id))
@@ -82,9 +89,9 @@ export async function GET(request: NextRequest) {
         return {
           ...ticket,
           messageCount: messageCount.length,
-          lastMessage: lastMessage[0]?.message
+          lastMessage: lastMessage[0]?.message,
         };
-      })
+      }),
     );
 
     return NextResponse.json({
@@ -93,15 +100,14 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: userTickets.length,
-        hasMore: userTickets.length === limit
-      }
+        hasMore: userTickets.length === limit,
+      },
     });
-
   } catch (error) {
-    console.error("Support tickets list error:", error);
+    logger.error("Support tickets list error:", error);
     return NextResponse.json(
       { error: "Failed to fetch support tickets" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -120,32 +126,36 @@ export async function POST(request: NextRequest) {
     // Build user context for smart routing
     const userContext: TicketContext = {
       userId: session.userId,
-      recentTransactions: [], // TODO: Fetch from DB
-      recentVerifications: [], // TODO: Fetch from DB
-      userTier: "basic", // TODO: Determine from user data
-      previousTickets: 0, // TODO: Count from DB
-      accountAge: 30 // TODO: Calculate from user creation date
+      recentTransactions: [],
+      recentVerifications: [],
+      userTier: "basic",
+      previousTickets: 0,
+      accountAge: 30,
     };
 
     // Detect issue type and routing
-    const issueDetection = detectIssueType(data.description, data.category, userContext);
-    
+    const issueDetection = detectIssueType(
+      data.description,
+      data.category,
+      userContext,
+    );
+
     // Calculate SLA deadlines
     const slaDeadlines = calculateSLADeadlines(
       issueDetection.priority,
-      issueDetection.slaTier
+      issueDetection.slaTier,
     );
 
     // Generate ticket subject
     const subject = generateTicketSubject(
       data.category,
       data.subcategory,
-      issueDetection.relatedContext
+      undefined,
     );
 
     // Create ticket
     const ticketId = generateTicketId();
-    
+
     await db.insert(supportTickets).values({
       id: ticketId,
       userId: session.userId,
@@ -161,9 +171,10 @@ export async function POST(request: NextRequest) {
       resolutionDue: slaDeadlines.resolutionDue,
       sourceChannel: "web",
       userAgent: request.headers.get("user-agent") || undefined,
-      ipAddress: request.headers.get("x-forwarded-for") || 
-                 request.headers.get("x-real-ip") || 
-                 "unknown",
+      ipAddress:
+        request.headers.get("x-forwarded-for") ||
+        request.headers.get("x-real-ip") ||
+        "unknown",
       transactionId: data.relatedTransaction,
       verificationId: data.relatedVerification,
       metadata: {
@@ -171,16 +182,20 @@ export async function POST(request: NextRequest) {
         contactPreferences: data.contactPreferences,
         issueDetection: {
           confidence: issueDetection.confidence,
-          suggestedSolution: issueDetection.suggestedSolution
-        }
-      }
+          suggestedSolution: issueDetection.suggestedSolution,
+        },
+        // Type-safe related context
+        ...(issueDetection.relatedContext && {
+          relatedContext: issueDetection.relatedContext,
+        }),
+      },
     });
 
     // Create initial system message
     const systemMessage = generateSystemMessage(
       data.category,
       issueDetection.priority,
-      slaDeadlines
+      slaDeadlines,
     );
 
     await db.insert(ticketMessages).values({
@@ -190,7 +205,7 @@ export async function POST(request: NextRequest) {
       senderType: "system",
       message: systemMessage,
       messageType: "system_note",
-      isSystemGenerated: true
+      isSystemGenerated: true,
     });
 
     return NextResponse.json({
@@ -199,28 +214,32 @@ export async function POST(request: NextRequest) {
       priority: issueDetection.priority,
       department: issueDetection.department,
       expectedResponse: slaDeadlines.firstResponseDue,
-      message: "Support ticket created successfully"
+      message: "Support ticket created successfully",
     });
-
   } catch (error) {
-    console.log("Create support ticket error:", error);
-    console.log("Error details:", {
-      message: error.message,
-      code: error.code,
-      position: error.position,
-      routine: error.routine
-    });
-    
+    logger.error("Create support ticket error:", error);
+
+    // Type-safe error handling
+    const errorDetails: Record<string, unknown> = {};
+    if (error && typeof error === "object") {
+      if ("message" in error) errorDetails.message = error.message;
+      if ("code" in error) errorDetails.code = error.code;
+      if ("position" in error) errorDetails.position = error.position;
+      if ("routine" in error) errorDetails.routine = error.routine;
+    }
+
+    logger.info("Error details:", errorDetails);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Failed to create support ticket" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

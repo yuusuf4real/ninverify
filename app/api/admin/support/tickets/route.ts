@@ -5,27 +5,44 @@ import { supportTickets, ticketMessages, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq, desc, and, or, like, count, sql } from "drizzle-orm";
 
+import { logger } from "../../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const querySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(50),
   search: z.string().optional(),
-  status: z.enum(["all", "open", "assigned", "in_progress", "resolved", "closed"]).default("all"),
+  status: z
+    .enum(["all", "open", "assigned", "in_progress", "resolved", "closed"])
+    .default("all"),
   priority: z.enum(["all", "low", "medium", "high", "urgent"]).default("all"),
-  category: z.enum(["all", "payment_issue", "verification_problem", "account_access", "technical_support", "general_inquiry"]).default("all"),
+  category: z
+    .enum([
+      "all",
+      "payment_issue",
+      "verification_problem",
+      "account_access",
+      "technical_support",
+      "general_inquiry",
+    ])
+    .default("all"),
   assignedTo: z.string().optional(),
-  sort: z.enum(["created_at", "updated_at", "priority", "status"]).default("created_at"),
+  sort: z
+    .enum(["created_at", "updated_at", "priority", "status"])
+    .default("created_at"),
   order: z.enum(["asc", "desc"]).default("desc"),
   dateFrom: z.string().optional(),
-  dateTo: z.string().optional()
+  dateTo: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,15 +53,40 @@ export async function GET(request: NextRequest) {
     const conditions = [];
 
     if (query.status !== "all") {
-      conditions.push(eq(supportTickets.status, query.status as "open" | "assigned" | "in_progress" | "resolved" | "closed"));
+      conditions.push(
+        eq(
+          supportTickets.status,
+          query.status as
+            | "open"
+            | "assigned"
+            | "in_progress"
+            | "resolved"
+            | "closed",
+        ),
+      );
     }
 
     if (query.priority !== "all") {
-      conditions.push(eq(supportTickets.priority, query.priority as "low" | "medium" | "high" | "urgent"));
+      conditions.push(
+        eq(
+          supportTickets.priority,
+          query.priority as "low" | "medium" | "high" | "urgent",
+        ),
+      );
     }
 
     if (query.category !== "all") {
-      conditions.push(eq(supportTickets.category, query.category as "payment_issue" | "verification_problem" | "account_access" | "technical_support" | "general_inquiry"));
+      conditions.push(
+        eq(
+          supportTickets.category,
+          query.category as
+            | "payment_issue"
+            | "verification_problem"
+            | "account_access"
+            | "technical_support"
+            | "general_inquiry",
+        ),
+      );
     }
 
     if (query.assignedTo) {
@@ -58,8 +100,8 @@ export async function GET(request: NextRequest) {
           like(sql`LOWER(${supportTickets.subject})`, searchTerm),
           like(sql`LOWER(${supportTickets.description})`, searchTerm),
           like(sql`LOWER(${users.email})`, searchTerm),
-          like(sql`LOWER(${users.fullName})`, searchTerm)
-        )
+          like(sql`LOWER(${users.fullName})`, searchTerm),
+        ),
       );
     }
 
@@ -76,7 +118,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch tickets with pagination
     const offset = (query.page - 1) * query.limit;
-    
+
     const tickets = await db
       .select({
         id: supportTickets.id,
@@ -93,19 +135,19 @@ export async function GET(request: NextRequest) {
         resolvedAt: supportTickets.resolvedAt,
         userEmail: users.email,
         userFullName: users.fullName,
-        assignedAdminName: sql<string>`assigned_admin.full_name`
+        assignedAdminName: sql<string>`assigned_admin.full_name`,
       })
       .from(supportTickets)
       .leftJoin(users, eq(supportTickets.userId, users.id))
       .leftJoin(
         sql`${users} as assigned_admin`,
-        eq(supportTickets.assignedTo, sql`assigned_admin.id`)
+        eq(supportTickets.assignedTo, sql`assigned_admin.id`),
       )
       .where(whereClause)
       .orderBy(
-        query.order === "desc" 
-          ? desc(supportTickets[query.sort as keyof typeof supportTickets])
-          : supportTickets[query.sort as keyof typeof supportTickets]
+        query.order === "desc"
+          ? desc(supportTickets.createdAt)
+          : supportTickets.createdAt,
       )
       .limit(query.limit)
       .offset(offset);
@@ -120,9 +162,9 @@ export async function GET(request: NextRequest) {
 
         return {
           ...ticket,
-          messageCount: messageCountResult[0]?.count || 0
+          messageCount: messageCountResult[0]?.count || 0,
         };
-      })
+      }),
     );
 
     // Calculate summary statistics
@@ -130,18 +172,30 @@ export async function GET(request: NextRequest) {
       .select({
         status: supportTickets.status,
         priority: supportTickets.priority,
-        count: count()
+        count: count(),
       })
       .from(supportTickets)
       .groupBy(supportTickets.status, supportTickets.priority);
 
     const summary = {
-      openCount: summaryResult.filter(s => s.status === 'open').reduce((acc, s) => acc + s.count, 0),
-      assignedCount: summaryResult.filter(s => s.status === 'assigned').reduce((acc, s) => acc + s.count, 0),
-      inProgressCount: summaryResult.filter(s => s.status === 'in_progress').reduce((acc, s) => acc + s.count, 0),
-      resolvedCount: summaryResult.filter(s => s.status === 'resolved').reduce((acc, s) => acc + s.count, 0),
-      urgentCount: summaryResult.filter(s => s.priority === 'urgent').reduce((acc, s) => acc + s.count, 0),
-      highCount: summaryResult.filter(s => s.priority === 'high').reduce((acc, s) => acc + s.count, 0)
+      openCount: summaryResult
+        .filter((s) => s.status === "open")
+        .reduce((acc, s) => acc + s.count, 0),
+      assignedCount: summaryResult
+        .filter((s) => s.status === "assigned")
+        .reduce((acc, s) => acc + s.count, 0),
+      inProgressCount: summaryResult
+        .filter((s) => s.status === "in_progress")
+        .reduce((acc, s) => acc + s.count, 0),
+      resolvedCount: summaryResult
+        .filter((s) => s.status === "resolved")
+        .reduce((acc, s) => acc + s.count, 0),
+      urgentCount: summaryResult
+        .filter((s) => s.priority === "urgent")
+        .reduce((acc, s) => acc + s.count, 0),
+      highCount: summaryResult
+        .filter((s) => s.priority === "high")
+        .reduce((acc, s) => acc + s.count, 0),
     };
 
     return NextResponse.json({
@@ -150,16 +204,15 @@ export async function GET(request: NextRequest) {
         page: query.page,
         limit: query.limit,
         total,
-        totalPages: Math.ceil(total / query.limit)
+        totalPages: Math.ceil(total / query.limit),
       },
-      summary
+      summary,
     });
-
   } catch (error) {
-    console.error("Admin support tickets list error:", error);
+    logger.error("Admin support tickets list error:", error);
     return NextResponse.json(
       { error: "Failed to fetch support tickets" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -12,7 +12,7 @@ export function AdminLoginForm() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ export function AdminLoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
@@ -40,16 +40,18 @@ export function AdminLoginForm() {
       router.push("/admin");
       router.refresh();
     } catch (error) {
-      setError(getFriendlyErrorMessage(error, "Login failed. Please try again."));
+      setError(
+        getFriendlyErrorMessage(error, "Login failed. Please try again."),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
     // Clear error when user starts typing
     if (error) setError("");
@@ -72,7 +74,10 @@ export function AdminLoginForm() {
 
       {/* Email Field */}
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-semibold text-foreground">
+        <label
+          htmlFor="email"
+          className="text-sm font-semibold text-foreground"
+        >
           Admin Email
         </label>
         <Input
@@ -90,7 +95,10 @@ export function AdminLoginForm() {
 
       {/* Password Field */}
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-semibold text-foreground">
+        <label
+          htmlFor="password"
+          className="text-sm font-semibold text-foreground"
+        >
           Password
         </label>
         <div className="relative">
@@ -148,7 +156,8 @@ export function AdminLoginForm() {
           <div>
             <p className="text-sm font-medium text-blue-900">Security Notice</p>
             <p className="mt-1 text-xs text-blue-800">
-              Admin access is logged and monitored. Only authorized personnel should access this portal.
+              Admin access is logged and monitored. Only authorized personnel
+              should access this portal.
             </p>
           </div>
         </div>

@@ -13,16 +13,17 @@ interface MetricCardProps {
 
 const colorVariants = {
   primary: "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20",
-  success: "bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200",
+  success:
+    "bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200",
   warning: "bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200",
-  error: "bg-gradient-to-br from-red-50 to-red-100/50 border-red-200"
+  error: "bg-gradient-to-br from-red-50 to-red-100/50 border-red-200",
 };
 
 const iconColorVariants = {
   primary: "text-primary bg-primary/10",
   success: "text-emerald-600 bg-emerald-100",
   warning: "text-amber-600 bg-amber-100",
-  error: "text-red-600 bg-red-100"
+  error: "text-red-600 bg-red-100",
 };
 
 export function MetricCard({
@@ -31,7 +32,7 @@ export function MetricCard({
   trend,
   icon: Icon,
   color = "primary",
-  loading = false
+  loading = false,
 }: MetricCardProps) {
   const isPositiveTrend = trend && trend > 0;
   const isNegativeTrend = trend && trend < 0;
@@ -54,13 +55,18 @@ export function MetricCard({
   }
 
   return (
-    <Card className={cn("border-border/50 hover:shadow-lg transition-all duration-200", colorVariants[color])}>
+    <Card
+      className={cn(
+        "border-border/50 hover:shadow-lg transition-all duration-200",
+        colorVariants[color],
+      )}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-600">{title}</p>
             <p className="text-2xl font-bold text-gray-900">{value}</p>
-            
+
             {trend !== undefined && (
               <div className="flex items-center gap-1">
                 {isPositiveTrend ? (
@@ -73,16 +79,22 @@ export function MetricCard({
                     "text-xs font-medium",
                     isPositiveTrend && "text-emerald-600",
                     isNegativeTrend && "text-red-600",
-                    !isPositiveTrend && !isNegativeTrend && "text-gray-500"
+                    !isPositiveTrend && !isNegativeTrend && "text-gray-500",
                   )}
                 >
-                  {trend > 0 ? "+" : ""}{trend}%
+                  {trend > 0 ? "+" : ""}
+                  {trend}%
                 </span>
               </div>
             )}
           </div>
-          
-          <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", iconColorVariants[color])}>
+
+          <div
+            className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-xl",
+              iconColorVariants[color],
+            )}
+          >
             <Icon className="h-6 w-6" />
           </div>
         </div>

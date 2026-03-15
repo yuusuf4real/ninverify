@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { walletTransactions, users, wallets } from "@/db/schema";
+import { walletTransactions, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, ilike, and, gte, lte, desc, asc, count, sql, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, count, sql } from "drizzle-orm";
 import { logAuditEvent } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const querySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(50),
   search: z.string().optional(),
-  status: z.enum(["all", "pending", "completed", "failed", "refunded"]).default("all"),
+  status: z
+    .enum(["all", "pending", "completed", "failed", "refunded"])
+    .default("all"),
   type: z.enum(["all", "credit", "debit"]).default("all"),
   sort: z.enum(["created_at", "amount", "status"]).default("created_at"),
   order: z.enum(["asc", "desc"]).default("desc"),
@@ -20,14 +23,17 @@ const querySchema = z.object({
   amountMax: z.coerce.number().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -42,7 +48,7 @@ export async function GET(request: NextRequest) {
       conditions.push(
         sql`(${users.email} ILIKE ${`%${query.search}%`} OR 
             ${users.fullName} ILIKE ${`%${query.search}%`} OR 
-            ${walletTransactions.reference} ILIKE ${`%${query.search}%`})`
+            ${walletTransactions.reference} ILIKE ${`%${query.search}%`})`,
       );
     }
 
@@ -66,10 +72,14 @@ export async function GET(request: NextRequest) {
 
     // Date range filter
     if (query.dateFrom) {
-      conditions.push(gte(walletTransactions.createdAt, new Date(query.dateFrom)));
+      conditions.push(
+        gte(walletTransactions.createdAt, new Date(query.dateFrom)),
+      );
     }
     if (query.dateTo) {
-      conditions.push(lte(walletTransactions.createdAt, new Date(query.dateTo)));
+      conditions.push(
+        lte(walletTransactions.createdAt, new Date(query.dateTo)),
+      );
     }
 
     // User filter
@@ -90,7 +100,10 @@ export async function GET(request: NextRequest) {
 
     // Get transactions with user data
     const offset = (query.page - 1) * query.limit;
-    const orderColumn = walletTransactions[query.sort === "created_at" ? "createdAt" : query.sort];
+    const orderColumn =
+      walletTransactions[
+        query.sort === "created_at" ? "createdAt" : query.sort
+      ];
     const orderDirection = query.order === "asc" ? asc : desc;
 
     const transactionsList = await db
@@ -105,7 +118,7 @@ export async function GET(request: NextRequest) {
         createdAt: walletTransactions.createdAt,
         userId: walletTransactions.userId,
         userEmail: users.email,
-        userFullName: users.fullName
+        userFullName: users.fullName,
       })
       .from(walletTransactions)
       .leftJoin(users, eq(walletTransactions.userId, users.id))
@@ -121,13 +134,14 @@ export async function GET(request: NextRequest) {
         completedVolume: sql<number>`COALESCE(SUM(CASE WHEN ${walletTransactions.status} = 'completed' THEN ${walletTransactions.amount} ELSE 0 END), 0)`,
         pendingCount: sql<number>`COALESCE(SUM(CASE WHEN ${walletTransactions.status} = 'pending' THEN 1 ELSE 0 END), 0)`,
         failedCount: sql<number>`COALESCE(SUM(CASE WHEN ${walletTransactions.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
-        completedCount: sql<number>`COALESCE(SUM(CASE WHEN ${walletTransactions.status} = 'completed' THEN 1 ELSE 0 END), 0)`
+        completedCount: sql<number>`COALESCE(SUM(CASE WHEN ${walletTransactions.status} = 'completed' THEN 1 ELSE 0 END), 0)`,
       })
       .from(walletTransactions)
       .leftJoin(users, eq(walletTransactions.userId, users.id))
       .where(whereClause);
 
-    const successRate = total > 0 ? (summaryResult.completedCount / total) * 100 : 0;
+    const successRate =
+      total > 0 ? (summaryResult.completedCount / total) * 100 : 0;
     const avgAmount = total > 0 ? summaryResult.totalVolume / total : 0;
 
     // Log admin action
@@ -141,8 +155,8 @@ export async function GET(request: NextRequest) {
       status: "success",
       metadata: {
         query: query,
-        resultCount: transactionsList.length
-      }
+        resultCount: transactionsList.length,
+      },
     });
 
     return NextResponse.json({
@@ -151,7 +165,7 @@ export async function GET(request: NextRequest) {
         page: query.page,
         limit: query.limit,
         total,
-        totalPages: Math.ceil(total / query.limit)
+        totalPages: Math.ceil(total / query.limit),
       },
       summary: {
         totalVolume: Number(summaryResult.totalVolume),
@@ -160,15 +174,14 @@ export async function GET(request: NextRequest) {
         failedCount: Number(summaryResult.failedCount),
         completedCount: Number(summaryResult.completedCount),
         successRate: Math.round(successRate * 10) / 10,
-        avgAmount: Number(avgAmount)
-      }
+        avgAmount: Number(avgAmount),
+      },
     });
-
   } catch (error) {
-    console.error("Admin transactions list error:", error);
+    logger.error("Admin transactions list error:", error);
     return NextResponse.json(
       { error: "Failed to fetch transactions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

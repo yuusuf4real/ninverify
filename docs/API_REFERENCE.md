@@ -5,6 +5,7 @@
 All API endpoints require authentication unless otherwise specified. Authentication is handled via JWT tokens stored in httpOnly cookies.
 
 ### Session Cookie
+
 - **Name**: `verifynin_session`
 - **Type**: httpOnly, secure (in production)
 - **TTL**: 7 days
@@ -13,9 +14,11 @@ All API endpoints require authentication unless otherwise specified. Authenticat
 ## Public Endpoints
 
 ### POST /api/auth/register
+
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "fullName": "John Doe",
@@ -26,12 +29,14 @@ Register a new user account.
 ```
 
 **Validation Rules:**
+
 - `fullName`: Required, minimum 2 characters
 - `email`: Required, valid email format, unique
 - `phone`: Required, Nigerian phone format
 - `password`: Required, minimum 8 characters, must contain uppercase, lowercase, number
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -40,6 +45,7 @@ Register a new user account.
 ```
 
 **Error Response (400):**
+
 ```json
 {
   "error": "Validation failed",
@@ -51,9 +57,11 @@ Register a new user account.
 ```
 
 ### POST /api/auth/login
+
 Authenticate user and create session.
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -62,6 +70,7 @@ Authenticate user and create session.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -75,6 +84,7 @@ Authenticate user and create session.
 ```
 
 **Error Response (401):**
+
 ```json
 {
   "error": "Invalid email or password"
@@ -82,9 +92,11 @@ Authenticate user and create session.
 ```
 
 ### POST /api/auth/logout
+
 Clear user session.
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -95,11 +107,13 @@ Clear user session.
 ## User Endpoints (Protected)
 
 ### POST /api/nin/verify
+
 Verify a National Identification Number.
 
 **Authentication**: Required (user, admin, super_admin)
 
 **Request Body:**
+
 ```json
 {
   "nin": "12345678901",
@@ -109,11 +123,13 @@ Verify a National Identification Number.
 ```
 
 **Validation Rules:**
+
 - `nin`: Required, exactly 11 digits
 - `consent`: Required, must be true
 - `purpose`: Required, valid purpose enum
 
 **Purpose Options:**
+
 - `banking`
 - `education_jamb`
 - `education_waec`
@@ -127,6 +143,7 @@ Verify a National Identification Number.
 - `other`
 
 **Response (200) - Success:**
+
 ```json
 {
   "success": true,
@@ -146,6 +163,7 @@ Verify a National Identification Number.
 ```
 
 **Response (200) - Failure with Refund:**
+
 ```json
 {
   "success": false,
@@ -163,6 +181,7 @@ Verify a National Identification Number.
 ```
 
 **Error Response (400) - Insufficient Balance:**
+
 ```json
 {
   "error": "Insufficient wallet balance",
@@ -172,6 +191,7 @@ Verify a National Identification Number.
 ```
 
 **Error Response (429) - Rate Limited:**
+
 ```json
 {
   "error": "Daily verification limit exceeded",
@@ -181,11 +201,13 @@ Verify a National Identification Number.
 ```
 
 ### GET /api/wallet/balance
+
 Get current wallet balance.
 
 **Authentication**: Required
 
 **Response (200):**
+
 ```json
 {
   "balance": 150000,
@@ -195,11 +217,13 @@ Get current wallet balance.
 ```
 
 ### POST /api/wallet/check-pending-payments
+
 Check and recover missed payments using Paystack reference.
 
 **Authentication**: Required
 
 **Request Body:**
+
 ```json
 {
   "reference": "paystack_ref_123456789"
@@ -207,6 +231,7 @@ Check and recover missed payments using Paystack reference.
 ```
 
 **Response (200) - Payment Found and Credited:**
+
 ```json
 {
   "success": true,
@@ -223,6 +248,7 @@ Check and recover missed payments using Paystack reference.
 ```
 
 **Response (404) - Payment Not Found:**
+
 ```json
 {
   "error": "Payment not found or already processed",
@@ -233,11 +259,13 @@ Check and recover missed payments using Paystack reference.
 ## Payment Endpoints
 
 ### POST /api/paystack/initialize
+
 Initialize a Paystack payment for wallet funding.
 
 **Authentication**: Required
 
 **Request Body:**
+
 ```json
 {
   "amount": 100000,
@@ -246,10 +274,12 @@ Initialize a Paystack payment for wallet funding.
 ```
 
 **Validation Rules:**
+
 - `amount`: Required, minimum 5000 kobo (₦50), maximum 100000000 kobo (₦1,000,000)
 - `email`: Required, valid email format
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -262,6 +292,7 @@ Initialize a Paystack payment for wallet funding.
 ```
 
 **Error Response (400):**
+
 ```json
 {
   "error": "Amount must be between ₦50 and ₦1,000,000"
@@ -269,14 +300,17 @@ Initialize a Paystack payment for wallet funding.
 ```
 
 ### GET /api/paystack/verify/:reference
+
 Verify a Paystack payment (called automatically after payment).
 
 **Authentication**: Required
 
 **Parameters:**
+
 - `reference`: Paystack transaction reference
 
 **Response (200) - Success:**
+
 ```json
 {
   "success": true,
@@ -293,6 +327,7 @@ Verify a Paystack payment (called automatically after payment).
 ```
 
 **Response (400) - Failed Payment:**
+
 ```json
 {
   "success": false,
@@ -305,14 +340,17 @@ Verify a Paystack payment (called automatically after payment).
 ```
 
 ### POST /api/paystack/webhook
+
 Paystack webhook endpoint for payment notifications.
 
 **Authentication**: Webhook signature verification
 
 **Headers:**
+
 - `x-paystack-signature`: HMAC SHA-512 signature
 
 **Request Body:**
+
 ```json
 {
   "event": "charge.success",
@@ -328,6 +366,7 @@ Paystack webhook endpoint for payment notifications.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true
@@ -335,21 +374,25 @@ Paystack webhook endpoint for payment notifications.
 ```
 
 **Error Response (401):**
+
 ```json
 {
   "error": "Invalid signature"
 }
 ```
+
 ## Admin Endpoints (Protected)
 
 All admin endpoints require authentication with `admin` or `super_admin` role.
 
 ### GET /api/admin/dashboard/metrics
+
 Get dashboard metrics for admin overview.
 
 **Authentication**: Required (admin, super_admin)
 
 **Response (200):**
+
 ```json
 {
   "users": {
@@ -386,11 +429,13 @@ Get dashboard metrics for admin overview.
 ```
 
 ### GET /api/admin/users
+
 List and search users with pagination and filtering.
 
 **Authentication**: Required (admin, super_admin)
 
 **Query Parameters:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50, max: 100)
 - `search`: Search by email, name, or phone
@@ -401,11 +446,13 @@ List and search users with pagination and filtering.
 - `dateTo`: Filter by registration date (ISO string)
 
 **Example Request:**
+
 ```
 GET /api/admin/users?page=1&limit=25&search=john&status=active&sort=created_at&order=desc
 ```
 
 **Response (200):**
+
 ```json
 {
   "users": [
@@ -436,14 +483,17 @@ GET /api/admin/users?page=1&limit=25&search=john&status=active&sort=created_at&o
 ```
 
 ### GET /api/admin/users/:id
+
 Get detailed information about a specific user.
 
 **Authentication**: Required (admin, super_admin)
 
 **Parameters:**
+
 - `id`: User ID
 
 **Response (200):**
+
 ```json
 {
   "user": {
@@ -484,17 +534,21 @@ Get detailed information about a specific user.
 ```
 
 ### POST /api/admin/users/:id?action=suspend
+
 Suspend a user account.
 
 **Authentication**: Required (admin, super_admin)
 
 **Parameters:**
+
 - `id`: User ID
 
 **Query Parameters:**
+
 - `action`: Must be `suspend`
 
 **Request Body:**
+
 ```json
 {
   "reason": "Suspicious activity detected",
@@ -503,6 +557,7 @@ Suspend a user account.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -511,17 +566,21 @@ Suspend a user account.
 ```
 
 ### POST /api/admin/users/:id?action=activate
+
 Reactivate a suspended user account.
 
 **Authentication**: Required (admin, super_admin)
 
 **Parameters:**
+
 - `id`: User ID
 
 **Query Parameters:**
+
 - `action`: Must be `activate`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -530,11 +589,13 @@ Reactivate a suspended user account.
 ```
 
 ### GET /api/admin/transactions
+
 List transactions with advanced filtering.
 
 **Authentication**: Required (admin, super_admin)
 
 **Query Parameters:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50, max: 100)
 - `search`: Search by user email/name or transaction reference
@@ -549,6 +610,7 @@ List transactions with advanced filtering.
 - `userId`: Filter by specific user ID
 
 **Response (200):**
+
 ```json
 {
   "transactions": [
@@ -584,11 +646,13 @@ List transactions with advanced filtering.
 ```
 
 ### POST /api/admin/transactions/reconcile
+
 Manually reconcile a payment that failed to process automatically.
 
 **Authentication**: Required (admin, super_admin)
 
 **Request Body:**
+
 ```json
 {
   "reference": "paystack_ref_123456789",
@@ -598,6 +662,7 @@ Manually reconcile a payment that failed to process automatically.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -612,11 +677,13 @@ Manually reconcile a payment that failed to process automatically.
 ```
 
 ### GET /api/admin/verifications
+
 List NIN verifications with analytics.
 
 **Authentication**: Required (admin, super_admin)
 
 **Query Parameters:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50, max: 100)
 - `search`: Search by user email/name, NIN (masked), or provider reference
@@ -629,6 +696,7 @@ List NIN verifications with analytics.
 - `userId`: Filter by specific user ID
 
 **Response (200):**
+
 ```json
 {
   "verifications": [
@@ -665,11 +733,13 @@ List NIN verifications with analytics.
 ```
 
 ### GET /api/admin/support/tickets
+
 List support tickets with filtering.
 
 **Authentication**: Required (admin, super_admin)
 
 **Query Parameters:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50, max: 100)
 - `status`: Filter by status (`all`, `open`, `assigned`, `in_progress`, `resolved`, `closed`)
@@ -680,6 +750,7 @@ List support tickets with filtering.
 - `order`: Sort order (`asc`, `desc`)
 
 **Response (200):**
+
 ```json
 {
   "tickets": [
@@ -719,6 +790,7 @@ List support tickets with filtering.
 All endpoints return consistent error responses with appropriate HTTP status codes.
 
 ### 400 Bad Request
+
 ```json
 {
   "error": "Validation failed",
@@ -729,6 +801,7 @@ All endpoints return consistent error responses with appropriate HTTP status cod
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "error": "Authentication required"
@@ -736,6 +809,7 @@ All endpoints return consistent error responses with appropriate HTTP status cod
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "error": "Insufficient permissions"
@@ -743,6 +817,7 @@ All endpoints return consistent error responses with appropriate HTTP status cod
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "error": "Resource not found"
@@ -750,6 +825,7 @@ All endpoints return consistent error responses with appropriate HTTP status cod
 ```
 
 ### 429 Too Many Requests
+
 ```json
 {
   "error": "Rate limit exceeded",
@@ -758,6 +834,7 @@ All endpoints return consistent error responses with appropriate HTTP status cod
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "Internal server error"
@@ -767,14 +844,17 @@ All endpoints return consistent error responses with appropriate HTTP status cod
 ## Rate Limiting
 
 ### User Endpoints
+
 - **General API**: 60 requests per minute per user
 - **NIN Verification**: 10 verifications per day per user
 - **Payment Initialization**: 5 requests per minute per user
 
 ### Admin Endpoints
+
 - **Admin API**: 100 requests per minute per admin user
 
 ### Webhook Endpoints
+
 - **Paystack Webhook**: No rate limiting (signature verified)
 
 ## Pagination
@@ -785,6 +865,7 @@ All list endpoints support pagination with consistent parameters:
 - `limit`: Items per page (default: 50, max: 100)
 
 Response includes pagination metadata:
+
 ```json
 {
   "pagination": {
@@ -804,6 +885,7 @@ List endpoints support sorting with:
 - `order`: Sort direction (`asc` or `desc`)
 
 Common sortable fields:
+
 - `created_at`: Creation timestamp
 - `updated_at`: Last update timestamp
 - `amount`: Transaction amount

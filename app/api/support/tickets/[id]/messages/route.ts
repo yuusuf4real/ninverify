@@ -3,21 +3,22 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { supportTickets, ticketMessages, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from "../../../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const createMessageSchema = z.object({
   message: z.string().min(1).max(2000),
   messageType: z.enum(["text", "image", "file", "system_note"]).default("text"),
   isInternal: z.boolean().default(false),
-  attachments: z.array(z.any()).optional()
+  attachments: z.array(z.any()).optional(),
 });
 
 // GET /api/support/tickets/[id]/messages - Get ticket messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getSession();
@@ -25,7 +26,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
 
     // Verify ticket access
     const ticket = await db
@@ -58,7 +60,7 @@ export async function GET(
         isSystemGenerated: ticketMessages.isSystemGenerated,
         attachments: ticketMessages.attachments,
         readAt: ticketMessages.readAt,
-        createdAt: ticketMessages.createdAt
+        createdAt: ticketMessages.createdAt,
       })
       .from(ticketMessages)
       .leftJoin(users, eq(ticketMessages.senderId, users.id))
@@ -66,8 +68,8 @@ export async function GET(
         and(
           eq(ticketMessages.ticketId, ticketId),
           // Hide internal messages from non-admin users
-          isAdmin ? undefined : eq(ticketMessages.isInternal, false)
-        )
+          isAdmin ? undefined : eq(ticketMessages.isInternal, false),
+        ),
       )
       .orderBy(ticketMessages.createdAt);
 
@@ -80,20 +82,19 @@ export async function GET(
           and(
             eq(ticketMessages.ticketId, ticketId),
             eq(ticketMessages.senderType, "agent"),
-            eq(ticketMessages.readAt, null)
-          )
+            isNull(ticketMessages.readAt),
+          ),
         );
     }
 
     return NextResponse.json({
-      messages
+      messages,
     });
-
   } catch (error) {
-    console.error("Get ticket messages error:", error);
+    logger.error("Get ticket messages error:", error);
     return NextResponse.json(
       { error: "Failed to fetch messages" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -101,7 +102,7 @@ export async function GET(
 // POST /api/support/tickets/[id]/messages - Add message to ticket
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getSession();
@@ -109,16 +110,17 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
     const body = await request.json();
     const data = createMessageSchema.parse(body);
 
     // Verify ticket access and status
     const ticket = await db
-      .select({ 
+      .select({
         userId: supportTickets.userId,
         status: supportTickets.status,
-        firstResponseAt: supportTickets.firstResponseAt
+        firstResponseAt: supportTickets.firstResponseAt,
       })
       .from(supportTickets)
       .where(eq(supportTickets.id, ticketId))
@@ -139,7 +141,7 @@ export async function POST(
     if (ticket[0].status === "closed" && !isAdmin) {
       return NextResponse.json(
         { error: "Cannot add messages to closed tickets" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -148,7 +150,7 @@ export async function POST(
 
     // Create message
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     await db.insert(ticketMessages).values({
       id: messageId,
       ticketId,
@@ -158,12 +160,12 @@ export async function POST(
       messageType: data.messageType,
       isInternal: data.isInternal && isAdmin, // Only admins can create internal messages
       attachments: data.attachments,
-      isSystemGenerated: false
+      isSystemGenerated: false,
     });
 
     // Update ticket status and timestamps
     const updates: Record<string, unknown> = {
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     // If this is the first admin response, record it
@@ -185,22 +187,21 @@ export async function POST(
 
     return NextResponse.json({
       messageId,
-      message: "Message added successfully"
+      message: "Message added successfully",
     });
-
   } catch (error) {
-    console.error("Add ticket message error:", error);
-    
+    logger.error("Add ticket message error:", error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid message data", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Failed to add message" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

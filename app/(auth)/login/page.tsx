@@ -21,7 +21,8 @@ export default function LoginPage() {
 
   const validateEmail = (email: string) => {
     if (!email) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email address";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Please enter a valid email address";
     return null;
   };
 
@@ -35,20 +36,20 @@ export default function LoginPage() {
     // Validate
     const emailErr = validateEmail(email);
     const passwordErr = validatePassword(password);
-    
+
     setEmailError(emailErr);
     setPasswordError(passwordErr);
-    
+
     if (emailErr || passwordErr) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -64,7 +65,7 @@ export default function LoginPage() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) {
+    if (e.key === "Enter" && !loading) {
       e.preventDefault();
       handleSubmit();
     }
@@ -92,7 +93,9 @@ export default function LoginPage() {
           />
         </div>
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold sm:text-3xl">Welcome Back</h1>
+          <h1 className="font-heading text-2xl font-bold sm:text-3xl">
+            Welcome Back
+          </h1>
           <p className="text-sm text-muted-foreground">
             Sign in to access your wallet and verifications
           </p>
@@ -100,12 +103,18 @@ export default function LoginPage() {
       </div>
 
       {/* Form Fields */}
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="space-y-4"
+      >
         <div className="space-y-2">
           <label className="text-sm font-medium">Email Address</label>
-          <Input 
+          <Input
             type="email"
-            placeholder="you@example.com" 
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -126,7 +135,7 @@ export default function LoginPage() {
         <div className="space-y-2">
           <label className="text-sm font-medium">Password</label>
           <div className="relative">
-            <Input 
+            <Input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
@@ -166,12 +175,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <Button 
-          type="submit"
-          size="lg" 
-          className="w-full" 
-          disabled={loading}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? (
             "Signing in..."
           ) : (
@@ -195,11 +199,9 @@ export default function LoginPage() {
             </span>
           </div>
         </div>
-        
+
         <Button variant="outline" size="lg" className="w-full" asChild>
-          <Link href="/register">
-            Create Account
-          </Link>
+          <Link href="/register">Create Account</Link>
         </Button>
       </div>
     </Card>

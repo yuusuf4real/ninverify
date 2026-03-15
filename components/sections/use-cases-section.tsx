@@ -7,12 +7,12 @@ import {
   Plane,
   Briefcase,
   Smartphone,
-  Landmark
+  Landmark,
 } from "lucide-react";
 
 const fadeIn = {
   hidden: { opacity: 1, y: 0 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 const staggerContainer = {
@@ -20,9 +20,9 @@ const staggerContainer = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const useCases = [
@@ -32,7 +32,7 @@ const useCases = [
     description: "Open bank accounts, link BVN, comply with CBN requirements",
     color: "from-blue-500 to-cyan-500",
     bgColor: "bg-blue-50",
-    iconColor: "text-blue-600"
+    iconColor: "text-blue-600",
   },
   {
     icon: GraduationCap,
@@ -40,23 +40,25 @@ const useCases = [
     description: "JAMB, WAEC, NECO, NYSC registration and scholarships",
     color: "from-green-500 to-emerald-500",
     bgColor: "bg-green-50",
-    iconColor: "text-green-600"
+    iconColor: "text-green-600",
   },
   {
     icon: Plane,
     title: "Travel & Immigration",
-    description: "Passport applications, visa requirements, and travel documents",
+    description:
+      "Passport applications, visa requirements, and travel documents",
     color: "from-purple-500 to-pink-500",
     bgColor: "bg-purple-50",
-    iconColor: "text-purple-600"
+    iconColor: "text-purple-600",
   },
   {
     icon: Briefcase,
     title: "Employment",
-    description: "Job applications, professional certifications, and HR verification",
+    description:
+      "Job applications, professional certifications, and HR verification",
     color: "from-orange-500 to-red-500",
     bgColor: "bg-orange-50",
-    iconColor: "text-orange-600"
+    iconColor: "text-orange-600",
   },
   {
     icon: Smartphone,
@@ -64,7 +66,7 @@ const useCases = [
     description: "SIM card registration, activation, and mobile services",
     color: "from-indigo-500 to-blue-500",
     bgColor: "bg-indigo-50",
-    iconColor: "text-indigo-600"
+    iconColor: "text-indigo-600",
   },
   {
     icon: Landmark,
@@ -72,13 +74,16 @@ const useCases = [
     description: "Driver's license, voter registration, and official documents",
     color: "from-amber-500 to-yellow-500",
     bgColor: "bg-amber-50",
-    iconColor: "text-amber-600"
-  }
+    iconColor: "text-amber-600",
+  },
 ];
 
 export function UseCasesSection() {
   return (
-    <section id="use-cases" className="py-20 bg-gradient-to-b from-background to-muted/30">
+    <section
+      id="use-cases"
+      className="py-20 bg-gradient-to-b from-background to-muted/30"
+    >
       <div className="container">
         <motion.div
           initial="hidden"
@@ -93,7 +98,7 @@ export function UseCasesSection() {
           >
             Why Verify Your NIN?
           </motion.div>
-          
+
           <motion.h2
             variants={fadeIn}
             className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4"
@@ -103,13 +108,10 @@ export function UseCasesSection() {
               Multiple Uses
             </span>
           </motion.h2>
-          
-          <motion.p
-            variants={fadeIn}
-            className="text-lg text-muted-foreground"
-          >
-            Your NIN is required for almost everything in Nigeria today. 
-            Get verified once, use it everywhere.
+
+          <motion.p variants={fadeIn} className="text-lg text-muted-foreground">
+            Your NIN is required for almost everything in Nigeria today. Get
+            verified once, use it everywhere.
           </motion.p>
         </motion.div>
 
@@ -129,17 +131,21 @@ export function UseCasesSection() {
               className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 shadow-sm hover:shadow-lg transition-all"
             >
               {/* Gradient background on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${useCase.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
-              
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${useCase.color} opacity-0 group-hover:opacity-5 transition-opacity`}
+              />
+
               <div className="relative">
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${useCase.bgColor} group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${useCase.bgColor} group-hover:scale-110 transition-transform`}
+                >
                   <useCase.icon className={`h-6 w-6 ${useCase.iconColor}`} />
                 </div>
-                
+
                 <h3 className="mb-2 text-lg font-semibold group-hover:text-primary transition-colors">
                   {useCase.title}
                 </h3>
-                
+
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {useCase.description}
                 </p>

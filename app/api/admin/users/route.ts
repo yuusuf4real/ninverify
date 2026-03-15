@@ -3,9 +3,10 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { users, wallets } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, ilike, and, gte, lte, desc, asc, count, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, count, sql } from "drizzle-orm";
 import { logAuditEvent } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const querySchema = z.object({
@@ -13,19 +14,24 @@ const querySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
   search: z.string().optional(),
   status: z.enum(["active", "suspended", "all"]).default("all"),
-  sort: z.enum(["created_at", "email", "fullName", "balance"]).default("created_at"),
+  sort: z
+    .enum(["created_at", "email", "fullName", "balance"])
+    .default("created_at"),
   order: z.enum(["asc", "desc"]).default("desc"),
   balanceMin: z.coerce.number().optional(),
   balanceMax: z.coerce.number().optional(),
   dateFrom: z.string().optional(),
-  dateTo: z.string().optional()
+  dateTo: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,7 +46,7 @@ export async function GET(request: NextRequest) {
       conditions.push(
         sql`(${users.email} ILIKE ${`%${query.search}%`} OR 
             ${users.fullName} ILIKE ${`%${query.search}%`} OR 
-            ${users.phone} ILIKE ${`%${query.search}%`})`
+            ${users.phone} ILIKE ${`%${query.search}%`})`,
       );
     }
 
@@ -69,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     // Get users with wallet data
     const offset = (query.page - 1) * query.limit;
-    
+
     let orderColumn;
     if (query.sort === "balance") {
       orderColumn = wallets.balance;
@@ -82,7 +88,7 @@ export async function GET(request: NextRequest) {
     } else {
       orderColumn = users.createdAt; // default fallback
     }
-    
+
     const orderDirection = query.order === "asc" ? asc : desc;
 
     const usersList = await db
@@ -93,7 +99,7 @@ export async function GET(request: NextRequest) {
         phone: users.phone,
         isSuspended: users.isSuspended,
         createdAt: users.createdAt,
-        balance: wallets.balance
+        balance: wallets.balance,
       })
       .from(users)
       .leftJoin(wallets, eq(users.id, wallets.userId))
@@ -105,10 +111,12 @@ export async function GET(request: NextRequest) {
     // Apply balance filters if specified (post-query filtering for joined data)
     let filteredUsers = usersList;
     if (query.balanceMin !== undefined || query.balanceMax !== undefined) {
-      filteredUsers = usersList.filter(user => {
+      filteredUsers = usersList.filter((user) => {
         const balance = user.balance || 0;
-        if (query.balanceMin !== undefined && balance < query.balanceMin) return false;
-        if (query.balanceMax !== undefined && balance > query.balanceMax) return false;
+        if (query.balanceMin !== undefined && balance < query.balanceMin)
+          return false;
+        if (query.balanceMax !== undefined && balance > query.balanceMax)
+          return false;
         return true;
       });
     }
@@ -124,8 +132,8 @@ export async function GET(request: NextRequest) {
       status: "success",
       metadata: {
         query: query,
-        resultCount: filteredUsers.length
-      }
+        resultCount: filteredUsers.length,
+      },
     });
 
     return NextResponse.json({
@@ -134,15 +142,14 @@ export async function GET(request: NextRequest) {
         page: query.page,
         limit: query.limit,
         total,
-        totalPages: Math.ceil(total / query.limit)
-      }
+        totalPages: Math.ceil(total / query.limit),
+      },
     });
-
   } catch (error) {
-    console.error("Admin users list error:", error);
+    logger.error("Admin users list error:", error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

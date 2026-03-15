@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Users, 
-  DollarSign, 
-  CheckCircle, 
+import {
+  Users,
+  DollarSign,
+  CheckCircle,
   AlertCircle,
   TrendingUp,
-  Activity
+  Activity,
 } from "lucide-react";
 
 import { formatCurrency } from "@/lib/format";
@@ -53,19 +53,36 @@ export function AdminDashboardMetrics() {
 
   const fetchMetrics = async () => {
     try {
-      const response = await fetch('/api/admin/dashboard/metrics');
-      if (!response.ok) throw new Error('Failed to fetch metrics');
-      
+      const response = await fetch("/api/admin/dashboard/metrics");
+      if (!response.ok) throw new Error("Failed to fetch metrics");
+
       const data = await response.json();
       setMetrics(data);
     } catch (error) {
-      console.error('Error fetching dashboard metrics:', error);
+      console.error("Error fetching dashboard metrics:", error);
       // Set fallback data
       setMetrics({
         users: { total: 0, active30d: 0, newToday: 0, growthRate: 0 },
-        transactions: { totalVolume: 0, totalCount: 0, monthlyRevenue: 0, avgAmount: 0, growthRate: 0 },
-        verifications: { total: 0, successful: 0, todayCount: 0, successRate: 0, growthRate: 0 },
-        system: { uptime: 99.9, apiResponseTime: 145, errorRate: 0.1, activeSessions: 0 }
+        transactions: {
+          totalVolume: 0,
+          totalCount: 0,
+          monthlyRevenue: 0,
+          avgAmount: 0,
+          growthRate: 0,
+        },
+        verifications: {
+          total: 0,
+          successful: 0,
+          todayCount: 0,
+          successRate: 0,
+          growthRate: 0,
+        },
+        system: {
+          uptime: 99.9,
+          apiResponseTime: 145,
+          errorRate: 0.1,
+          activeSessions: 0,
+        },
       });
     } finally {
       setLoading(false);
@@ -136,15 +153,21 @@ export function AdminDashboardMetrics() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">API Response</span>
-              <span className="text-sm font-medium text-green-600">{metrics.system.apiResponseTime}ms</span>
+              <span className="text-sm font-medium text-green-600">
+                {metrics.system.apiResponseTime}ms
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Uptime</span>
-              <span className="text-sm font-medium text-green-600">{metrics.system.uptime}%</span>
+              <span className="text-sm font-medium text-green-600">
+                {metrics.system.uptime}%
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Active Sessions</span>
-              <span className="text-sm font-medium">{metrics.system.activeSessions.toLocaleString()}</span>
+              <span className="text-sm font-medium">
+                {metrics.system.activeSessions.toLocaleString()}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -159,15 +182,23 @@ export function AdminDashboardMetrics() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">New Users</span>
-              <span className="text-sm font-medium">{metrics.users.newToday}</span>
+              <span className="text-sm font-medium">
+                {metrics.users.newToday}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Verifications</span>
-              <span className="text-sm font-medium">{metrics.verifications.todayCount}</span>
+              <span className="text-sm font-medium">
+                {metrics.verifications.todayCount}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Revenue</span>
-              <span className="text-sm font-medium">{formatCurrency(Math.round(metrics.transactions.monthlyRevenue / 30))}</span>
+              <span className="text-sm font-medium">
+                {formatCurrency(
+                  Math.round(metrics.transactions.monthlyRevenue / 30),
+                )}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -181,7 +212,9 @@ export function AdminDashboardMetrics() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="text-sm">
-              <p className="text-amber-600 font-medium">High API Response Time</p>
+              <p className="text-amber-600 font-medium">
+                High API Response Time
+              </p>
               <p className="text-gray-500 text-xs">Resolved 2 minutes ago</p>
             </div>
             <div className="text-sm">

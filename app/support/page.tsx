@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 
 export default async function SupportPage() {
   const session = await getSession();
-  
+
   if (!session) {
     redirect("/login");
   }

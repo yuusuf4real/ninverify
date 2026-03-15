@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Server, 
-  Database, 
-  Activity, 
+import {
+  Server,
+  Database,
+  Activity,
   AlertTriangle,
   CheckCircle,
   Clock,
   RefreshCw,
-  Settings
+  Settings,
 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/format";
 
@@ -21,7 +21,7 @@ interface SystemHealth {
   apiResponseTime: number;
   errorRate: number;
   activeSessions: number;
-  databaseStatus: 'healthy' | 'warning' | 'error';
+  databaseStatus: "healthy" | "warning" | "error";
   lastBackup: string;
 }
 
@@ -49,48 +49,56 @@ export function SystemManagementClient() {
   const fetchSystemData = async () => {
     try {
       // Fetch system metrics
-      const metricsResponse = await fetch('/api/admin/dashboard/metrics');
+      const metricsResponse = await fetch("/api/admin/dashboard/metrics");
       const metricsData = await metricsResponse.json();
-      
+
       // Fetch recent audit logs (using transactions as proxy for now)
-      const logsResponse = await fetch('/api/admin/transactions?limit=10&sort=created_at&order=desc');
+      const logsResponse = await fetch(
+        "/api/admin/transactions?limit=10&sort=created_at&order=desc",
+      );
       const logsData = await logsResponse.json();
-      
+
       // Calculate system health metrics
       const health: SystemHealth = {
         uptime: metricsData.system?.uptime || 99.9,
         apiResponseTime: metricsData.system?.apiResponseTime || 145,
         errorRate: metricsData.system?.errorRate || 0.1,
-        activeSessions: metricsData.system?.activeSessions || metricsData.users?.active30d || 0,
-        databaseStatus: 'healthy', // Would be determined by actual health checks
-        lastBackup: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+        activeSessions:
+          metricsData.system?.activeSessions ||
+          metricsData.users?.active30d ||
+          0,
+        databaseStatus: "healthy", // Would be determined by actual health checks
+        lastBackup: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
       };
-      
+
       // Convert transactions to audit log format
       const logs: AuditLogEntry[] = [];
       if (logsData.transactions) {
-        logsData.transactions.forEach((tx: {
-          id: string;
-          type: string;
-          status: string;
-          amount: number;
-          userId: string;
-          createdAt: string;
-          provider?: string;
-        }) => {
-          logs.push({
-            id: tx.id,
-            timestamp: tx.createdAt,
-            eventType: tx.type === 'credit' ? 'wallet.funded' : 'wallet.debited',
-            userId: tx.userId,
-            action: tx.type,
-            status: tx.status,
-            resource: 'wallet',
-            metadata: { amount: tx.amount, provider: tx.provider }
-          });
-        });
+        logsData.transactions.forEach(
+          (tx: {
+            id: string;
+            type: string;
+            status: string;
+            amount: number;
+            userId: string;
+            createdAt: string;
+            provider?: string;
+          }) => {
+            logs.push({
+              id: tx.id,
+              timestamp: tx.createdAt,
+              eventType:
+                tx.type === "credit" ? "wallet.funded" : "wallet.debited",
+              userId: tx.userId,
+              action: tx.type,
+              status: tx.status,
+              resource: "wallet",
+              metadata: { amount: tx.amount, provider: tx.provider },
+            });
+          },
+        );
       }
-      
+
       setSystemHealth(health);
       setAuditLogs(logs);
     } catch (error) {
@@ -101,8 +109,8 @@ export function SystemManagementClient() {
         apiResponseTime: 145,
         errorRate: 0.1,
         activeSessions: 0,
-        databaseStatus: 'warning',
-        lastBackup: new Date().toISOString()
+        databaseStatus: "warning",
+        lastBackup: new Date().toISOString(),
       });
       setAuditLogs([]);
     } finally {
@@ -118,13 +126,13 @@ export function SystemManagementClient() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-      case 'success':
+      case "completed":
+      case "success":
         return <Badge variant="success">Success</Badge>;
-      case 'pending':
+      case "pending":
         return <Badge variant="warning">Pending</Badge>;
-      case 'failed':
-      case 'error':
+      case "failed":
+      case "error":
         return <Badge variant="warning">Failed</Badge>;
       default:
         return <Badge variant="default">{status}</Badge>;
@@ -133,14 +141,14 @@ export function SystemManagementClient() {
 
   const getHealthStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return 'text-green-600';
-      case 'warning':
-        return 'text-yellow-600';
-      case 'error':
-        return 'text-red-600';
+      case "healthy":
+        return "text-green-600";
+      case "warning":
+        return "text-yellow-600";
+      case "error":
+        return "text-red-600";
       default:
-        return 'text-gray-600';
+        return "text-gray-600";
     }
   };
 
@@ -173,9 +181,7 @@ export function SystemManagementClient() {
             <div className="text-2xl font-bold text-green-600">
               {systemHealth?.uptime.toFixed(1)}%
             </div>
-            <p className="text-xs text-muted-foreground">
-              Last 30 days
-            </p>
+            <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
 
@@ -196,7 +202,9 @@ export function SystemManagementClient() {
 
         <Card className="border-border/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Sessions
+            </CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -215,7 +223,9 @@ export function SystemManagementClient() {
         {/* System Status */}
         <Card className="border-border/50">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold">System Status</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              System Status
+            </CardTitle>
             <Button
               variant="outline"
               size="sm"
@@ -223,7 +233,9 @@ export function SystemManagementClient() {
               disabled={refreshing}
               className="gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </CardHeader>
@@ -233,8 +245,10 @@ export function SystemManagementClient() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="text-sm">Database</span>
               </div>
-              <span className={`text-sm font-medium ${getHealthStatusColor(systemHealth?.databaseStatus || 'healthy')}`}>
-                {systemHealth?.databaseStatus || 'Healthy'}
+              <span
+                className={`text-sm font-medium ${getHealthStatusColor(systemHealth?.databaseStatus || "healthy")}`}
+              >
+                {systemHealth?.databaseStatus || "Healthy"}
               </span>
             </div>
 
@@ -243,7 +257,9 @@ export function SystemManagementClient() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="text-sm">API Services</span>
               </div>
-              <span className="text-sm font-medium text-green-600">Healthy</span>
+              <span className="text-sm font-medium text-green-600">
+                Healthy
+              </span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -251,7 +267,9 @@ export function SystemManagementClient() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="text-sm">Payment Gateway</span>
               </div>
-              <span className="text-sm font-medium text-green-600">Connected</span>
+              <span className="text-sm font-medium text-green-600">
+                Connected
+              </span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -260,7 +278,9 @@ export function SystemManagementClient() {
                 <span className="text-sm">Last Backup</span>
               </div>
               <span className="text-sm font-medium text-blue-600">
-                {systemHealth?.lastBackup ? formatRelativeTime(systemHealth.lastBackup) : 'Unknown'}
+                {systemHealth?.lastBackup
+                  ? formatRelativeTime(systemHealth.lastBackup)
+                  : "Unknown"}
               </span>
             </div>
 
@@ -279,14 +299,19 @@ export function SystemManagementClient() {
         {/* Recent Audit Logs */}
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Recent Activity
+            </CardTitle>
             <p className="text-sm text-gray-600">System audit logs</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4 max-h-80 overflow-y-auto">
               {auditLogs.length > 0 ? (
                 auditLogs.map((log) => (
-                  <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
+                  <div
+                    key={log.id}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-gray-50"
+                  >
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                       <Settings className="h-4 w-4 text-primary" />
                     </div>
@@ -297,7 +322,8 @@ export function SystemManagementClient() {
                       </div>
                       <p className="text-xs text-gray-600 mt-1">
                         {log.action} on {log.resource}
-                        {log.userId && ` by user ${log.userId.substring(0, 8)}...`}
+                        {log.userId &&
+                          ` by user ${log.userId.substring(0, 8)}...`}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {formatRelativeTime(log.timestamp)}

@@ -15,12 +15,10 @@ This document outlines the required branch protection rules for the VerifyNIN re
 2. **Require status checks to pass before merging**
    - Require branches to be up to date before merging: ✅
    - Required status checks:
-     - `security-lint`
-     - `dependency-scan`
-     - `sast-scan`
-     - `secret-scan`
-     - `security-tests`
-     - `license-check`
+     - `Pre-Commit Quality Gate` (comprehensive validation)
+     - `Advanced Security Validation` (security-focused checks)
+     - `Quality & Performance Validation` (performance and quality)
+     - `Deployment Ready` (final approval gate)
 
 3. **Require conversation resolution before merging**: ✅
 
@@ -52,9 +50,8 @@ This document outlines the required branch protection rules for the VerifyNIN re
 
 2. **Require status checks to pass before merging**
    - Required status checks:
-     - `security-lint`
-     - `dependency-scan`
-     - `secret-scan`
+     - `Pre-Commit Quality Gate` (comprehensive validation)
+     - `Advanced Security Validation` (security-focused checks)
 
 3. **Require conversation resolution before merging**: ✅
 
@@ -63,6 +60,7 @@ This document outlines the required branch protection rules for the VerifyNIN re
 ## Feature Branch Naming Convention
 
 All feature branches must follow this naming pattern:
+
 - `feature/JIRA-123-short-description`
 - `bugfix/JIRA-456-short-description`
 - `hotfix/JIRA-789-short-description`
@@ -81,6 +79,7 @@ All commits must follow the Conventional Commits specification:
 ```
 
 ### Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `security`: Security-related changes
@@ -93,6 +92,7 @@ All commits must follow the Conventional Commits specification:
 - `chore`: Maintenance tasks
 
 ### Security-specific commit requirements:
+
 - All security-related commits must be signed
 - Security commits require additional review from security team
 - Breaking security changes require approval from security lead
@@ -100,6 +100,7 @@ All commits must follow the Conventional Commits specification:
 ## Code Review Requirements
 
 ### Security Review Checklist:
+
 - [ ] No hardcoded secrets or credentials
 - [ ] Input validation implemented
 - [ ] Authentication and authorization checks
@@ -112,6 +113,7 @@ All commits must follow the Conventional Commits specification:
 - [ ] Dependencies are up to date and secure
 
 ### Performance Review Checklist:
+
 - [ ] Database queries are optimized
 - [ ] Proper indexing implemented
 - [ ] Caching strategy considered
@@ -146,6 +148,7 @@ The following automated checks must pass before merge:
 ## Emergency Procedures
 
 ### Hotfix Process:
+
 1. Create hotfix branch from `main`
 2. Implement minimal fix
 3. Fast-track security review (1 reviewer minimum)
@@ -154,6 +157,7 @@ The following automated checks must pass before merge:
 6. Tag release and deploy
 
 ### Security Incident Response:
+
 1. Immediately revoke any exposed credentials
 2. Create security incident branch
 3. Implement fix with security team review
@@ -163,6 +167,7 @@ The following automated checks must pass before merge:
 ## Repository Settings
 
 ### General Security Settings:
+
 - Private repository: ✅
 - Vulnerability alerts: ✅
 - Dependency graph: ✅
@@ -172,6 +177,7 @@ The following automated checks must pass before merge:
 - Secret scanning alerts: ✅
 
 ### Access Control:
+
 - Base permissions: Read
 - Admin access: Security team + Tech leads only
 - Write access: Core development team
@@ -179,6 +185,7 @@ The following automated checks must pass before merge:
 - Outside collaborators: Not allowed
 
 ### Webhook Security:
+
 - All webhooks must use HTTPS
 - Webhook secrets must be configured
 - IP allowlisting for critical webhooks
@@ -186,6 +193,7 @@ The following automated checks must pass before merge:
 ## Compliance Requirements
 
 This repository must maintain compliance with:
+
 - PCI DSS Level 1
 - SOC 2 Type II
 - ISO 27001
@@ -194,6 +202,7 @@ This repository must maintain compliance with:
 ## Monitoring and Alerting
 
 Security alerts are sent to:
+
 - Slack: #security-alerts
 - Email: security-team@verifynin.ng
 - PagerDuty: Critical security incidents
@@ -201,16 +210,19 @@ Security alerts are sent to:
 ## Regular Security Tasks
 
 ### Weekly:
+
 - Review dependency updates
 - Check for new security advisories
 - Update security documentation
 
 ### Monthly:
+
 - Security architecture review
 - Penetration testing results review
 - Access control audit
 
 ### Quarterly:
+
 - Full security assessment
 - Compliance audit
 - Security training updates

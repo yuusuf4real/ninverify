@@ -3,24 +3,28 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { walletTransactions, wallets, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logAuditEvent } from "@/lib/audit-log";
 import { nanoid } from "nanoid";
 
+import { logger } from "../../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const reconcileSchema = z.object({
   reference: z.string().min(1, "Payment reference is required"),
   userId: z.string().min(1, "User ID is required"),
   amount: z.number().positive("Amount must be positive"),
-  description: z.string().optional().default("Manual reconciliation")
+  description: z.string().optional().default("Manual reconciliation"),
 });
 
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -44,9 +48,12 @@ export async function POST(request: NextRequest) {
       .where(eq(walletTransactions.reference, data.reference));
 
     if (existingTransaction) {
-      return NextResponse.json({ 
-        error: "Transaction with this reference already exists" 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Transaction with this reference already exists",
+        },
+        { status: 400 },
+      );
     }
 
     // Get user's wallet
@@ -56,7 +63,10 @@ export async function POST(request: NextRequest) {
       .where(eq(wallets.userId, data.userId));
 
     if (!wallet) {
-      return NextResponse.json({ error: "User wallet not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User wallet not found" },
+        { status: 404 },
+      );
     }
 
     // Create the reconciliation transaction
@@ -73,8 +83,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         reconciledBy: session.userId,
         reconciledAt: new Date().toISOString(),
-        method: "manual_reconciliation"
-      }
+        method: "manual_reconciliation",
+      },
     });
 
     // Update wallet balance
@@ -97,8 +107,8 @@ export async function POST(request: NextRequest) {
         targetUserId: data.userId,
         targetUserEmail: user.email,
         amount: data.amount,
-        reference: data.reference
-      }
+        reference: data.reference,
+      },
     });
 
     return NextResponse.json({
@@ -111,14 +121,13 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.fullName
-        }
-      }
+          fullName: user.fullName,
+        },
+      },
     });
-
   } catch (error) {
-    console.error("Transaction reconciliation error:", error);
-    
+    logger.error("Transaction reconciliation error:", error);
+
     // Log error
     const session = await getSession();
     if (session) {
@@ -130,13 +139,13 @@ export async function POST(request: NextRequest) {
         resource: "transaction",
         action: "reconcile",
         status: "failure",
-        errorMessage: error instanceof Error ? error.message : String(error)
+        errorMessage: error instanceof Error ? error.message : String(error),
       });
     }
 
     return NextResponse.json(
       { error: "Failed to reconcile payment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

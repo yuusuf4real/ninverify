@@ -3,27 +3,36 @@
 import { motion } from "framer-motion";
 import { SectionTitle } from "@/components/atoms/section-title";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CreditCard, Fingerprint, FileCheck2, Info } from "lucide-react";
+import {
+  ArrowRight,
+  CreditCard,
+  Fingerprint,
+  FileCheck2,
+  Info,
+} from "lucide-react";
 
 const steps = [
   {
     title: "Create account + fund wallet",
-    description: "Sign up once, then fund your wallet with Paystack card or transfer.",
+    description:
+      "Sign up once, then fund your wallet with Paystack card or transfer.",
     icon: CreditCard,
-    color: "from-emerald-500 to-primary"
+    color: "from-emerald-500 to-primary",
   },
   {
     title: "Enter your 11-digit NIN",
-    description: "Provide the NIN and consent to verify it against NIMC records.",
+    description:
+      "Provide the NIN and consent to verify it against NIMC records.",
     icon: Fingerprint,
-    color: "from-blue-500 to-accent"
+    color: "from-blue-500 to-accent",
   },
   {
     title: "Verify & download document",
-    description: "We confirm the NIN and generate an official verification document instantly for ₦500.",
+    description:
+      "We confirm the NIN and generate an official verification document instantly for ₦500.",
     icon: FileCheck2,
-    color: "from-orange-500 to-secondary"
-  }
+    color: "from-orange-500 to-secondary",
+  },
 ];
 
 export function HowItWorksSection() {
@@ -34,15 +43,15 @@ export function HowItWorksSection() {
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
         animate={{
           scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3]
+          opacity: [0.3, 0.5, 0.3],
         }}
         transition={{
           duration: 8,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
-      
+
       <div className="container relative z-10 space-y-16">
         <motion.div
           initial={{ opacity: 1, y: 0 }}
@@ -77,15 +86,16 @@ export function HowItWorksSection() {
                     Your NIN stays protected
                   </h3>
                   <p className="text-sm text-emerald-800 leading-relaxed">
-                    We use your 11-digit NIN only for verification and store masked values in
-                    verification documents and history for privacy.
+                    We use your 11-digit NIN only for verification and store
+                    masked values in verification documents and history for
+                    privacy.
                   </p>
                 </div>
               </div>
             </div>
           </Card>
         </motion.div>
-        
+
         <div className="grid gap-8 md:grid-cols-3">
           {steps.map((step, index) => (
             <motion.div
@@ -108,7 +118,7 @@ export function HowItWorksSection() {
                     {index + 1}
                   </span>
                 </motion.div>
-                
+
                 <div className="relative space-y-5 p-8">
                   {/* Animated icon */}
                   <motion.div
@@ -118,16 +128,16 @@ export function HowItWorksSection() {
                   >
                     <step.icon className="h-8 w-8" />
                   </motion.div>
-                  
+
                   <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
                     {step.title}
                   </h3>
-                  
+
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
-                
+
                 {/* Arrow connector */}
                 {index < steps.length - 1 && (
                   <motion.div
@@ -139,19 +149,19 @@ export function HowItWorksSection() {
                   >
                     <motion.div
                       animate={{
-                        x: [0, 5, 0]
+                        x: [0, 5, 0],
                       }}
                       transition={{
                         duration: 2,
                         repeat: Infinity,
-                        ease: "easeInOut"
+                        ease: "easeInOut",
                       }}
                     >
                       <ArrowRight className="h-5 w-5 text-primary" />
                     </motion.div>
                   </motion.div>
                 )}
-                
+
                 {/* Progress bar */}
                 <motion.div
                   className={`absolute bottom-0 left-0 h-1.5 bg-gradient-to-r ${step.color}`}
@@ -164,7 +174,7 @@ export function HowItWorksSection() {
             </motion.div>
           ))}
         </div>
-        
+
         {/* Call to action */}
         <motion.div
           initial={{ opacity: 1, y: 0 }}

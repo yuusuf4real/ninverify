@@ -9,16 +9,20 @@ import { getFriendlyErrorMessage } from "@/lib/utils";
 import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 import { logAuditEvent } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const schema = z.object({
   fullName: z.string().min(3),
   email: z.string().email(),
   phone: z.string().min(8),
-  password: z.string().min(6)
+  password: z.string().min(6),
 });
 
-async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+async function queryWithRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
@@ -26,7 +30,9 @@ async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> 
     } catch (error) {
       lastError = error;
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 100));
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 100),
+        );
       }
     }
   }
@@ -35,15 +41,16 @@ async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> 
 
 export async function POST(request: Request) {
   // Get IP address for rate limiting
-  const ip = request.headers.get("x-forwarded-for") ||
-             request.headers.get("x-real-ip") ||
-             "unknown";
+  const ip =
+    request.headers.get("x-forwarded-for") ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
 
   // Apply rate limiting
   const rateLimitResult = rateLimitMiddleware(
     `register:${ip}`,
     RATE_LIMITS.register,
-    "/api/auth/register"
+    "/api/auth/register",
   );
 
   if (rateLimitResult) {
@@ -51,8 +58,8 @@ export async function POST(request: Request) {
       { message: rateLimitResult.message },
       {
         status: rateLimitResult.status,
-        headers: { "Retry-After": String(rateLimitResult.retryAfter) }
-      }
+        headers: { "Retry-After": String(rateLimitResult.retryAfter) },
+      },
     );
   }
 
@@ -62,8 +69,8 @@ export async function POST(request: Request) {
 
     const existing = await queryWithRetry(() =>
       db.query.users.findFirst({
-        where: (users, { eq }) => eq(users.email, data.email)
-      })
+        where: (users, { eq }) => eq(users.email, data.email),
+      }),
     );
 
     if (existing) {
@@ -76,12 +83,12 @@ export async function POST(request: Request) {
         action: "register",
         status: "failure",
         errorMessage: "Email already registered",
-        metadata: { email: data.email }
+        metadata: { email: data.email },
       });
 
       return NextResponse.json(
         { message: "Email already registered" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -96,8 +103,8 @@ export async function POST(request: Request) {
         fullName: data.fullName,
         email: data.email,
         phone: data.phone,
-        passwordHash
-      })
+        passwordHash,
+      }),
     );
 
     await queryWithRetry(() =>
@@ -105,15 +112,15 @@ export async function POST(request: Request) {
         id: walletId,
         userId,
         balance: 0,
-        currency: "NGN"
-      })
+        currency: "NGN",
+      }),
     );
 
     await setSessionCookie({
       userId,
       email: data.email,
       fullName: data.fullName,
-      role: "user"
+      role: "user",
     });
 
     // Log successful registration
@@ -126,12 +133,12 @@ export async function POST(request: Request) {
       resource: "user",
       action: "register",
       status: "success",
-      metadata: { email: data.email, fullName: data.fullName }
+      metadata: { email: data.email, fullName: data.fullName },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Register error:", error);
+    logger.error("Register error:", error);
 
     // Log error
     await logAuditEvent({
@@ -141,12 +148,12 @@ export async function POST(request: Request) {
       resource: "/api/auth/register",
       action: "register",
       status: "failure",
-      errorMessage: error instanceof Error ? error.message : String(error)
+      errorMessage: error instanceof Error ? error.message : String(error),
     });
 
     const message = getFriendlyErrorMessage(
       error,
-      "We couldn't create your account. Please try again in a few minutes."
+      "We couldn't create your account. Please try again in a few minutes.",
     );
     return NextResponse.json({ message }, { status: 500 });
   }

@@ -1,25 +1,23 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Search, 
-  Filter, 
-  Download, 
+import { useSearchParams } from "next/navigation";
+import {
+  Search,
+  Filter,
+  Download,
   MoreHorizontal,
   Eye,
   UserX,
   UserCheck,
-  Calendar,
   DollarSign,
   Users,
-  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -65,24 +63,27 @@ interface UserListResponse {
 }
 
 export function UserManagementClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
-  
+
   // Filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "created_at");
-  const [sortOrder, setSortOrder] = useState(searchParams.get("order") || "desc");
-  
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("sort") || "created_at",
+  );
+  const [sortOrder, setSortOrder] = useState(
+    searchParams.get("order") || "desc",
+  );
+
   // Modal state
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -96,12 +97,12 @@ export function UserManagementClient() {
         status,
         sort: sortBy,
         order: sortOrder,
-        ...(search && { search })
+        ...(search && { search }),
       });
 
       const response = await fetch(`/api/admin/users?${params}`);
       if (!response.ok) throw new Error("Failed to fetch users");
-      
+
       const data: UserListResponse = await response.json();
       setUsers(data.users);
       setPagination(data.pagination);
@@ -118,12 +119,12 @@ export function UserManagementClient() {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleStatusChange = (value: string) => {
     setStatus(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleSortChange = (field: string) => {
@@ -133,21 +134,32 @@ export function UserManagementClient() {
       setSortBy(field);
       setSortOrder("desc");
     }
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const handleUserAction = async (userId: string, action: "suspend" | "activate") => {
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return null;
+    return sortOrder === "asc" ? "↑" : "↓";
+  };
+
+  const handleUserAction = async (
+    userId: string,
+    action: "suspend" | "activate",
+  ) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}?action=${action}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reason: action === "suspend" ? "Administrative action" : undefined
-        })
-      });
+      const response = await fetch(
+        `/api/admin/users/${userId}?action=${action}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason: action === "suspend" ? "Administrative action" : undefined,
+          }),
+        },
+      );
 
       if (!response.ok) throw new Error(`Failed to ${action} user`);
-      
+
       // Refresh users list
       fetchUsers();
     } catch (error) {
@@ -165,11 +177,6 @@ export function UserManagementClient() {
       return <Badge variant="warning">Suspended</Badge>;
     }
     return <Badge variant="success">Active</Badge>;
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortBy !== field) return null;
-    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   return (
@@ -222,7 +229,9 @@ export function UserManagementClient() {
                 <Users className="h-4 w-4 text-primary" />
                 <div>
                   <p className="text-sm font-medium">Total Users</p>
-                  <p className="text-2xl font-bold">{pagination.total.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">
+                    {pagination.total.toLocaleString()}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -234,7 +243,7 @@ export function UserManagementClient() {
                 <div>
                   <p className="text-sm font-medium">Active Users</p>
                   <p className="text-2xl font-bold">
-                    {users.filter(u => !u.isSuspended).length}
+                    {users.filter((u) => !u.isSuspended).length}
                   </p>
                 </div>
               </div>
@@ -247,7 +256,7 @@ export function UserManagementClient() {
                 <div>
                   <p className="text-sm font-medium">Suspended</p>
                   <p className="text-2xl font-bold">
-                    {users.filter(u => u.isSuspended).length}
+                    {users.filter((u) => u.isSuspended).length}
                   </p>
                 </div>
               </div>
@@ -260,7 +269,9 @@ export function UserManagementClient() {
                 <div>
                   <p className="text-sm font-medium">Total Balance</p>
                   <p className="text-2xl font-bold">
-                    {formatCurrency(users.reduce((sum, u) => sum + (u.balance || 0), 0))}
+                    {formatCurrency(
+                      users.reduce((sum, u) => sum + (u.balance || 0), 0),
+                    )}
                   </p>
                 </div>
               </div>
@@ -277,7 +288,10 @@ export function UserManagementClient() {
             {loading ? (
               <div className="space-y-4">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-16 bg-gray-100 rounded animate-pulse"
+                  />
                 ))}
               </div>
             ) : (
@@ -285,26 +299,26 @@ export function UserManagementClient() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("fullName")}
                       >
                         Name {getSortIcon("fullName")}
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("email")}
                       >
                         Email {getSortIcon("email")}
                       </TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("balance")}
                       >
                         Balance {getSortIcon("balance")}
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("created_at")}
                       >
@@ -320,15 +334,23 @@ export function UserManagementClient() {
                         <TableCell>
                           <div>
                             <p className="font-medium">{user.fullName}</p>
-                            <p className="text-sm text-gray-500">{user.phone}</p>
+                            <p className="text-sm text-gray-500">
+                              {user.phone}
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>{getStatusBadge(user.isSuspended)}</TableCell>
-                        <TableCell>{formatCurrency(user.balance || 0)}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(user.isSuspended)}
+                        </TableCell>
+                        <TableCell>
+                          {formatCurrency(user.balance || 0)}
+                        </TableCell>
                         <TableCell>{formatDate(user.createdAt)}</TableCell>
                         <TableCell>
-                          {user.lastLoginAt ? formatDate(user.lastLoginAt) : "Never"}
+                          {user.lastLoginAt
+                            ? formatDate(user.lastLoginAt)
+                            : "Never"}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -338,20 +360,26 @@ export function UserManagementClient() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleViewUser(user.id)}
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
                               {user.isSuspended ? (
-                                <DropdownMenuItem 
-                                  onClick={() => handleUserAction(user.id, "activate")}
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleUserAction(user.id, "activate")
+                                  }
                                 >
                                   <UserCheck className="h-4 w-4 mr-2" />
                                   Activate User
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem 
-                                  onClick={() => handleUserAction(user.id, "suspend")}
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleUserAction(user.id, "suspend")
+                                  }
                                   className="text-red-600"
                                 >
                                   <UserX className="h-4 w-4 mr-2" />
@@ -369,16 +397,24 @@ export function UserManagementClient() {
                 {/* Pagination */}
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{" "}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                    {pagination.total} users
+                    Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total,
+                    )}{" "}
+                    of {pagination.total} users
                   </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={pagination.page <= 1}
-                      onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: prev.page - 1,
+                        }))
+                      }
                     >
                       Previous
                     </Button>
@@ -386,7 +422,12 @@ export function UserManagementClient() {
                       variant="outline"
                       size="sm"
                       disabled={pagination.page >= pagination.totalPages}
-                      onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: prev.page + 1,
+                        }))
+                      }
                     >
                       Next
                     </Button>

@@ -1,26 +1,24 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  MoreHorizontal,
+import { useSearchParams } from "next/navigation";
+import {
+  Search,
+  Download,
   Eye,
-  RefreshCw,
-  Shield,
   CheckCircle,
-  XCircle,
-  Clock,
+  AlertTriangle,
   TrendingUp,
-  AlertTriangle
+  Shield,
+  XCircle,
+  RefreshCw,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -81,9 +79,8 @@ interface VerificationListResponse {
 }
 
 export function VerificationManagementClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [summary, setSummary] = useState<VerificationSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,15 +89,19 @@ export function VerificationManagementClient() {
     page: 1,
     limit: 50,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
-  
+
   // Filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
   const [purpose, setPurpose] = useState(searchParams.get("purpose") || "all");
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "created_at");
-  const [sortOrder, setSortOrder] = useState(searchParams.get("order") || "desc");
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("sort") || "created_at",
+  );
+  const [sortOrder, setSortOrder] = useState(
+    searchParams.get("order") || "desc",
+  );
 
   const fetchVerifications = useCallback(async () => {
     setLoading(true);
@@ -112,12 +113,12 @@ export function VerificationManagementClient() {
         purpose,
         sort: sortBy,
         order: sortOrder,
-        ...(search && { search })
+        ...(search && { search }),
       });
 
       const response = await fetch(`/api/admin/verifications?${params}`);
       if (!response.ok) throw new Error("Failed to fetch verifications");
-      
+
       const data: VerificationListResponse = await response.json();
       setVerifications(data.verifications);
       setPagination(data.pagination);
@@ -132,12 +133,20 @@ export function VerificationManagementClient() {
         failedVerifications: 0,
         pendingVerifications: 0,
         successRate: 0,
-        todayCount: 0
+        todayCount: 0,
       });
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search, status, purpose, sortBy, sortOrder]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    search,
+    status,
+    purpose,
+    sortBy,
+    sortOrder,
+  ]);
 
   useEffect(() => {
     fetchVerifications();
@@ -151,17 +160,17 @@ export function VerificationManagementClient() {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleStatusChange = (value: string) => {
     setStatus(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handlePurposeChange = (value: string) => {
     setPurpose(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleSortChange = (field: string) => {
@@ -171,29 +180,35 @@ export function VerificationManagementClient() {
       setSortBy(field);
       setSortOrder("desc");
     }
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return null;
+    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      success: { className: "bg-emerald-100 text-emerald-800", label: "Success" },
+      success: {
+        className: "bg-emerald-100 text-emerald-800",
+        label: "Success",
+      },
       failed: { className: "bg-red-100 text-red-800", label: "Failed" },
-      pending: { className: "bg-amber-100 text-amber-800", label: "Pending" }
+      pending: { className: "bg-amber-100 text-amber-800", label: "Pending" },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: status };
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+    };
 
-    return (
-      <Badge className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const getPurposeLabel = (purpose: string | null) => {
     if (!purpose) return "Unknown";
-    
+
     const purposeLabels = {
       banking: "Banking",
       education_jamb: "JAMB",
@@ -205,15 +220,10 @@ export function VerificationManagementClient() {
       employment: "Employment",
       telecommunications: "Telecommunications",
       government_service: "Government Service",
-      other: "Other"
+      other: "Other",
     };
 
     return purposeLabels[purpose as keyof typeof purposeLabels] || purpose;
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortBy !== field) return null;
-    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   return (
@@ -227,7 +237,9 @@ export function VerificationManagementClient() {
                 <Shield className="h-4 w-4 text-primary" />
                 <div>
                   <p className="text-sm font-medium">Total Verifications</p>
-                  <p className="text-2xl font-bold">{summary.totalVerifications.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">
+                    {summary.totalVerifications.toLocaleString()}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -238,7 +250,9 @@ export function VerificationManagementClient() {
                 <CheckCircle className="h-4 w-4 text-emerald-500" />
                 <div>
                   <p className="text-sm font-medium">Success Rate</p>
-                  <p className="text-2xl font-bold">{summary.successRate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold">
+                    {summary.successRate.toFixed(1)}%
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -249,7 +263,9 @@ export function VerificationManagementClient() {
                 <XCircle className="h-4 w-4 text-red-500" />
                 <div>
                   <p className="text-sm font-medium">Failed</p>
-                  <p className="text-2xl font-bold">{summary.failedVerifications}</p>
+                  <p className="text-2xl font-bold">
+                    {summary.failedVerifications}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -308,13 +324,15 @@ export function VerificationManagementClient() {
               </Select>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={refreshing}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                />
                 Refresh
               </Button>
               <Button variant="outline" size="sm">
@@ -329,13 +347,18 @@ export function VerificationManagementClient() {
       {/* Verifications Table */}
       <Card>
         <CardHeader>
-          <CardTitle>NIN Verifications ({pagination.total.toLocaleString()})</CardTitle>
+          <CardTitle>
+            NIN Verifications ({pagination.total.toLocaleString()})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-4">
               {[...Array(10)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                <div
+                  key={i}
+                  className="h-16 bg-gray-100 rounded animate-pulse"
+                />
               ))}
             </div>
           ) : (
@@ -346,14 +369,14 @@ export function VerificationManagementClient() {
                     <TableHead>NIN</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Purpose</TableHead>
-                    <TableHead 
+                    <TableHead
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSortChange("status")}
                     >
                       Status {getSortIcon("status")}
                     </TableHead>
                     <TableHead>Verified Name</TableHead>
-                    <TableHead 
+                    <TableHead
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSortChange("created_at")}
                     >
@@ -372,27 +395,41 @@ export function VerificationManagementClient() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{verification.userFullName}</p>
-                          <p className="text-sm text-gray-500">{verification.userEmail}</p>
+                          <p className="font-medium">
+                            {verification.userFullName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {verification.userEmail}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">{getPurposeLabel(verification.purpose)}</span>
+                        <span className="text-sm">
+                          {getPurposeLabel(verification.purpose)}
+                        </span>
                       </TableCell>
-                      <TableCell>{getStatusBadge(verification.status)}</TableCell>
+                      <TableCell>
+                        {getStatusBadge(verification.status)}
+                      </TableCell>
                       <TableCell>
                         {verification.fullName ? (
                           <div>
-                            <p className="font-medium">{verification.fullName}</p>
+                            <p className="font-medium">
+                              {verification.fullName}
+                            </p>
                             {verification.dateOfBirth && (
-                              <p className="text-sm text-gray-500">DOB: {verification.dateOfBirth}</p>
+                              <p className="text-sm text-gray-500">
+                                DOB: {verification.dateOfBirth}
+                              </p>
                             )}
                           </div>
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
                       </TableCell>
-                      <TableCell>{formatDate(verification.createdAt)}</TableCell>
+                      <TableCell>
+                        {formatDate(verification.createdAt)}
+                      </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -405,12 +442,13 @@ export function VerificationManagementClient() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            {verification.status === "failed" && verification.errorMessage && (
-                              <DropdownMenuItem>
-                                <AlertTriangle className="h-4 w-4 mr-2" />
-                                View Error
-                              </DropdownMenuItem>
-                            )}
+                            {verification.status === "failed" &&
+                              verification.errorMessage && (
+                                <DropdownMenuItem>
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  View Error
+                                </DropdownMenuItem>
+                              )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -422,16 +460,24 @@ export function VerificationManagementClient() {
               {/* Pagination */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{" "}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                  {pagination.total} verifications
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                  {Math.min(
+                    pagination.page * pagination.limit,
+                    pagination.total,
+                  )}{" "}
+                  of {pagination.total} verifications
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={pagination.page <= 1}
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page - 1,
+                      }))
+                    }
                   >
                     Previous
                   </Button>
@@ -439,7 +485,12 @@ export function VerificationManagementClient() {
                     variant="outline"
                     size="sm"
                     disabled={pagination.page >= pagination.totalPages}
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page + 1,
+                      }))
+                    }
                   >
                     Next
                   </Button>

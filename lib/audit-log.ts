@@ -1,15 +1,17 @@
 /**
  * Audit Logging System
- * 
+ *
  * COMPLIANCE: Required for NDPR/NDPA and financial regulations
  * Maintains immutable record of all sensitive operations
- * 
+ *
  * SECURITY: Logs should never contain:
  * - Full NIN numbers (always masked)
  * - Passwords or API keys
  * - Full card numbers
  * - Sensitive PII beyond what's necessary
  */
+
+import { logger } from "./security/secure-logger";
 
 export type AuditEventType =
   | "user.registered"
@@ -45,7 +47,7 @@ export interface AuditLogEntry {
 
 /**
  * Log audit event
- * 
+ *
  * Writes to:
  * 1. Database table for queryable audit trail
  * 2. Console for development/debugging
@@ -55,11 +57,11 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
   const logEntry = {
     ...entry,
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development"
+    environment: process.env.NODE_ENV || "development",
   };
 
   // Console logging (always)
-  console.log("[AUDIT]", JSON.stringify(logEntry));
+  logger.info("[AUDIT]", { entry: JSON.stringify(logEntry) });
 
   // Write to database (async, non-blocking)
   if (process.env.ENABLE_AUDIT_LOGGING !== "false") {
@@ -79,11 +81,11 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
         action: entry.action,
         status: entry.status,
         metadata: entry.metadata || null,
-        errorMessage: entry.errorMessage || null
+        errorMessage: entry.errorMessage || null,
       });
     } catch (error) {
       // Don't fail the request if audit logging fails
-      console.error("[AUDIT] Failed to write to database:", error);
+      logger.error("[AUDIT] Failed to write to database:", error);
     }
   }
 
@@ -100,12 +102,15 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
  * Log payment event with financial audit requirements
  */
 export async function logPaymentEvent(
-  eventType: Extract<AuditEventType, "payment.initialized" | "payment.success" | "payment.failed">,
+  eventType: Extract<
+    AuditEventType,
+    "payment.initialized" | "payment.success" | "payment.failed"
+  >,
   userId: string,
   amount: number,
   reference: string,
   status: "success" | "failure" | "pending",
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<void> {
   await logAuditEvent({
     timestamp: new Date().toISOString(),
@@ -118,8 +123,8 @@ export async function logPaymentEvent(
       amount,
       reference,
       currency: "NGN",
-      ...metadata
-    }
+      ...metadata,
+    },
   });
 }
 
@@ -129,12 +134,14 @@ export async function logPaymentEvent(
 export async function logNINVerification(
   eventType: Extract<
     AuditEventType,
-    "nin.verification.initiated" | "nin.verification.success" | "nin.verification.failed"
+    | "nin.verification.initiated"
+    | "nin.verification.success"
+    | "nin.verification.failed"
   >,
   userId: string,
   ninMasked: string,
   status: "success" | "failure" | "pending",
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<void> {
   await logAuditEvent({
     timestamp: new Date().toISOString(),
@@ -145,8 +152,8 @@ export async function logNINVerification(
     status,
     metadata: {
       ninMasked, // Only log masked NIN
-      ...metadata
-    }
+      ...metadata,
+    },
   });
 }
 
@@ -157,7 +164,7 @@ export async function logSecurityEvent(
   description: string,
   userId?: string,
   ipAddress?: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<void> {
   await logAuditEvent({
     timestamp: new Date().toISOString(),
@@ -169,8 +176,8 @@ export async function logSecurityEvent(
     status: "failure",
     metadata: {
       description,
-      ...metadata
-    }
+      ...metadata,
+    },
   });
 }
 
@@ -181,7 +188,7 @@ export async function logAPIError(
   endpoint: string,
   error: unknown,
   userId?: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<void> {
   await logAuditEvent({
     timestamp: new Date().toISOString(),
@@ -193,7 +200,7 @@ export async function logAPIError(
     errorMessage: error instanceof Error ? error.message : String(error),
     metadata: {
       errorStack: error instanceof Error ? error.stack : undefined,
-      ...metadata
-    }
+      ...metadata,
+    },
   });
 }

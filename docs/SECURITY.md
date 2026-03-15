@@ -46,6 +46,7 @@ VerifyNIN implements enterprise-grade security measures to protect sensitive fin
 ## 🔐 Compliance Standards
 
 ### PCI DSS Level 1 Compliance
+
 - Secure cardholder data environment
 - Encrypted data transmission
 - Access control measures
@@ -53,6 +54,7 @@ VerifyNIN implements enterprise-grade security measures to protect sensitive fin
 - Vulnerability management
 
 ### GDPR/NDPR Compliance
+
 - Data minimization principles
 - Consent management
 - Right to be forgotten
@@ -60,6 +62,7 @@ VerifyNIN implements enterprise-grade security measures to protect sensitive fin
 - Privacy by design
 
 ### SOC 2 Type II
+
 - Security controls
 - Availability measures
 - Processing integrity
@@ -73,11 +76,13 @@ VerifyNIN implements enterprise-grade security measures to protect sensitive fin
 We take security seriously and appreciate responsible disclosure of vulnerabilities.
 
 **Please DO NOT:**
+
 - Create public GitHub issues for security vulnerabilities
 - Disclose vulnerabilities publicly before we've had a chance to address them
 - Access or modify data that doesn't belong to you
 
 **Please DO:**
+
 - Email security vulnerabilities to: security@verifynin.ng
 - Provide detailed information about the vulnerability
 - Include steps to reproduce the issue
@@ -108,6 +113,7 @@ We offer rewards for valid security vulnerabilities:
 ### For Developers
 
 #### Secure Coding Practices
+
 ```typescript
 // ✅ Good: Input validation
 const userInput = secureStringSchema.parse(input);
@@ -120,6 +126,7 @@ const user = await db.select().from(users).where(eq(users.id, userId));
 ```
 
 #### Authentication Implementation
+
 ```typescript
 // ✅ Good: Secure password hashing
 const hashedPassword = await AuthSecurity.hashPassword(password);
@@ -132,6 +139,7 @@ const { valid, session } = AuthSecurity.validateSession(sessionId);
 ```
 
 #### Data Protection
+
 ```typescript
 // ✅ Good: Encrypt PII data
 const encryptedData = PIIProtection.encryptPII(userData);
@@ -146,6 +154,7 @@ const logData = PIIProtection.sanitizeForLogging(userData);
 ### Security Testing
 
 #### Running Security Tests
+
 ```bash
 # Run all security tests
 npm run test:security
@@ -161,7 +170,9 @@ npm run security:audit
 ```
 
 #### Pre-commit Hooks
+
 All commits are automatically checked for:
+
 - Security vulnerabilities
 - Code quality issues
 - Secrets exposure
@@ -175,7 +186,7 @@ All commits are automatically checked for:
 - **Mean Time to Detection (MTTD)**: < 5 minutes
 - **Mean Time to Response (MTTR)**: < 1 hour
 - **Security Test Coverage**: > 90%
-- **Vulnerability Remediation**: 
+- **Vulnerability Remediation**:
   - Critical: 100% within 24 hours
   - High: 100% within 72 hours
   - Medium: 95% within 1 week
@@ -193,24 +204,28 @@ All commits are automatically checked for:
 ### Regular Security Activities
 
 #### Daily
+
 - Automated security scans
 - Dependency vulnerability checks
 - Log analysis and alerting
 - Backup verification
 
 #### Weekly
+
 - Security metrics review
 - Incident response testing
 - Access control audit
 - Security training updates
 
 #### Monthly
+
 - Penetration testing
 - Security architecture review
 - Compliance assessment
 - Vendor security evaluation
 
 #### Quarterly
+
 - Full security audit
 - Risk assessment update
 - Business continuity testing
@@ -239,12 +254,14 @@ All commits are automatically checked for:
 ## 🎓 Security Training
 
 ### Developer Security Training
+
 - Secure coding practices
 - OWASP Top 10 awareness
 - Threat modeling
 - Security testing techniques
 
 ### Security Awareness Program
+
 - Phishing simulation
 - Social engineering awareness
 - Data handling procedures

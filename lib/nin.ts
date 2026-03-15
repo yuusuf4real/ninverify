@@ -41,4 +41,3 @@ export function getInputType(input: string): "nin" | "vnin" | "invalid" {
   if (isValidNin(clean)) return "nin";
   return "invalid";
 }
-

@@ -51,7 +51,7 @@ export async function setSessionCookie(payload: SessionPayload) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL
+    maxAge: SESSION_TTL,
   });
 }
 
@@ -62,6 +62,6 @@ export async function clearSessionCookie() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 0
+    maxAge: 0,
   });
 }

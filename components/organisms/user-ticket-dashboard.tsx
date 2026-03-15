@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
+import {
+  MessageSquare,
+  Clock,
+  CheckCircle,
   AlertTriangle,
   Plus,
   Eye,
@@ -13,12 +13,18 @@ import {
   RotateCcw,
   Calendar,
   User,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { TicketCreationWizard } from "./ticket-creation-wizard";
 import { formatRelativeTime } from "@/lib/format";
 
@@ -40,7 +46,7 @@ interface UserTicket {
 
 interface UserTicketDashboardProps {
   user: {
-    id: string;
+    userId: string;
     email: string;
     fullName: string;
   };
@@ -53,11 +59,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  useEffect(() => {
-    fetchTickets();
-  }, []);
-
-  const fetchTickets = async (retryCount = 0) => {
+  const fetchTickets = useCallback(async (retryCount = 0) => {
     try {
       setError(null);
       const response = await fetch("/api/support/tickets");
@@ -68,25 +70,38 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
         } else if (response.status >= 500) {
           // If it's a server error and we haven't retried yet, try again
           if (retryCount < 2) {
-            console.log(`Server error, retrying in ${(retryCount + 1) * 2} seconds...`);
-            setTimeout(() => fetchTickets(retryCount + 1), (retryCount + 1) * 2000);
+            console.log(
+              `Server error, retrying in ${(retryCount + 1) * 2} seconds...`,
+            );
+            setTimeout(
+              () => fetchTickets(retryCount + 1),
+              (retryCount + 1) * 2000,
+            );
             return;
           }
-          throw new Error("Server is starting up, please refresh the page in a moment");
+          throw new Error(
+            "Server is starting up, please refresh the page in a moment",
+          );
         } else {
           throw new Error("Failed to fetch tickets");
         }
       }
-      
+
       const data = await response.json();
       setTickets(data.tickets || []);
     } catch (error) {
       console.error("Error fetching tickets:", error);
-      setError(error instanceof Error ? error.message : "Failed to load tickets");
+      setError(
+        error instanceof Error ? error.message : "Failed to load tickets",
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
 
   const handleTicketCreated = (ticketId: string) => {
     setShowCreateDialog(false);
@@ -96,15 +111,38 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      open: { className: "bg-blue-100 text-blue-800", label: "Open", icon: MessageSquare },
-      assigned: { className: "bg-purple-100 text-purple-800", label: "Assigned", icon: User },
-      in_progress: { className: "bg-amber-100 text-amber-800", label: "In Progress", icon: Clock },
-      resolved: { className: "bg-emerald-100 text-emerald-800", label: "Resolved", icon: CheckCircle },
-      closed: { className: "bg-gray-100 text-gray-800", label: "Closed", icon: CheckCircle }
+      open: {
+        className: "bg-blue-100 text-blue-800",
+        label: "Open",
+        icon: MessageSquare,
+      },
+      assigned: {
+        className: "bg-purple-100 text-purple-800",
+        label: "Assigned",
+        icon: User,
+      },
+      in_progress: {
+        className: "bg-amber-100 text-amber-800",
+        label: "In Progress",
+        icon: Clock,
+      },
+      resolved: {
+        className: "bg-emerald-100 text-emerald-800",
+        label: "Resolved",
+        icon: CheckCircle,
+      },
+      closed: {
+        className: "bg-gray-100 text-gray-800",
+        label: "Closed",
+        icon: CheckCircle,
+      },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: status, icon: MessageSquare };
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+      icon: MessageSquare,
+    };
 
     const Icon = config.icon;
 
@@ -121,14 +159,16 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
       urgent: { className: "bg-red-100 text-red-800", label: "Urgent" },
       high: { className: "bg-orange-100 text-orange-800", label: "High" },
       medium: { className: "bg-yellow-100 text-yellow-800", label: "Medium" },
-      low: { className: "bg-green-100 text-green-800", label: "Low" }
+      low: { className: "bg-green-100 text-green-800", label: "Low" },
     };
 
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: priority };
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: priority,
+    };
 
     return (
-      <Badge variant="outline" className={config.className}>
+      <Badge variant="default" className={config.className}>
         {config.label}
       </Badge>
     );
@@ -137,10 +177,10 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
   const getCategoryLabel = (category: string) => {
     const categoryLabels = {
       payment_issue: "Payment Issue",
-      verification_problem: "Verification Problem", 
+      verification_problem: "Verification Problem",
       account_access: "Account Access",
       technical_support: "Technical Support",
-      general_inquiry: "General Inquiry"
+      general_inquiry: "General Inquiry",
     };
 
     return categoryLabels[category as keyof typeof categoryLabels] || category;
@@ -148,16 +188,14 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
 
   const renderSatisfactionRating = (rating?: number) => {
     if (!rating) return null;
-    
+
     return (
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
-          <Star 
+          <Star
             key={star}
             className={`h-3 w-3 ${
-              star <= rating 
-                ? "text-yellow-400 fill-current" 
-                : "text-gray-300"
+              star <= rating ? "text-yellow-400 fill-current" : "text-gray-300"
             }`}
           />
         ))}
@@ -196,9 +234,11 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">My Support Tickets</h1>
-          <p className="text-gray-600">Track and manage your support requests</p>
+          <p className="text-gray-600">
+            Track and manage your support requests
+          </p>
         </div>
-        
+
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button>
@@ -211,7 +251,11 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
               <DialogTitle>Create Support Ticket</DialogTitle>
             </DialogHeader>
             <TicketCreationWizard
-              user={user}
+              user={{
+                id: user.userId,
+                email: user.email,
+                fullName: user.fullName,
+              }}
               onComplete={handleTicketCreated}
               onCancel={() => setShowCreateDialog(false)}
             />
@@ -238,7 +282,8 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">No support tickets yet</h3>
             <p className="text-gray-600 mb-6">
-              When you need help, create a support ticket and we&apos;ll assist you quickly.
+              When you need help, create a support ticket and we&apos;ll assist
+              you quickly.
             </p>
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -257,7 +302,9 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg">{ticket.subject}</h3>
+                          <h3 className="font-semibold text-lg">
+                            {ticket.subject}
+                          </h3>
                           {getStatusBadge(ticket.status)}
                           {getPriorityBadge(ticket.priority)}
                         </div>
@@ -266,8 +313,12 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">#{ticket.id.slice(-8)}</p>
-                        <p className="text-xs text-gray-500">{getCategoryLabel(ticket.category)}</p>
+                        <p className="text-sm font-medium">
+                          #{ticket.id.slice(-8)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {getCategoryLabel(ticket.category)}
+                        </p>
                       </div>
                     </div>
 
@@ -275,7 +326,9 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                     <div className="flex items-center gap-6 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        <span>Created {formatRelativeTime(ticket.createdAt)}</span>
+                        <span>
+                          Created {formatRelativeTime(ticket.createdAt)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <MessageSquare className="h-4 w-4" />
@@ -293,7 +346,8 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                     {ticket.lastMessage && (
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <p className="text-sm text-gray-700 line-clamp-2">
-                          <span className="font-medium">Latest update:</span> {ticket.lastMessage}
+                          <span className="font-medium">Latest update:</span>{" "}
+                          {ticket.lastMessage}
                         </p>
                       </div>
                     )}
@@ -321,22 +375,25 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
 
                   {/* Actions */}
                   <div className="ml-4 flex flex-col gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/dashboard/support/tickets/${ticket.id}`)}
+                      onClick={() =>
+                        router.push(`/dashboard/support/tickets/${ticket.id}`)
+                      }
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       View Details
                     </Button>
-                    
-                    {ticket.status === "resolved" && !ticket.satisfactionRating && (
-                      <Button variant="outline" size="sm">
-                        <Star className="h-4 w-4 mr-2" />
-                        Rate Support
-                      </Button>
-                    )}
-                    
+
+                    {ticket.status === "resolved" &&
+                      !ticket.satisfactionRating && (
+                        <Button variant="outline" size="sm">
+                          <Star className="h-4 w-4 mr-2" />
+                          Rate Support
+                        </Button>
+                      )}
+
                     {ticket.status === "closed" && (
                       <Button variant="outline" size="sm">
                         <RotateCcw className="h-4 w-4 mr-2" />

@@ -3,7 +3,14 @@ import { getSession } from "@/lib/auth";
 import { formatNaira } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { desc } from "drizzle-orm";
 
 export default async function TransactionsPage() {
@@ -13,7 +20,7 @@ export default async function TransactionsPage() {
         where: (walletTransactions, { eq }) =>
           eq(walletTransactions.userId, session.userId),
         orderBy: (walletTransactions) => [desc(walletTransactions.createdAt)],
-        limit: 20
+        limit: 20,
       })
     : [];
 
@@ -23,9 +30,12 @@ export default async function TransactionsPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">
           History
         </p>
-        <h1 className="font-heading text-3xl font-semibold">Wallet transactions</h1>
+        <h1 className="font-heading text-3xl font-semibold">
+          Wallet transactions
+        </h1>
         <p className="text-sm text-muted-foreground">
-          NIN values are masked for privacy. Refunds appear instantly on failure.
+          NIN values are masked for privacy. Refunds appear instantly on
+          failure.
         </p>
       </div>
 
@@ -44,14 +54,19 @@ export default async function TransactionsPage() {
           <TableBody>
             {transactions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="py-8 text-center text-muted-foreground"
+                >
                   No transactions yet.
                 </TableCell>
               </TableRow>
             ) : (
               transactions.map((tx) => (
                 <TableRow key={tx.id}>
-                  <TableCell>{new Date(tx.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </TableCell>
                   <TableCell className="capitalize">{tx.type}</TableCell>
                   <TableCell>{tx.description ?? "-"}</TableCell>
                   <TableCell>{tx.ninMasked ?? "-"}</TableCell>
@@ -68,7 +83,9 @@ export default async function TransactionsPage() {
                       {tx.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">{formatNaira(tx.amount)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatNaira(tx.amount)}
+                  </TableCell>
                 </TableRow>
               ))
             )}

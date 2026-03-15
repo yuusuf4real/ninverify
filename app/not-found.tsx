@@ -32,7 +32,8 @@ export default function NotFound() {
               Page Not Found
             </h2>
             <p className="text-lg text-muted-foreground">
-              We couldn&apos;t find the page you&apos;re looking for. It might have been moved, deleted, or the link might be incorrect.
+              We couldn&apos;t find the page you&apos;re looking for. It might
+              have been moved, deleted, or the link might be incorrect.
             </p>
           </div>
 
@@ -64,21 +65,27 @@ export default function NotFound() {
                 className="rounded-lg border border-border/60 bg-white p-4 transition-colors hover:bg-muted/50"
               >
                 <p className="font-semibold">Support</p>
-                <p className="mt-1 text-xs text-muted-foreground">Get help from our team</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Get help from our team
+                </p>
               </Link>
               <Link
                 href="/dashboard"
                 className="rounded-lg border border-border/60 bg-white p-4 transition-colors hover:bg-muted/50"
               >
                 <p className="font-semibold">Dashboard</p>
-                <p className="mt-1 text-xs text-muted-foreground">Access your account</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Access your account
+                </p>
               </Link>
               <Link
                 href="/"
                 className="rounded-lg border border-border/60 bg-white p-4 transition-colors hover:bg-muted/50"
               >
                 <p className="font-semibold">Home</p>
-                <p className="mt-1 text-xs text-muted-foreground">Start from the beginning</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Start from the beginning
+                </p>
               </Link>
             </div>
           </div>

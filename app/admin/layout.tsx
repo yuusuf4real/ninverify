@@ -2,30 +2,33 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { 
-  BarChart3, 
-  Users, 
-  CreditCard, 
-  Shield, 
-  LifeBuoy, 
+import {
+  BarChart3,
+  Users,
+  CreditCard,
+  Shield,
+  LifeBuoy,
   TrendingUp,
   Settings,
   Bell,
-  Search
+  Search,
 } from "lucide-react";
 
 import { getSession } from "@/lib/auth";
 import { AdminLogoutButton } from "@/components/organisms/admin-logout-button";
 
 export default async function AdminLayout({
-  children
+  children,
 }: {
   children: ReactNode;
 }) {
   // Skip authentication check for login page - it has its own layout
   const session = await getSession();
 
-  if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+  if (
+    !session ||
+    (session.role !== "admin" && session.role !== "super_admin")
+  ) {
     redirect("/admin-login");
   }
 
@@ -39,7 +42,9 @@ export default async function AdminLayout({
     { name: "Verifications", href: "/admin/verifications", icon: Shield },
     { name: "Support", href: "/admin/support", icon: LifeBuoy },
     { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
-    ...(isSuper ? [{ name: "System", href: "/admin/system", icon: Settings }] : [])
+    ...(isSuper
+      ? [{ name: "System", href: "/admin/system", icon: Settings }]
+      : []),
   ];
 
   return (
@@ -138,9 +143,7 @@ export default async function AdminLayout({
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
-          {children}
-        </main>
+        <main className="p-6">{children}</main>
       </div>
     </div>
   );

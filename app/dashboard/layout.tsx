@@ -2,13 +2,19 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { History, RefreshCw, UserCircle, Wallet, MessageSquare } from "lucide-react";
+import {
+  History,
+  RefreshCw,
+  UserCircle,
+  Wallet,
+  MessageSquare,
+} from "lucide-react";
 
 import { getSession } from "@/lib/auth";
 import { LogoutButton } from "@/components/organisms/logout-button";
 
 export default async function DashboardLayout({
-  children
+  children,
 }: {
   children: ReactNode;
 }) {

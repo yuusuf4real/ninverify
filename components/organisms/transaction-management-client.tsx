@@ -1,26 +1,24 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  MoreHorizontal,
+import { useSearchParams } from "next/navigation";
+import {
+  Search,
+  Download,
   Eye,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  TrendingUp,
   RefreshCw,
   CreditCard,
-  DollarSign,
-  CheckCircle,
-  XCircle,
-  Clock,
-  TrendingUp
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -80,9 +78,8 @@ interface TransactionListResponse {
 }
 
 export function TransactionManagementClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,16 +88,20 @@ export function TransactionManagementClient() {
     page: 1,
     limit: 50,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
-  
+
   // Filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
   const [type, setType] = useState(searchParams.get("type") || "all");
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "created_at");
-  const [sortOrder, setSortOrder] = useState(searchParams.get("order") || "desc");
-  
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("sort") || "created_at",
+  );
+  const [sortOrder, setSortOrder] = useState(
+    searchParams.get("order") || "desc",
+  );
+
   // Modal state
   const [showReconciliationModal, setShowReconciliationModal] = useState(false);
 
@@ -114,12 +115,12 @@ export function TransactionManagementClient() {
         type,
         sort: sortBy,
         order: sortOrder,
-        ...(search && { search })
+        ...(search && { search }),
       });
 
       const response = await fetch(`/api/admin/transactions?${params}`);
       if (!response.ok) throw new Error("Failed to fetch transactions");
-      
+
       const data: TransactionListResponse = await response.json();
       setTransactions(data.transactions);
       setPagination(data.pagination);
@@ -129,7 +130,15 @@ export function TransactionManagementClient() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search, status, type, sortBy, sortOrder]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    search,
+    status,
+    type,
+    sortBy,
+    sortOrder,
+  ]);
 
   useEffect(() => {
     fetchTransactions();
@@ -143,17 +152,17 @@ export function TransactionManagementClient() {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleStatusChange = (value: string) => {
     setStatus(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleTypeChange = (value: string) => {
     setType(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleSortChange = (field: string) => {
@@ -163,25 +172,31 @@ export function TransactionManagementClient() {
       setSortBy(field);
       setSortOrder("desc");
     }
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return null;
+    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      completed: { className: "bg-emerald-100 text-emerald-800", label: "Completed" },
+      completed: {
+        className: "bg-emerald-100 text-emerald-800",
+        label: "Completed",
+      },
       pending: { className: "bg-amber-100 text-amber-800", label: "Pending" },
       failed: { className: "bg-red-100 text-red-800", label: "Failed" },
-      refunded: { className: "bg-blue-100 text-blue-800", label: "Refunded" }
+      refunded: { className: "bg-blue-100 text-blue-800", label: "Refunded" },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: status };
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+    };
 
-    return (
-      <Badge className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const getTypeBadge = (type: string) => {
@@ -190,11 +205,6 @@ export function TransactionManagementClient() {
     ) : (
       <Badge className="bg-red-100 text-red-800">Debit</Badge>
     );
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortBy !== field) return null;
-    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   return (
@@ -209,7 +219,9 @@ export function TransactionManagementClient() {
                   <DollarSign className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Total Volume</p>
-                    <p className="text-2xl font-bold">{formatCurrency(summary.totalVolume)}</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(summary.totalVolume)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -220,7 +232,9 @@ export function TransactionManagementClient() {
                   <CheckCircle className="h-4 w-4 text-emerald-500" />
                   <div>
                     <p className="text-sm font-medium">Success Rate</p>
-                    <p className="text-2xl font-bold">{summary.successRate.toFixed(1)}%</p>
+                    <p className="text-2xl font-bold">
+                      {summary.successRate.toFixed(1)}%
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -242,7 +256,9 @@ export function TransactionManagementClient() {
                   <TrendingUp className="h-4 w-4 text-blue-500" />
                   <div>
                     <p className="text-sm font-medium">Avg Amount</p>
-                    <p className="text-2xl font-bold">{formatCurrency(summary.avgAmount)}</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(summary.avgAmount)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -288,17 +304,19 @@ export function TransactionManagementClient() {
                 </Select>
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleRefresh}
                   disabled={refreshing}
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                  />
                   Refresh
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => setShowReconciliationModal(true)}
                 >
@@ -317,13 +335,18 @@ export function TransactionManagementClient() {
         {/* Transactions Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Transactions ({pagination.total.toLocaleString()})</CardTitle>
+            <CardTitle>
+              Transactions ({pagination.total.toLocaleString()})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="space-y-4">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-16 bg-gray-100 rounded animate-pulse"
+                  />
                 ))}
               </div>
             ) : (
@@ -334,20 +357,20 @@ export function TransactionManagementClient() {
                       <TableHead>Reference</TableHead>
                       <TableHead>User</TableHead>
                       <TableHead>Type</TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("amount")}
                       >
                         Amount {getSortIcon("amount")}
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("status")}
                       >
                         Status {getSortIcon("status")}
                       </TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("created_at")}
                       >
@@ -361,30 +384,47 @@ export function TransactionManagementClient() {
                       <TableRow key={transaction.id}>
                         <TableCell>
                           <div className="font-mono text-sm">
-                            {transaction.reference || transaction.id.slice(0, 8)}
+                            {transaction.reference ||
+                              transaction.id.slice(0, 8)}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{transaction.userFullName}</p>
-                            <p className="text-sm text-gray-500">{transaction.userEmail}</p>
+                            <p className="font-medium">
+                              {transaction.userFullName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {transaction.userEmail}
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>{getTypeBadge(transaction.type)}</TableCell>
                         <TableCell>
-                          <span className={`font-semibold ${
-                            transaction.type === "credit" ? "text-emerald-600" : "text-red-600"
-                          }`}>
-                            {transaction.type === "credit" ? "+" : "-"}{formatCurrency(transaction.amount)}
+                          <span
+                            className={`font-semibold ${
+                              transaction.type === "credit"
+                                ? "text-emerald-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {transaction.type === "credit" ? "+" : "-"}
+                            {formatCurrency(transaction.amount)}
                           </span>
                         </TableCell>
-                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                         <TableCell>
-                          <div className="max-w-xs truncate" title={transaction.description}>
+                          {getStatusBadge(transaction.status)}
+                        </TableCell>
+                        <TableCell>
+                          <div
+                            className="max-w-xs truncate"
+                            title={transaction.description}
+                          >
                             {transaction.description}
                           </div>
                         </TableCell>
-                        <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                        <TableCell>
+                          {formatDate(transaction.createdAt)}
+                        </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -414,16 +454,24 @@ export function TransactionManagementClient() {
                 {/* Pagination */}
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{" "}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                    {pagination.total} transactions
+                    Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total,
+                    )}{" "}
+                    of {pagination.total} transactions
                   </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={pagination.page <= 1}
-                      onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: prev.page - 1,
+                        }))
+                      }
                     >
                       Previous
                     </Button>
@@ -431,7 +479,12 @@ export function TransactionManagementClient() {
                       variant="outline"
                       size="sm"
                       disabled={pagination.page >= pagination.totalPages}
-                      onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: prev.page + 1,
+                        }))
+                      }
                     >
                       Next
                     </Button>

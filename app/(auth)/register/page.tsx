@@ -32,7 +32,8 @@ export default function RegisterPage() {
 
   const validateEmail = (email: string) => {
     if (!email) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email address";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Please enter a valid email address";
     return null;
   };
 
@@ -54,22 +55,22 @@ export default function RegisterPage() {
     const emailErr = validateEmail(email);
     const phoneErr = validatePhone(phone);
     const passwordErr = validatePassword(password);
-    
+
     setFullNameError(fullNameErr);
     setEmailError(emailErr);
     setPhoneError(phoneErr);
     setPasswordError(passwordErr);
-    
+
     if (fullNameErr || emailErr || phoneErr || passwordErr) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email, phone, password })
+        body: JSON.stringify({ fullName, email, phone, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -81,8 +82,8 @@ export default function RegisterPage() {
       setError(
         getFriendlyErrorMessage(
           err,
-          "We couldn't create your account. Please check your details and try again."
-        )
+          "We couldn't create your account. Please check your details and try again.",
+        ),
       );
     } finally {
       setLoading(false);
@@ -90,7 +91,7 @@ export default function RegisterPage() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) {
+    if (e.key === "Enter" && !loading) {
       e.preventDefault();
       handleSubmit();
     }
@@ -118,7 +119,9 @@ export default function RegisterPage() {
           />
         </div>
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold sm:text-3xl">Create Account</h1>
+          <h1 className="font-heading text-2xl font-bold sm:text-3xl">
+            Create Account
+          </h1>
           <p className="text-sm text-muted-foreground">
             Start verifying NINs for banking, education, travel, and more
           </p>
@@ -126,12 +129,18 @@ export default function RegisterPage() {
       </div>
 
       {/* Form Fields */}
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="space-y-4"
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium">Full Name</label>
-            <Input 
-              placeholder="Aisha Yusuf" 
+            <Input
+              placeholder="Aisha Yusuf"
               value={fullName}
               onChange={(e) => {
                 setFullName(e.target.value);
@@ -150,8 +159,8 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Phone Number</label>
-            <Input 
-              placeholder="08012345678" 
+            <Input
+              placeholder="08012345678"
               value={phone}
               onChange={(e) => {
                 setPhone(e.target.value);
@@ -173,9 +182,9 @@ export default function RegisterPage() {
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Email Address</label>
-          <Input 
+          <Input
             type="email"
-            placeholder="you@example.com" 
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -196,7 +205,7 @@ export default function RegisterPage() {
         <div className="space-y-2">
           <label className="text-sm font-medium">Password</label>
           <div className="relative">
-            <Input 
+            <Input
               type={showPassword ? "text" : "password"}
               placeholder="Create a strong password"
               value={password}
@@ -236,12 +245,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <Button 
-          type="submit"
-          size="lg" 
-          className="w-full" 
-          disabled={loading}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? (
             "Creating account..."
           ) : (
@@ -265,11 +269,9 @@ export default function RegisterPage() {
             </span>
           </div>
         </div>
-        
+
         <Button variant="outline" size="lg" className="w-full" asChild>
-          <Link href="/login">
-            Sign In
-          </Link>
+          <Link href="/login">Sign In</Link>
         </Button>
       </div>
     </Card>

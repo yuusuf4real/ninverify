@@ -6,13 +6,13 @@ import "./globals.css";
 const sora = Sora({
   subsets: ["latin"],
   variable: "--font-heading",
-  display: "swap"
+  display: "swap",
 });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-sans",
-  display: "swap"
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     "NIN verification for passport",
     "NIMC verification",
     "instant NIN verification",
-    "NIN verification service"
+    "NIN verification service",
   ],
   authors: [{ name: "VerifyNIN" }],
   creator: "VerifyNIN",
@@ -38,13 +38,15 @@ export const metadata: Metadata = {
     locale: "en_NG",
     url: "https://verifynin.ng",
     title: "VerifyNIN | Fast NIN Verification for Banking, Education & More",
-    description: "Verify your NIN instantly for banking, education, travel, and more. Official NIMC verification in minutes.",
-    siteName: "VerifyNIN"
+    description:
+      "Verify your NIN instantly for banking, education, travel, and more. Official NIMC verification in minutes.",
+    siteName: "VerifyNIN",
   },
   twitter: {
     card: "summary_large_image",
     title: "VerifyNIN | Fast NIN Verification for Banking, Education & More",
-    description: "Verify your NIN instantly for banking, education, travel, and more. Official NIMC verification in minutes."
+    description:
+      "Verify your NIN instantly for banking, education, travel, and more. Official NIMC verification in minutes.",
   },
   robots: {
     index: true,
@@ -54,16 +56,12 @@ export const metadata: Metadata = {
       follow: true,
       "max-video-preview": -1,
       "max-image-preview": "large",
-      "max-snippet": -1
-    }
-  }
+      "max-snippet": -1,
+    },
+  },
 };
 
-export default function RootLayout({
-  children
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${sora.variable} ${spaceGrotesk.variable}`}>
       <head>

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { RefreshCw, AlertCircle, CheckCircle2, Info, ArrowLeft } from "lucide-react";
+import {
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+  ArrowLeft,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +18,7 @@ import { formatNaira } from "@/lib/format";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
 export default function RecoveryPage() {
@@ -33,7 +39,7 @@ export default function RecoveryPage() {
     if (!reference.trim()) {
       setResult({
         status: "error",
-        message: "Please enter a payment reference"
+        message: "Please enter a payment reference",
       });
       return;
     }
@@ -45,7 +51,7 @@ export default function RecoveryPage() {
       const res = await fetch("/api/wallet/check-pending-payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: reference.trim() })
+        body: JSON.stringify({ reference: reference.trim() }),
       });
 
       const data = await res.json();
@@ -53,7 +59,7 @@ export default function RecoveryPage() {
       if (!res.ok) {
         setResult({
           status: "error",
-          message: data.message || "Failed to check payment status"
+          message: data.message || "Failed to check payment status",
         });
       } else {
         setResult({
@@ -63,15 +69,15 @@ export default function RecoveryPage() {
             amount: data.amount,
             status: data.status,
             previousBalance: data.previousBalance,
-            newBalance: data.newBalance
-          }
+            newBalance: data.newBalance,
+          },
         });
         setReference("");
       }
     } catch {
       setResult({
         status: "error",
-        message: "Network error. Please check your connection and try again."
+        message: "Network error. Please check your connection and try again.",
       });
     } finally {
       setChecking(false);
@@ -115,9 +121,14 @@ export default function RecoveryPage() {
             <div className="space-y-2 text-sm text-blue-900">
               <p className="font-semibold">When to use this tool:</p>
               <ul className="ml-4 list-disc space-y-1 text-blue-800">
-                <li>You completed payment but your wallet balance didn&apos;t update</li>
+                <li>
+                  You completed payment but your wallet balance didn&apos;t
+                  update
+                </li>
                 <li>You were debited but the transaction shows as pending</li>
-                <li>Your internet connection dropped during payment verification</li>
+                <li>
+                  Your internet connection dropped during payment verification
+                </li>
               </ul>
             </div>
           </div>
@@ -131,7 +142,8 @@ export default function RecoveryPage() {
             <div>
               <h2 className="mb-4 text-xl font-bold">Check Payment Status</h2>
               <p className="text-sm text-muted-foreground">
-                Enter your Paystack payment reference to check if the payment was successful and update your wallet balance.
+                Enter your Paystack payment reference to check if the payment
+                was successful and update your wallet balance.
               </p>
             </div>
 
@@ -149,7 +161,8 @@ export default function RecoveryPage() {
                   disabled={checking}
                 />
                 <p className="text-xs text-muted-foreground">
-                  You can find this in your payment confirmation email or bank statement
+                  You can find this in your payment confirmation email or bank
+                  statement
                 </p>
               </div>
 
@@ -188,8 +201,8 @@ export default function RecoveryPage() {
               result.status === "success"
                 ? "border-emerald-200 bg-emerald-50"
                 : result.status === "info"
-                ? "border-blue-200 bg-blue-50"
-                : "border-red-200 bg-red-50"
+                  ? "border-blue-200 bg-blue-50"
+                  : "border-red-200 bg-red-50"
             }`}
           >
             <CardContent className="p-6">
@@ -199,8 +212,8 @@ export default function RecoveryPage() {
                     result.status === "success"
                       ? "bg-emerald-100"
                       : result.status === "info"
-                      ? "bg-blue-100"
-                      : "bg-red-100"
+                        ? "bg-blue-100"
+                        : "bg-red-100"
                   }`}
                 >
                   {result.status === "success" ? (
@@ -217,23 +230,23 @@ export default function RecoveryPage() {
                       result.status === "success"
                         ? "text-emerald-900"
                         : result.status === "info"
-                        ? "text-blue-900"
-                        : "text-red-900"
+                          ? "text-blue-900"
+                          : "text-red-900"
                     }`}
                   >
                     {result.status === "success"
                       ? "Payment Recovered!"
                       : result.status === "info"
-                      ? "Information"
-                      : "Unable to Recover"}
+                        ? "Information"
+                        : "Unable to Recover"}
                   </p>
                   <p
                     className={`mt-1 text-sm ${
                       result.status === "success"
                         ? "text-emerald-800"
                         : result.status === "info"
-                        ? "text-blue-800"
-                        : "text-red-800"
+                          ? "text-blue-800"
+                          : "text-red-800"
                     }`}
                   >
                     {result.message}
@@ -244,26 +257,40 @@ export default function RecoveryPage() {
                       {result.details.amount && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Amount:</span>
-                          <span className="font-semibold">{formatNaira(result.details.amount)}</span>
+                          <span className="font-semibold">
+                            {formatNaira(result.details.amount)}
+                          </span>
                         </div>
                       )}
                       {result.details.previousBalance !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Previous Balance:</span>
-                          <span className="font-semibold">{formatNaira(result.details.previousBalance)}</span>
+                          <span className="text-muted-foreground">
+                            Previous Balance:
+                          </span>
+                          <span className="font-semibold">
+                            {formatNaira(result.details.previousBalance)}
+                          </span>
                         </div>
                       )}
                       {result.details.newBalance !== undefined && (
                         <div className="flex justify-between border-t border-emerald-200 pt-2">
-                          <span className="font-semibold text-emerald-900">New Balance:</span>
-                          <span className="font-bold text-emerald-900">{formatNaira(result.details.newBalance)}</span>
+                          <span className="font-semibold text-emerald-900">
+                            New Balance:
+                          </span>
+                          <span className="font-bold text-emerald-900">
+                            {formatNaira(result.details.newBalance)}
+                          </span>
                         </div>
                       )}
                     </div>
                   )}
 
                   {result.status === "success" && (
-                    <Button asChild size="sm" className="mt-4 bg-emerald-600 hover:bg-emerald-700">
+                    <Button
+                      asChild
+                      size="sm"
+                      className="mt-4 bg-emerald-600 hover:bg-emerald-700"
+                    >
                       <Link href="/dashboard">View Dashboard</Link>
                     </Button>
                   )}
@@ -285,7 +312,10 @@ export default function RecoveryPage() {
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                   1
                 </div>
-                <p>Wait a few minutes and try again (payments can take time to process)</p>
+                <p>
+                  Wait a few minutes and try again (payments can take time to
+                  process)
+                </p>
               </div>
               <div className="flex gap-3">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
@@ -299,7 +329,10 @@ export default function RecoveryPage() {
                 </div>
                 <p>
                   Contact our support team at{" "}
-                  <a href="mailto:support@verifynin.ng" className="font-semibold text-primary hover:underline">
+                  <a
+                    href="mailto:support@verifynin.ng"
+                    className="font-semibold text-primary hover:underline"
+                  >
                     support@verifynin.ng
                   </a>{" "}
                   with your payment reference
@@ -313,18 +346,23 @@ export default function RecoveryPage() {
       {/* Where to Find Reference */}
       <Card className="border-border/50">
         <CardContent className="p-6">
-          <h3 className="mb-4 font-semibold">Where to Find Your Payment Reference</h3>
+          <h3 className="mb-4 font-semibold">
+            Where to Find Your Payment Reference
+          </h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
               <p className="mb-2 font-semibold text-sm">Email Confirmation</p>
               <p className="text-xs text-muted-foreground">
-                Check your email for a payment confirmation from Paystack. The reference is usually in the subject or body.
+                Check your email for a payment confirmation from Paystack. The
+                reference is usually in the subject or body.
               </p>
             </div>
             <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
               <p className="mb-2 font-semibold text-sm">Bank Statement</p>
               <p className="text-xs text-muted-foreground">
-                Look for the transaction in your bank app or statement. The reference may appear as &quot;Paystack&quot; followed by numbers.
+                Look for the transaction in your bank app or statement. The
+                reference may appear as &quot;Paystack&quot; followed by
+                numbers.
               </p>
             </div>
           </div>

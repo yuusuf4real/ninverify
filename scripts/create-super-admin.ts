@@ -39,12 +39,12 @@ async function createSuperAdmin() {
 
     // Check if user already exists
     const existingUser = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.email, FIRST_SUPER_ADMIN_EMAIL!)
+      where: (users, { eq }) => eq(users.email, FIRST_SUPER_ADMIN_EMAIL!),
     });
 
     if (existingUser) {
       console.log("⚠️  User already exists with this email");
-      
+
       // Update role to super_admin if not already
       if (existingUser.role !== "super_admin") {
         await db
@@ -55,7 +55,7 @@ async function createSuperAdmin() {
       } else {
         console.log("✅ User already has super_admin role");
       }
-      
+
       return;
     }
 
@@ -71,7 +71,7 @@ async function createSuperAdmin() {
       phone: "+2340000000000",
       passwordHash,
       role: "super_admin",
-      isSuspended: false
+      isSuspended: false,
     });
 
     // Create wallet for admin user
@@ -80,15 +80,16 @@ async function createSuperAdmin() {
       id: walletId,
       userId,
       balance: 0,
-      currency: "NGN"
+      currency: "NGN",
     });
 
     console.log("✅ Super admin user created successfully");
     console.log(`👤 User ID: ${userId}`);
     console.log(`📧 Email: ${FIRST_SUPER_ADMIN_EMAIL}`);
     console.log(`🔑 Role: super_admin`);
-    console.log("\n⚠️  IMPORTANT: Change the default password after first login!");
-
+    console.log(
+      "\n⚠️  IMPORTANT: Change the default password after first login!",
+    );
   } catch (error) {
     console.error("❌ Error creating super admin:", error);
     throw error;

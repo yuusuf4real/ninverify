@@ -1,6 +1,7 @@
-# JAMB Verification System - Developer Guide
+# VerifyNIN - Developer Guide
 
 ## Table of Contents
+
 1. [Quick Start](#quick-start)
 2. [Architecture Overview](#architecture-overview)
 3. [Database Schema](#database-schema)
@@ -9,24 +10,27 @@
 6. [Payment System](#payment-system)
 7. [Admin System](#admin-system)
 8. [Component Architecture](#component-architecture)
-9. [Development Workflow](#development-workflow)
+9. [External Services Setup](#external-services-setup)
 10. [Testing & Debugging](#testing--debugging)
-11. [Deployment](#deployment)
-12. [Troubleshooting](#troubleshooting)
+11. [Production Deployment](#production-deployment)
+12. [Security Guidelines](#security-guidelines)
+13. [Troubleshooting](#troubleshooting)
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
-- PostgreSQL database
+- PostgreSQL database (Neon recommended)
 - Paystack account (for payments)
 - YouVerify account (for NIN verification)
 
 ### Environment Setup
+
 ```bash
 # Clone and install
 git clone <repository>
-cd jamb-verify
+cd verifynin
 npm install
 
 # Copy environment file
@@ -44,16 +48,22 @@ npm run dev
 ```
 
 ### Essential Environment Variables
+
 ```bash
 DATABASE_URL="postgresql://user:password@host:5432/database"
 AUTH_SECRET="your-secret-key-minimum-32-characters"
+ENCRYPTION_KEY="your-base64-encoded-32-byte-encryption-key"
 PAYSTACK_SECRET_KEY="sk_live_..."
+PAYSTACK_PUBLIC_KEY="pk_live_..."
+YOUVERIFY_API_KEY="your-youverify-api-key"
+YOUVERIFY_BASE_URL="https://api.youverify.co"
 YOUVERIFY_TOKEN="your-live-api-token"
 ```
 
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **Database**: PostgreSQL + Drizzle ORM
 - **Authentication**: JWT sessions (httpOnly cookies)
@@ -63,6 +73,7 @@ YOUVERIFY_TOKEN="your-live-api-token"
 - **UI**: shadcn/ui components
 
 ### System Architecture
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend API   │    │   External APIs │
@@ -83,14 +94,17 @@ YOUVERIFY_TOKEN="your-live-api-token"
 ```
 
 ### User Roles & Permissions
+
 - **User**: NIN verification, wallet management, transaction history
 - **Admin**: User management, transaction monitoring, support tickets
 - **Super Admin**: Full system access, admin management, system settings
+
 ## Database Schema
 
 ### Core Tables
 
 #### Users Table
+
 ```sql
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
@@ -107,6 +121,7 @@ CREATE TABLE users (
 ```
 
 #### Wallets Table
+
 ```sql
 CREATE TABLE wallets (
   id TEXT PRIMARY KEY,
@@ -118,6 +133,7 @@ CREATE TABLE wallets (
 ```
 
 #### Wallet Transactions
+
 ```sql
 CREATE TABLE wallet_transactions (
   id TEXT PRIMARY KEY,
@@ -135,6 +151,7 @@ CREATE TABLE wallet_transactions (
 ```
 
 #### NIN Verifications
+
 ```sql
 CREATE TABLE nin_verifications (
   id TEXT PRIMARY KEY,
@@ -156,6 +173,7 @@ CREATE TABLE nin_verifications (
 ### Admin Tables
 
 #### Support Tickets
+
 ```sql
 CREATE TABLE support_tickets (
   id TEXT PRIMARY KEY,
@@ -176,6 +194,7 @@ CREATE TABLE support_tickets (
 ```
 
 #### Audit Logs
+
 ```sql
 CREATE TABLE audit_logs (
   id TEXT PRIMARY KEY,
@@ -193,6 +212,7 @@ CREATE TABLE audit_logs (
 ```
 
 ### Key Relationships
+
 - Users have one Wallet (1:1)
 - Users have many Transactions (1:N)
 - Users have many NIN Verifications (1:N)
@@ -201,6 +221,7 @@ CREATE TABLE audit_logs (
 - All operations are logged in Audit Logs
 
 ### Database Migrations
+
 ```bash
 # Generate new migration
 npm run db:generate
@@ -211,14 +232,17 @@ npm run db:migrate
 # View database in GUI
 npm run db:studio
 ```
+
 ## API Reference
 
 ### Authentication Endpoints
 
 #### POST /api/auth/register
+
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "fullName": "John Doe",
@@ -229,6 +253,7 @@ Register a new user account.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -237,9 +262,11 @@ Register a new user account.
 ```
 
 #### POST /api/auth/login
+
 Authenticate user and create session.
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -248,6 +275,7 @@ Authenticate user and create session.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -263,9 +291,11 @@ Authenticate user and create session.
 ### NIN Verification
 
 #### POST /api/nin/verify
+
 Verify a National Identification Number.
 
 **Request Body:**
+
 ```json
 {
   "nin": "12345678901",
@@ -275,6 +305,7 @@ Verify a National Identification Number.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -290,6 +321,7 @@ Verify a National Identification Number.
 ```
 
 **Response (Failure):**
+
 ```json
 {
   "success": false,
@@ -302,9 +334,11 @@ Verify a National Identification Number.
 ### Wallet Management
 
 #### GET /api/wallet/balance
+
 Get current wallet balance.
 
 **Response:**
+
 ```json
 {
   "balance": 150000,
@@ -314,9 +348,11 @@ Get current wallet balance.
 ```
 
 #### POST /api/wallet/check-pending-payments
+
 Check and recover missed payments.
 
 **Request Body:**
+
 ```json
 {
   "reference": "paystack_ref_123"
@@ -326,9 +362,11 @@ Check and recover missed payments.
 ### Payment Integration
 
 #### POST /api/paystack/initialize
+
 Initialize a Paystack payment.
 
 **Request Body:**
+
 ```json
 {
   "amount": 100000,
@@ -337,6 +375,7 @@ Initialize a Paystack payment.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -349,9 +388,11 @@ Initialize a Paystack payment.
 ```
 
 #### GET /api/paystack/verify/:reference
+
 Verify a Paystack payment.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -366,9 +407,11 @@ Verify a Paystack payment.
 ### Admin Endpoints (Protected)
 
 #### GET /api/admin/users
+
 List and search users with pagination.
 
 **Query Parameters:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50, max: 100)
 - `search`: Search by email, name, or phone
@@ -377,6 +420,7 @@ List and search users with pagination.
 - `order`: Sort order (asc, desc)
 
 **Response:**
+
 ```json
 {
   "users": [
@@ -400,9 +444,11 @@ List and search users with pagination.
 ```
 
 #### GET /api/admin/users/:id
+
 Get detailed user information.
 
 **Response:**
+
 ```json
 {
   "user": {
@@ -424,9 +470,11 @@ Get detailed user information.
 ```
 
 #### POST /api/admin/users/:id?action=suspend
+
 Suspend a user account.
 
 **Request Body:**
+
 ```json
 {
   "reason": "Suspicious activity detected",
@@ -435,9 +483,11 @@ Suspend a user account.
 ```
 
 #### GET /api/admin/transactions
+
 List transactions with advanced filtering.
 
 **Query Parameters:**
+
 - `status`: Filter by status (all, pending, completed, failed, refunded)
 - `type`: Filter by type (all, credit, debit)
 - `amountMin`, `amountMax`: Amount range filter
@@ -445,9 +495,11 @@ List transactions with advanced filtering.
 - `userId`: Filter by specific user
 
 #### GET /api/admin/verifications
+
 List NIN verifications with analytics.
 
 **Query Parameters:**
+
 - `status`: Filter by status (all, pending, success, failed)
 - `purpose`: Filter by purpose (all, banking, education_jamb, etc.)
 - `dateFrom`, `dateTo`: Date range filter
@@ -467,6 +519,7 @@ All API endpoints return consistent error responses:
 ```
 
 **Common HTTP Status Codes:**
+
 - `200`: Success
 - `400`: Bad Request (validation errors)
 - `401`: Unauthorized (authentication required)
@@ -474,6 +527,7 @@ All API endpoints return consistent error responses:
 - `404`: Not Found
 - `429`: Too Many Requests (rate limited)
 - `500`: Internal Server Error
+
 ## Authentication & Authorization
 
 ### Session Management
@@ -481,6 +535,7 @@ All API endpoints return consistent error responses:
 The system uses JWT tokens stored in httpOnly cookies for security.
 
 #### Session Creation
+
 ```typescript
 // lib/auth.ts
 export async function setSessionCookie(payload: SessionPayload) {
@@ -491,18 +546,19 @@ export async function setSessionCookie(payload: SessionPayload) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL // 7 days
+    maxAge: SESSION_TTL, // 7 days
   });
 }
 ```
 
 #### Session Validation
+
 ```typescript
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  
+
   try {
     const secret = getSecret();
     const { payload } = await jwtVerify<SessionPayload>(token, secret);
@@ -523,7 +579,7 @@ Routes are protected using Next.js middleware:
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const pathname = request.nextUrl.pathname;
-  
+
   // Require authentication for dashboard and admin routes
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
     if (!token) {
@@ -531,12 +587,12 @@ export async function middleware(request: NextRequest) {
       url.pathname = pathname.startsWith("/admin") ? "/admin-login" : "/login";
       return NextResponse.redirect(url);
     }
-    
+
     const session = await verifySession(token);
     if (!session) {
       // Redirect to appropriate login page
     }
-    
+
     // Admin route protection
     if (pathname.startsWith("/admin")) {
       if (session.role !== "admin" && session.role !== "super_admin") {
@@ -550,6 +606,7 @@ export async function middleware(request: NextRequest) {
 ### Role-Based Access Control
 
 #### User Roles
+
 ```typescript
 type UserRole = "user" | "admin" | "super_admin";
 
@@ -562,11 +619,15 @@ interface SessionPayload {
 ```
 
 #### Permission Checking
+
 ```typescript
 // In API routes
 export async function GET(request: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+  if (
+    !session ||
+    (session.role !== "admin" && session.role !== "super_admin")
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   // Continue with admin logic
@@ -579,22 +640,28 @@ Admin endpoints have rate limiting (100 requests/minute):
 
 ```typescript
 // In middleware.ts
-function checkAdminRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+function checkAdminRateLimit(userId: string): {
+  allowed: boolean;
+  retryAfter?: number;
+} {
   const now = Date.now();
   const windowMs = 60 * 1000; // 1 minute
   const maxRequests = 100;
-  
+
   let entry = adminRateLimitStore.get(userId);
-  
+
   if (!entry || now > entry.resetAt) {
     entry = { count: 0, resetAt: now + windowMs };
     adminRateLimitStore.set(userId, entry);
   }
-  
+
   entry.count++;
   return {
     allowed: entry.count <= maxRequests,
-    retryAfter: entry.count > maxRequests ? Math.ceil((entry.resetAt - now) / 1000) : undefined
+    retryAfter:
+      entry.count > maxRequests
+        ? Math.ceil((entry.resetAt - now) / 1000)
+        : undefined,
   };
 }
 ```
@@ -608,6 +675,7 @@ function checkAdminRateLimit(userId: string): { allowed: boolean; retryAfter?: n
 5. **Rate Limiting**: Prevents brute force attacks
 6. **Input Validation**: Zod schemas for all API inputs
 7. **Audit Logging**: All sensitive operations logged
+
 ## Payment System
 
 ### Paystack Integration
@@ -615,6 +683,7 @@ function checkAdminRateLimit(userId: string): { allowed: boolean; retryAfter?: n
 The system uses Paystack for wallet funding with webhook verification.
 
 #### Payment Flow
+
 1. User initiates wallet funding
 2. System calls Paystack Initialize API
 3. User completes payment on Paystack
@@ -623,78 +692,87 @@ The system uses Paystack for wallet funding with webhook verification.
 6. Wallet balance is updated
 
 #### Payment Initialization
+
 ```typescript
 // lib/paystack.ts
 export async function initializePaystackPayment(
   email: string,
   amount: number, // Amount in kobo
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ) {
-  const response = await fetch("https://api.paystack.co/transaction/initialize", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-      "Content-Type": "application/json"
+  const response = await fetch(
+    "https://api.paystack.co/transaction/initialize",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        amount,
+        currency: "NGN",
+        metadata: {
+          ...metadata,
+          custom_fields: [
+            {
+              display_name: "Service",
+              variable_name: "service",
+              value: "NIN Verification",
+            },
+          ],
+        },
+      }),
     },
-    body: JSON.stringify({
-      email,
-      amount,
-      currency: "NGN",
-      metadata: {
-        ...metadata,
-        custom_fields: [
-          {
-            display_name: "Service",
-            variable_name: "service",
-            value: "NIN Verification"
-          }
-        ]
-      }
-    })
-  });
-  
+  );
+
   return await response.json();
 }
 ```
 
 #### Webhook Verification
+
 ```typescript
 export function verifyPaystackSignature(
   payload: string,
-  signature: string | null
+  signature: string | null,
 ): boolean {
   if (!signature) return false;
-  
+
   const secret = process.env.PAYSTACK_SECRET_KEY;
   const hash = crypto
     .createHmac("sha512", secret)
     .update(payload)
     .digest("hex");
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(hash),
-    Buffer.from(signature)
-  );
+
+  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
 }
 ```
 
 #### Payment Reconciliation
+
 For failed webhook deliveries, users can manually recover payments:
 
 ```typescript
 // API: /api/wallet/check-pending-payments
 export async function POST(request: NextRequest) {
   const { reference } = await request.json();
-  
+
   // Verify payment with Paystack
   const verification = await verifyPaystackPayment(reference);
-  
+
   if (verification.data.status === "success") {
     // Credit user wallet
     await creditWallet(userId, verification.data.amount);
-    
+
     // Log transaction
-    await logPaymentEvent("payment.success", userId, amount, reference, "success");
+    await logPaymentEvent(
+      "payment.success",
+      userId,
+      amount,
+      reference,
+      "success",
+    );
   }
 }
 ```
@@ -704,48 +782,50 @@ export async function POST(request: NextRequest) {
 NIN verification is handled through YouVerify API v2.
 
 #### Verification Process
+
 ```typescript
 // lib/youverify.ts
 export async function verifyNinWithYouVerify(nin: string) {
   const response = await fetch(`${baseUrl}/v2/api/identity/ng/nin`, {
     method: "POST",
     headers: {
-      "token": process.env.YOUVERIFY_TOKEN, // Not Bearer token
-      "Content-Type": "application/json"
+      token: process.env.YOUVERIFY_TOKEN, // Not Bearer token
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       id: nin,
-      isSubjectConsent: true
-    })
+      isSubjectConsent: true,
+    }),
   });
-  
+
   if (response.status === 402) {
     throw new Error("YouVerify account has insufficient funds");
   }
-  
+
   if (response.status === 403) {
     throw new Error("API key missing NIN permission");
   }
-  
+
   return await response.json();
 }
 ```
 
 #### Error Handling & Retry Logic
+
 ```typescript
 // Retry up to 3 times for 502/503 errors
 for (let attempt = 1; attempt <= 3; attempt++) {
   try {
     const response = await fetch(url, options);
-    
+
     if (response.status === 502 || response.status === 503) {
       if (attempt < 3) {
         const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
     }
-    
+
     return await response.json();
   } catch (error) {
     if (attempt === 3) throw error;
@@ -756,12 +836,14 @@ for (let attempt = 1; attempt <= 3; attempt++) {
 ### Transaction Management
 
 #### Transaction States
+
 - **Pending**: Transaction initiated but not completed
 - **Completed**: Successfully processed
 - **Failed**: Processing failed
 - **Refunded**: Amount returned to user
 
 #### Automatic Refunds
+
 When NIN verification fails, the system automatically refunds the user:
 
 ```typescript
@@ -775,11 +857,12 @@ if (verificationResult.success === false) {
     status: "completed",
     amount: NIN_VERIFICATION_COST_KOBO,
     provider: "system",
-    description: "NIN verification failed - automatic refund"
+    description: "NIN verification failed - automatic refund",
   });
-  
+
   // Update wallet balance
-  await db.update(wallets)
+  await db
+    .update(wallets)
     .set({ balance: sql`${wallets.balance} + ${NIN_VERIFICATION_COST_KOBO}` })
     .where(eq(wallets.userId, userId));
 }
@@ -788,11 +871,13 @@ if (verificationResult.success === false) {
 ### Currency & Amounts
 
 The system uses kobo (smallest NGN unit) for all internal calculations:
+
 - ₦1 = 100 kobo
 - ₦500 = 50,000 kobo
 - Minimum funding: ₦50 (5,000 kobo)
 - Maximum funding: ₦1,000,000 (100,000,000 kobo)
 - NIN verification cost: ₦500 (50,000 kobo)
+
 ## Admin System
 
 ### Admin Dashboard Architecture
@@ -800,6 +885,7 @@ The system uses kobo (smallest NGN unit) for all internal calculations:
 The admin system provides comprehensive management capabilities for users, transactions, verifications, and support.
 
 #### Admin Routes Structure
+
 ```
 /admin
 ├── /dashboard          # Overview & metrics
@@ -812,6 +898,7 @@ The admin system provides comprehensive management capabilities for users, trans
 ```
 
 #### Admin Components Architecture
+
 ```
 components/organisms/
 ├── admin-dashboard-client.tsx      # Main dashboard with charts
@@ -828,6 +915,7 @@ components/organisms/
 ### Key Admin Features
 
 #### 1. Dashboard Metrics
+
 Real-time business metrics with visual charts:
 
 ```typescript
@@ -857,6 +945,7 @@ interface DashboardMetrics {
 ```
 
 #### 2. User Management
+
 Advanced user search and management:
 
 ```typescript
@@ -879,6 +968,7 @@ interface UserFilters {
 ```
 
 #### 3. Transaction Monitoring
+
 Comprehensive transaction oversight:
 
 ```typescript
@@ -901,6 +991,7 @@ interface TransactionFilters {
 ```
 
 #### 4. Support Ticket System
+
 Full-featured support management:
 
 ```typescript
@@ -924,6 +1015,7 @@ Open → Assigned → In Progress → Resolved → Closed
 ### Admin API Endpoints
 
 #### Dashboard Metrics
+
 ```typescript
 GET /api/admin/dashboard/metrics
 // Returns real-time business metrics
@@ -933,6 +1025,7 @@ GET /api/admin/dashboard/charts?period=30d
 ```
 
 #### User Management
+
 ```typescript
 GET /api/admin/users?page=1&limit=50&search=john&status=active
 // List users with pagination and filters
@@ -952,6 +1045,7 @@ POST /api/admin/users/:id?action=activate
 ```
 
 #### Transaction Management
+
 ```typescript
 GET /api/admin/transactions?status=pending&dateFrom=2024-01-01
 // List transactions with filters
@@ -975,6 +1069,7 @@ POST /api/admin/transactions/:id/refund
 ### Admin Security & Audit
 
 #### Audit Logging
+
 All admin actions are automatically logged:
 
 ```typescript
@@ -989,7 +1084,7 @@ export async function logAuditEvent(entry: AuditLogEntry) {
     resource: entry.resource,
     action: entry.action,
     status: entry.status,
-    metadata: entry.metadata
+    metadata: entry.metadata,
   });
 }
 
@@ -1001,28 +1096,28 @@ await logAuditEvent({
   resource: "user",
   action: "suspend",
   status: "success",
-  metadata: { targetUserId, reason }
+  metadata: { targetUserId, reason },
 });
 ```
 
 #### Admin Rate Limiting
+
 Admin endpoints have enhanced rate limiting:
 
 ```typescript
 // 100 requests per minute for admin users
 const adminRateLimit = {
   windowMs: 60 * 1000,
-  maxRequests: 100
+  maxRequests: 100,
 };
 
 // Applied in middleware for /admin routes
 if (pathname.startsWith("/admin")) {
   const rateLimit = checkAdminRateLimit(session.userId);
   if (!rateLimit.allowed) {
-    return new NextResponse(
-      JSON.stringify({ error: "Rate limit exceeded" }),
-      { status: 429 }
-    );
+    return new NextResponse(JSON.stringify({ error: "Rate limit exceeded" }), {
+      status: 429,
+    });
   }
 }
 ```
@@ -1030,6 +1125,7 @@ if (pathname.startsWith("/admin")) {
 ### Admin UI Components
 
 #### Metric Cards
+
 ```typescript
 interface MetricCardProps {
   title: string;
@@ -1049,6 +1145,7 @@ interface MetricCardProps {
 ```
 
 #### Data Tables
+
 ```typescript
 interface DataTableProps<T> {
   data: T[];
@@ -1070,6 +1167,7 @@ interface DataTableProps<T> {
 ```
 
 #### Status Badges
+
 ```typescript
 <StatusBadge
   status="active"
@@ -1077,6 +1175,7 @@ interface DataTableProps<T> {
   className="bg-emerald-100 text-emerald-800"
 />
 ```
+
 ## Component Architecture
 
 ### File Organization
@@ -1109,6 +1208,7 @@ components/
 ### Component Patterns
 
 #### 1. Client Components with Server Data
+
 Most admin components follow this pattern:
 
 ```typescript
@@ -1142,6 +1242,7 @@ export function UserManagementClient() {
 ```
 
 #### 2. Modal Components
+
 Reusable modal pattern for detailed views:
 
 ```typescript
@@ -1170,7 +1271,7 @@ export function UserDetailModal({ userId, open, onClose }: UserDetailModalProps)
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="overview">
             <UserOverview user={user} />
           </TabsContent>
@@ -1183,6 +1284,7 @@ export function UserDetailModal({ userId, open, onClose }: UserDetailModalProps)
 ```
 
 #### 3. Form Components
+
 Consistent form handling with react-hook-form and Zod:
 
 ```typescript
@@ -1224,6 +1326,7 @@ export function AdminLoginForm() {
 ### Styling System
 
 #### Tailwind Configuration
+
 ```typescript
 // tailwind.config.ts
 export default {
@@ -1231,25 +1334,26 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#f0fdf4',
-          500: '#22c55e',
-          900: '#14532d'
+          50: "#f0fdf4",
+          500: "#22c55e",
+          900: "#14532d",
         },
         // Admin-specific colors
         admin: {
-          primary: '#1f2937',
-          secondary: '#6b7280'
-        }
+          primary: "#1f2937",
+          secondary: "#6b7280",
+        },
       },
       borderRadius: {
-        '3xl': '1.5rem'
-      }
-    }
-  }
-}
+        "3xl": "1.5rem",
+      },
+    },
+  },
+};
 ```
 
 #### Component Styling Patterns
+
 ```typescript
 // Consistent card styling
 const cardClasses = "rounded-3xl border border-border/50 bg-card p-6";
@@ -1275,6 +1379,7 @@ const getStatusColor = (status: string) => {
 ### State Management
 
 #### Local State with useState
+
 For component-specific state:
 
 ```typescript
@@ -1284,6 +1389,7 @@ const [error, setError] = useState<string | null>(null);
 ```
 
 #### URL State for Filters
+
 Persist filters in URL for better UX:
 
 ```typescript
@@ -1304,21 +1410,27 @@ const updateFilters = (newFilters: UserFilters) => {
 ```
 
 #### SWR for Data Fetching
+
 For frequently updated data:
 
 ```typescript
-import useSWR from 'swr';
+import useSWR from "swr";
 
-const { data: metrics, error, mutate } = useSWR(
-  '/api/admin/dashboard/metrics',
+const {
+  data: metrics,
+  error,
+  mutate,
+} = useSWR(
+  "/api/admin/dashboard/metrics",
   fetcher,
-  { refreshInterval: 30000 } // Refresh every 30 seconds
+  { refreshInterval: 30000 }, // Refresh every 30 seconds
 );
 ```
 
 ### Error Handling
 
 #### Consistent Error Display
+
 ```typescript
 // lib/utils.ts
 export function getFriendlyErrorMessage(error: unknown, fallback = "An error occurred"): string {
@@ -1349,6 +1461,7 @@ try {
 ```
 
 #### Loading States
+
 ```typescript
 // Skeleton loaders for better UX
 function DashboardSkeleton() {
@@ -1366,11 +1479,168 @@ function DashboardSkeleton() {
   <AdminDashboardMetrics />
 </Suspense>
 ```
-## Development Workflow
+
+## External Services Setup
+
+### YouVerify API Setup
+
+1. **Create Account**: Sign up at [YouVerify](https://youverify.co)
+2. **Get API Key**: Navigate to API settings and generate your API key
+3. **Configure Environment**:
+   ```bash
+   YOUVERIFY_API_KEY="your-api-key"
+   YOUVERIFY_BASE_URL="https://api.youverify.co"
+   ```
+4. **Test Connection**:
+   ```bash
+   curl -H "Authorization: Bearer YOUR_API_KEY" \
+        https://api.youverify.co/v2/api/identity/nin/12345678901
+   ```
+
+### Paystack Setup
+
+1. **Create Account**: Sign up at [Paystack](https://paystack.com)
+2. **Get API Keys**: Go to Settings > API Keys & Webhooks
+3. **Configure Environment**:
+   ```bash
+   PAYSTACK_SECRET_KEY="sk_live_..." # Use sk_test_ for testing
+   PAYSTACK_PUBLIC_KEY="pk_live_..." # Use pk_test_ for testing
+   ```
+4. **Setup Webhooks**: Add webhook URL: `https://yourdomain.com/api/paystack/webhook`
+
+### Database Setup (Neon)
+
+1. **Create Account**: Sign up at [Neon](https://neon.tech)
+2. **Create Database**: Create a new PostgreSQL database
+3. **Get Connection String**: Copy the connection string
+4. **Configure Environment**:
+   ```bash
+   DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
+   ```
+
+## Production Deployment
+
+### Vercel Deployment
+
+1. **Connect Repository**: Link your GitHub repository to Vercel
+2. **Environment Variables**: Add all production environment variables
+3. **Build Settings**:
+   ```bash
+   Build Command: npm run build
+   Output Directory: .next
+   Install Command: npm install
+   ```
+4. **Domain Setup**: Configure custom domain if needed
+
+### Environment Variables Checklist
+
+- [ ] `DATABASE_URL` - Production database connection
+- [ ] `AUTH_SECRET` - Secure random string (64+ characters)
+- [ ] `ENCRYPTION_KEY` - Base64 encoded 32-byte key
+- [ ] `PAYSTACK_SECRET_KEY` - Live Paystack secret key
+- [ ] `PAYSTACK_PUBLIC_KEY` - Live Paystack public key
+- [ ] `YOUVERIFY_API_KEY` - Production YouVerify API key
+- [ ] `NODE_ENV=production`
+- [ ] `NEXT_PUBLIC_APP_URL` - Your production domain
+
+### Security Checklist
+
+- [ ] Enable HTTPS/SSL
+- [ ] Configure security headers
+- [ ] Set up rate limiting
+- [ ] Enable audit logging
+- [ ] Configure monitoring and alerts
+- [ ] Set up backup and recovery
+- [ ] Implement proper error handling
+- [ ] Secure API endpoints
+- [ ] Validate all inputs
+- [ ] Encrypt sensitive data
+
+## Security Guidelines
+
+### Data Protection
+
+- All PII data is encrypted at rest using AES-256-GCM
+- Passwords are hashed using bcrypt with 12 salt rounds
+- JWT tokens have short expiration times (15 minutes)
+- Session management with automatic timeout
+- Rate limiting on all API endpoints
+
+### Input Validation
+
+- All inputs are validated using Zod schemas
+- SQL injection prevention through parameterized queries
+- XSS protection through input sanitization
+- File upload restrictions and validation
+- CSRF protection on all forms
+
+### Authentication & Authorization
+
+- Multi-factor authentication for admin accounts
+- Role-based access control (RBAC)
+- Account lockout after failed login attempts
+- Device fingerprinting for suspicious activity detection
+- Audit logging for all authentication events
+
+### API Security
+
+- All API routes use security middleware
+- Request validation and sanitization
+- Rate limiting per endpoint
+- Bot detection and prevention
+- Comprehensive error handling without data leakage
+
+## Testing & Debugging
+
+### Test Data
+
+Use these test credentials for development:
+
+**Admin User**:
+
+- Email: `admin@verifynin.ng`
+- Password: `YourSecurePassword123!`
+
+**Test User**:
+
+- Email: `test.user@example.com`
+- Password: `TestPassword123!`
+
+**Test NIN**: `12345678901` (for development only)
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run security tests
+npm run test:security
+
+# Run with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- user.test.ts
+```
+
+### Debugging
+
+```bash
+# Enable debug logging
+NODE_ENV=development npm run dev
+
+# Database debugging
+npm run db:studio
+
+# Check database health
+npm run db:health
+```
 
 ### Getting Started
 
 #### 1. Environment Setup
+
 ```bash
 # Clone repository
 git clone <repository-url>
@@ -1387,6 +1657,7 @@ cp .env.example .env
 ```
 
 #### 2. Database Setup
+
 ```bash
 # Push schema to database
 npm run db:push
@@ -1402,6 +1673,7 @@ npm run db:studio
 ```
 
 #### 3. Development Server
+
 ```bash
 # Start development server
 npm run dev
@@ -1415,6 +1687,7 @@ npm run dev
 #### Adding New Features
 
 1. **Database Changes**
+
 ```bash
 # Modify db/schema.ts
 # Generate migration
@@ -1425,6 +1698,7 @@ npm run db:migrate
 ```
 
 2. **API Endpoints**
+
 ```typescript
 // app/api/new-feature/route.ts
 import { NextRequest, NextResponse } from "next/server";
@@ -1444,6 +1718,7 @@ export async function GET(request: NextRequest) {
 ```
 
 3. **Components**
+
 ```typescript
 // components/organisms/new-feature-client.tsx
 "use client";
@@ -1455,6 +1730,7 @@ export function NewFeatureClient() {
 ```
 
 4. **Pages**
+
 ```typescript
 // app/admin/new-feature/page.tsx
 import { NewFeatureClient } from "@/components/organisms/new-feature-client";
@@ -1472,12 +1748,16 @@ export default function NewFeaturePage() {
 ### Common Development Tasks
 
 #### Adding New Admin Endpoint
+
 ```typescript
 // 1. Create API route
 // app/api/admin/new-endpoint/route.ts
 export async function GET(request: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+  if (
+    !session ||
+    (session.role !== "admin" && session.role !== "super_admin")
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -1489,7 +1769,7 @@ export async function GET(request: NextRequest) {
     ipAddress: request.headers.get("x-forwarded-for") || "unknown",
     resource: "new-resource",
     action: "view",
-    status: "success"
+    status: "success",
   });
 
   // Your logic
@@ -1500,13 +1780,16 @@ export async function GET(request: NextRequest) {
 ```
 
 #### Adding New Database Table
+
 ```typescript
 // 1. Add to db/schema.ts
 export const newTable = pgTable("new_table", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   data: text("data").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // 2. Generate migration
@@ -1517,13 +1800,14 @@ export const newTable = pgTable("new_table", {
 ```
 
 #### Adding New User Role
+
 ```typescript
 // 1. Update schema
 export const adminRole = pgEnum("admin_role", [
   "user",
   "admin",
   "super_admin",
-  "new_role" // Add new role
+  "new_role", // Add new role
 ]);
 
 // 2. Update types
@@ -1540,6 +1824,7 @@ if (pathname.startsWith("/new-role-routes")) {
 ### Testing
 
 #### Manual Testing
+
 ```bash
 # Test with sandbox credentials
 # Use test NINs: 11111111111 (valid), 00000000000 (invalid)
@@ -1547,6 +1832,7 @@ if (pathname.startsWith("/new-role-routes")) {
 ```
 
 #### API Testing
+
 ```bash
 # Test authentication
 curl -X POST http://localhost:3000/api/auth/login \
@@ -1563,6 +1849,7 @@ curl -X GET http://localhost:3000/api/admin/users \
 #### Common Issues
 
 1. **Database Connection**
+
 ```bash
 # Check DATABASE_URL format
 DATABASE_URL="postgresql://user:password@host:5432/database"
@@ -1572,6 +1859,7 @@ npm run db:studio
 ```
 
 2. **Authentication Issues**
+
 ```bash
 # Check AUTH_SECRET is set (minimum 32 characters)
 AUTH_SECRET="your-secret-key-minimum-32-characters"
@@ -1580,6 +1868,7 @@ AUTH_SECRET="your-secret-key-minimum-32-characters"
 ```
 
 3. **Payment Issues**
+
 ```bash
 # Check Paystack keys
 PAYSTACK_SECRET_KEY="sk_live_..." # or sk_test_...
@@ -1589,6 +1878,7 @@ PAYSTACK_PUBLIC_KEY="pk_live_..." # or pk_test_...
 ```
 
 4. **YouVerify Issues**
+
 ```bash
 # Check token and permissions
 YOUVERIFY_TOKEN="your-live-api-token"
@@ -1599,6 +1889,7 @@ YOUVERIFY_TOKEN="your-live-api-token"
 ```
 
 #### Logging
+
 ```typescript
 // Enable debug logging
 LOG_LEVEL="debug"
@@ -1613,6 +1904,7 @@ SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 10;
 ### Performance Optimization
 
 #### Database Queries
+
 ```typescript
 // Use indexes for common queries
 CREATE INDEX idx_users_email ON users(email);
@@ -1626,6 +1918,7 @@ const users = await db.select()
 ```
 
 #### Component Optimization
+
 ```typescript
 // Use React.memo for expensive components
 export const ExpensiveComponent = React.memo(({ data }) => {
@@ -1635,11 +1928,12 @@ export const ExpensiveComponent = React.memo(({ data }) => {
 // Debounce search inputs
 const debouncedSearch = useMemo(
   () => debounce((value: string) => setSearch(value), 300),
-  []
+  [],
 );
 ```
 
 #### API Optimization
+
 ```typescript
 // Use pagination for large datasets
 const { searchParams } = new URL(request.url);
@@ -1653,11 +1947,13 @@ if (!metrics) {
   await redis.setex("dashboard:metrics", 300, JSON.stringify(freshMetrics));
 }
 ```
+
 ## Testing & Debugging
 
 ### Test Data
 
 #### Test NINs (Sandbox)
+
 ```bash
 # Valid NIN (returns success)
 11111111111
@@ -1669,6 +1965,7 @@ if (!metrics) {
 ```
 
 #### Paystack Test Cards
+
 ```bash
 # Successful payment
 4084084084084081
@@ -1683,6 +1980,7 @@ if (!metrics) {
 ### Debugging Tools
 
 #### Database Inspection
+
 ```bash
 # Open Drizzle Studio
 npm run db:studio
@@ -1694,6 +1992,7 @@ SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 10;
 ```
 
 #### API Testing
+
 ```bash
 # Test authentication
 curl -X POST http://localhost:3000/api/auth/login \
@@ -1713,6 +2012,7 @@ curl -X POST http://localhost:3000/api/nin/verify \
 ```
 
 #### Log Analysis
+
 ```bash
 # Check application logs
 tail -f logs/app.log
@@ -1726,6 +2026,7 @@ grep "AUDIT" logs/app.log
 ### Common Issues & Solutions
 
 #### 1. Authentication Problems
+
 ```bash
 # Symptom: "Unauthorized" errors
 # Check: Session cookie exists and is valid
@@ -1738,6 +2039,7 @@ UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
 ```
 
 #### 2. Payment Issues
+
 ```bash
 # Symptom: Payment deducted but not reflected in wallet
 # Check: Webhook delivery logs
@@ -1749,6 +2051,7 @@ UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
 ```
 
 #### 3. NIN Verification Failures
+
 ```bash
 # Symptom: 402 Insufficient Funds
 # Check: YouVerify wallet balance
@@ -1764,6 +2067,7 @@ UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
 ```
 
 #### 4. Database Issues
+
 ```bash
 # Symptom: Migration errors
 # Check: Database connection and permissions
@@ -1777,33 +2081,35 @@ UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
 ### Performance Monitoring
 
 #### Key Metrics to Monitor
+
 ```typescript
 // API Response Times
-console.time('api-call');
+console.time("api-call");
 // ... API logic
-console.timeEnd('api-call');
+console.timeEnd("api-call");
 
 // Database Query Performance
-console.time('db-query');
+console.time("db-query");
 const users = await db.select().from(users);
-console.timeEnd('db-query');
+console.timeEnd("db-query");
 
 // Memory Usage
-console.log('Memory usage:', process.memoryUsage());
+console.log("Memory usage:", process.memoryUsage());
 ```
 
 #### Database Performance
+
 ```sql
 -- Check slow queries
-SELECT query, mean_exec_time, calls 
-FROM pg_stat_statements 
-ORDER BY mean_exec_time DESC 
+SELECT query, mean_exec_time, calls
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
 LIMIT 10;
 
 -- Check table sizes
-SELECT schemaname, tablename, 
+SELECT schemaname, tablename,
        pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM pg_tables 
+FROM pg_tables
 WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
@@ -1813,6 +2119,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Production Checklist
 
 #### Environment Variables
+
 ```bash
 # Required for production
 DATABASE_URL="postgresql://..."
@@ -1829,6 +2136,7 @@ ENABLE_AUDIT_LOGGING="true"
 ```
 
 #### Database Setup
+
 ```bash
 # Run migrations
 npm run db:migrate
@@ -1841,6 +2149,7 @@ npm run admin:create
 ```
 
 #### Security Configuration
+
 ```bash
 # Strong AUTH_SECRET (generate with)
 openssl rand -base64 32
@@ -1855,6 +2164,7 @@ openssl rand -base64 32
 ### Deployment Platforms
 
 #### Vercel (Recommended)
+
 ```bash
 # Install Vercel CLI
 npm i -g vercel
@@ -1868,6 +2178,7 @@ vercel
 ```
 
 #### Docker Deployment
+
 ```dockerfile
 # Dockerfile
 FROM node:18-alpine
@@ -1890,6 +2201,7 @@ docker run -p 3000:3000 --env-file .env jamb-verify
 ```
 
 #### Manual Server Deployment
+
 ```bash
 # On server
 git clone <repository>
@@ -1910,6 +2222,7 @@ pm2 save
 ### Post-Deployment
 
 #### Health Checks
+
 ```bash
 # Test main endpoints
 curl https://your-domain.com/api/health
@@ -1920,6 +2233,7 @@ curl https://your-domain.com/admin-login
 ```
 
 #### Monitoring Setup
+
 ```bash
 # Set up error tracking (Sentry)
 # Configure log aggregation
@@ -1928,6 +2242,7 @@ curl https://your-domain.com/admin-login
 ```
 
 #### Backup Strategy
+
 ```bash
 # Database backups
 pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
@@ -1941,6 +2256,7 @@ pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
 ### Common Production Issues
 
 #### 1. High Memory Usage
+
 ```bash
 # Check Node.js memory usage
 node --max-old-space-size=2048 server.js
@@ -1954,6 +2270,7 @@ pm2 monit
 ```
 
 #### 2. Database Connection Issues
+
 ```bash
 # Check connection pool settings
 # Increase connection limits if needed
@@ -1963,6 +2280,7 @@ SELECT count(*) FROM pg_stat_activity;
 ```
 
 #### 3. API Rate Limiting
+
 ```bash
 # Monitor rate limit hits
 # Adjust limits based on usage patterns
@@ -1970,6 +2288,7 @@ SELECT count(*) FROM pg_stat_activity;
 ```
 
 #### 4. External API Failures
+
 ```bash
 # Implement circuit breakers
 # Add retry logic with exponential backoff
@@ -1980,6 +2299,7 @@ SELECT count(*) FROM pg_stat_activity;
 ### Emergency Procedures
 
 #### System Maintenance
+
 ```bash
 # Enable maintenance mode
 # Update environment variable or feature flag
@@ -1994,6 +2314,7 @@ pm2 stop jamb-verify
 ```
 
 #### Data Recovery
+
 ```bash
 # Restore from backup
 pg_restore -d $DATABASE_URL backup-20240101.sql
@@ -2004,6 +2325,7 @@ pg_restore -d $DATABASE_URL backup-20240101.sql
 ```
 
 #### Security Incident Response
+
 ```bash
 # Immediate actions:
 # 1. Identify and contain the issue
@@ -2026,6 +2348,7 @@ pg_restore -d $DATABASE_URL backup-20240101.sql
 ## Support
 
 For technical issues or questions:
+
 1. Check this documentation first
 2. Review error logs and audit trails
 3. Test with sandbox/development environment

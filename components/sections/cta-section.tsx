@@ -13,7 +13,7 @@ const sparklePositions = [
   { left: 30, top: 85 },
   { left: 90, top: 60 },
   { left: 15, top: 50 },
-  { left: 75, top: 80 }
+  { left: 75, top: 80 },
 ];
 
 export function CTASection() {
@@ -32,28 +32,28 @@ export function CTASection() {
             className="absolute right-10 top-10 h-32 w-32 rounded-full bg-white/10 blur-3xl"
             animate={{
               scale: [1, 1.5, 1],
-              opacity: [0.3, 0.6, 0.3]
+              opacity: [0.3, 0.6, 0.3],
             }}
             transition={{
               duration: 4,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
           />
           <motion.div
             className="absolute bottom-8 left-12 h-32 w-32 rounded-full bg-white/10 blur-3xl"
             animate={{
               scale: [1, 1.4, 1],
-              opacity: [0.3, 0.5, 0.3]
+              opacity: [0.3, 0.5, 0.3],
             }}
             transition={{
               duration: 5,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: 1
+              delay: 1,
             }}
           />
-          
+
           {/* Floating sparkles */}
           {sparklePositions.map((pos, i) => (
             <motion.div
@@ -61,23 +61,23 @@ export function CTASection() {
               className="absolute"
               style={{
                 left: `${pos.left}%`,
-                top: `${pos.top}%`
+                top: `${pos.top}%`,
               }}
               animate={{
                 y: [0, -30, 0],
                 opacity: [0, 1, 0],
-                scale: [0, 1, 0]
+                scale: [0, 1, 0],
               }}
               transition={{
-                duration: 3 + (i * 0.3),
+                duration: 3 + i * 0.3,
                 repeat: Infinity,
-                delay: i * 0.4
+                delay: i * 0.4,
               }}
             >
               <Sparkles className="h-4 w-4 text-white/60" />
             </motion.div>
           ))}
-          
+
           <div className="relative space-y-8 max-w-3xl">
             <motion.div
               initial={{ opacity: 1, y: 0 }}
@@ -90,7 +90,7 @@ export function CTASection() {
                 <span className="text-sm font-semibold">Start in seconds</span>
               </div>
             </motion.div>
-            
+
             <motion.h2
               initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -100,7 +100,7 @@ export function CTASection() {
             >
               Ready to verify your NIN?
             </motion.h2>
-            
+
             <motion.p
               initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -108,10 +108,11 @@ export function CTASection() {
               transition={{ delay: 0.4 }}
               className="text-lg md:text-xl text-white/90 leading-relaxed"
             >
-              Register once, fund your wallet, and verify any candidate NIN instantly. Every
-              verification document is formatted for official submissions and onboarding.
+              Register once, fund your wallet, and verify any candidate NIN
+              instantly. Every verification document is formatted for official
+              submissions and onboarding.
             </motion.p>
-            
+
             <motion.div
               initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -139,7 +140,7 @@ export function CTASection() {
                 <Link href="/dashboard">Go to dashboard</Link>
               </Button>
             </motion.div>
-            
+
             {/* Stats */}
             <motion.div
               initial={{ opacity: 1, y: 0 }}
@@ -151,7 +152,7 @@ export function CTASection() {
               {[
                 { label: "Verification time", value: "< 10 sec" },
                 { label: "Success rate", value: "99.9%" },
-                { label: "Cost per NIN", value: "₦500" }
+                { label: "Cost per NIN", value: "₦500" },
               ].map((stat, i) => (
                 <div key={i} className="space-y-1">
                   <p className="text-2xl md:text-3xl font-bold">{stat.value}</p>

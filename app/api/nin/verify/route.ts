@@ -12,16 +12,20 @@ import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 import { logNINVerification, logAPIError } from "@/lib/audit-log";
 import { NIN_VERIFICATION_COST_KOBO } from "@/lib/constants";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const schema = z.object({
   nin: z.string(),
-  consent: z.boolean()
+  consent: z.boolean(),
 });
 
 const VERIFICATION_FEE = NIN_VERIFICATION_COST_KOBO; // kobo
 
-async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+async function queryWithRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
@@ -29,7 +33,9 @@ async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> 
     } catch (error) {
       lastError = error;
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 100));
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 100),
+        );
       }
     }
   }
@@ -46,45 +52,50 @@ export async function POST(request: Request) {
   const rateLimitResult = rateLimitMiddleware(
     `nin-verify:${session.userId}`,
     RATE_LIMITS.ninVerify,
-    "/api/nin/verify"
+    "/api/nin/verify",
   );
-  
+
   if (rateLimitResult) {
     return NextResponse.json(
       { message: rateLimitResult.message },
-      { 
+      {
         status: rateLimitResult.status,
-        headers: { "Retry-After": String(rateLimitResult.retryAfter) }
-      }
+        headers: { "Retry-After": String(rateLimitResult.retryAfter) },
+      },
     );
   }
 
-  console.log("[NIN] Verification request from user:", session.userId);
+  logger.info("[NIN] Verification request from user:", {
+    value: session.userId,
+  });
 
   try {
     const body = await request.json();
     const { nin, consent } = schema.parse(body);
 
     if (!consent) {
-      console.log("[NIN] Consent not provided");
+      logger.info("[NIN] Consent not provided");
       return NextResponse.json(
         { message: "Consent is required for NIN verification" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const cleanNin = normalizeNin(nin);
     if (!isValidNin(cleanNin)) {
-      console.log("[NIN] Invalid NIN format:", cleanNin.length, "digits");
+      logger.info("[NIN] Invalid NIN format:", {
+        length: cleanNin.length,
+        unit: "digits",
+      });
       return NextResponse.json(
         { message: "Please enter a valid 11-digit NIN" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const masked = maskNin(cleanNin);
 
-    console.log("[NIN] Processing NIN:", masked);
+    logger.info("[NIN] Processing NIN:", { value: masked });
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     const recentVerification = await db.query.ninVerifications.findFirst({
@@ -93,9 +104,9 @@ export async function POST(request: Request) {
           eq(table.userId, session.userId),
           eq(table.ninMasked, masked),
           eq(table.status, "success"),
-          gte(table.createdAt, tenMinutesAgo)
+          gte(table.createdAt, tenMinutesAgo),
         ),
-      orderBy: (table, { desc }) => [desc(table.createdAt)]
+      orderBy: (table, { desc }) => [desc(table.createdAt)],
     });
 
     if (recentVerification) {
@@ -105,41 +116,44 @@ export async function POST(request: Request) {
         data: {
           fullName: recentVerification.fullName,
           dateOfBirth: recentVerification.dateOfBirth,
-          phone: recentVerification.phone
+          phone: recentVerification.phone,
         },
-        cached: true
+        cached: true,
       });
     }
 
-    console.log("[NIN] Checking wallet balance...");
+    logger.info("[NIN] Checking wallet balance...");
     const wallet = await queryWithRetry(() =>
       db.query.wallets.findFirst({
-        where: (wallets, { eq }) => eq(wallets.userId, session.userId)
-      })
+        where: (wallets, { eq }) => eq(wallets.userId, session.userId),
+      }),
     );
 
     if (!wallet || wallet.balance < VERIFICATION_FEE) {
-      console.log("[NIN] Insufficient balance. Current:", wallet?.balance, "Required:", VERIFICATION_FEE);
+      logger.info("[NIN] Insufficient balance. Current:", {
+        current: wallet?.balance,
+        required: VERIFICATION_FEE,
+      });
       return NextResponse.json(
         { message: "Insufficient wallet balance" },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
     const verificationId = nanoid();
     const debitId = nanoid();
 
-    console.log("[NIN] Creating verification record and debiting wallet...");
-    
+    logger.info("[NIN] Creating verification record and debiting wallet...");
+
     // Log verification initiated
     await logNINVerification(
       "nin.verification.initiated",
       session.userId,
       masked,
       "pending",
-      { verificationId, amount: VERIFICATION_FEE }
+      { verificationId, amount: VERIFICATION_FEE },
     );
-    
+
     // Create verification record (no transaction - neon-http doesn't support it)
     await queryWithRetry(() =>
       db.insert(ninVerifications).values({
@@ -147,8 +161,8 @@ export async function POST(request: Request) {
         userId: session.userId,
         ninMasked: masked,
         consent,
-        status: "pending"
-      })
+        status: "pending",
+      }),
     );
 
     // Create debit transaction
@@ -161,36 +175,39 @@ export async function POST(request: Request) {
         amount: VERIFICATION_FEE,
         provider: "wallet",
         description: "NIN verification",
-        ninMasked: masked
-      })
+        ninMasked: masked,
+      }),
     );
 
     // Debit wallet
     await queryWithRetry(() =>
       db
         .update(wallets)
-        .set({ 
+        .set({
           balance: sql`${wallets.balance} - ${VERIFICATION_FEE}`,
-          updatedAt: sql`now()`
+          updatedAt: sql`now()`,
         })
-        .where(eq(wallets.id, wallet.id))
+        .where(eq(wallets.id, wallet.id)),
     );
 
-    console.log("[NIN] Wallet debited. Calling YouVerify API...");
+    logger.info("[NIN] Wallet debited. Calling YouVerify API...");
 
     let response;
     try {
       response = await verifyNinWithYouVerify(cleanNin);
-      console.log("[NIN] YouVerify response:", JSON.stringify(response, null, 2));
-    } catch (error) {
-      console.error("[NIN] YouVerify API error:", error);
-      console.error("[NIN] Error details:", {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error)
+      logger.info("[NIN] YouVerify response:", {
+        response: JSON.stringify(response, null, 2),
       });
-      
+    } catch (error) {
+      logger.error("[NIN] YouVerify API error:", { error: error });
+      logger.error("[NIN] Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+      });
+
       // Check if it's a rate limit error
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const providerStatus =
         error instanceof Error && "statusCode" in error
           ? (error as Error & { statusCode?: number }).statusCode
@@ -204,23 +221,29 @@ export async function POST(request: Request) {
         errorMessage.includes("insufficient funds") ||
         errorMessage.includes("Insufficient fund");
       const isForbidden =
-        providerStatus === 403 || errorMessage.toLowerCase().includes("forbidden");
+        providerStatus === 403 ||
+        errorMessage.toLowerCase().includes("forbidden");
       const isUnauthorized =
-        providerStatus === 401 || errorMessage.toLowerCase().includes("unauthorized");
-      
+        providerStatus === 401 ||
+        errorMessage.toLowerCase().includes("unauthorized");
+
       // Log failed verification
       await logNINVerification(
         "nin.verification.failed",
         session.userId,
         masked,
         "failure",
-        { 
-          verificationId, 
-          reason: isRateLimit ? "Rate limit exceeded" : isInsufficientFunds ? "Provider insufficient funds" : "Provider error",
-          error: errorMessage
-        }
+        {
+          verificationId,
+          reason: isRateLimit
+            ? "Rate limit exceeded"
+            : isInsufficientFunds
+              ? "Provider insufficient funds"
+              : "Provider error",
+          error: errorMessage,
+        },
       );
-      
+
       // Refund the wallet
       try {
         await handleRefund({
@@ -229,43 +252,55 @@ export async function POST(request: Request) {
           userId: session.userId,
           walletId: wallet.id,
           masked,
-          reason: isRateLimit ? "Rate limit exceeded" : isInsufficientFunds ? "Provider service unavailable" : "Verification provider error"
+          reason: isRateLimit
+            ? "Rate limit exceeded"
+            : isInsufficientFunds
+              ? "Provider service unavailable"
+              : "Verification provider error",
         });
-        console.log("[NIN] Refund completed after API error");
+        logger.info("[NIN] Refund completed after API error");
       } catch (refundError) {
-        console.error("[NIN] Refund failed:", refundError);
+        logger.error("[NIN] Refund failed:", { error: refundError });
         await logAPIError("/api/nin/verify", refundError, session.userId, {
           context: "refund_failed",
-          verificationId
+          verificationId,
         });
       }
-      
+
       // Provide user-friendly message
       if (isInsufficientFunds) {
-        return NextResponse.json({ 
-          message: "The verification service is temporarily unavailable. Your wallet has been refunded. Please try again later or contact support."
-        }, { status: 503 });
+        return NextResponse.json(
+          {
+            message:
+              "The verification service is temporarily unavailable. Your wallet has been refunded. Please try again later or contact support.",
+          },
+          { status: 503 },
+        );
       }
-      
+
       if (isRateLimit) {
-        return NextResponse.json({ 
-          message: "This NIN was recently verified. Please wait 10 minutes before trying again. Your wallet has been refunded."
-        }, { status: 429 });
+        return NextResponse.json(
+          {
+            message:
+              "This NIN was recently verified. Please wait 10 minutes before trying again. Your wallet has been refunded.",
+          },
+          { status: 429 },
+        );
       }
 
       if (isForbidden || isUnauthorized) {
         return NextResponse.json(
           {
             message:
-              "Verification provider rejected this request. If you are testing in sandbox, use the allowed test NIN and try again, or switch to a production token."
+              "Verification provider rejected this request. If you are testing in sandbox, use the allowed test NIN and try again, or switch to a production token.",
           },
-          { status: 403 }
+          { status: 403 },
         );
       }
-      
+
       const message = getFriendlyErrorMessage(
         error,
-        "We couldn't reach the verification provider. Your wallet has been refunded."
+        "We couldn't reach the verification provider. Your wallet has been refunded.",
       );
       return NextResponse.json({ message }, { status: 502 });
     }
@@ -273,7 +308,10 @@ export async function POST(request: Request) {
     const status = response.data?.status?.toLowerCase();
     const details = response.data;
 
-    console.log("[NIN] Verification check - Status:", status, "Has details:", !!details);
+    logger.info("[NIN] Verification check - Status:", {
+      status,
+      hasDetails: !!details,
+    });
 
     if (status === "found" && details) {
       const fullName = [details.firstName, details.middleName, details.lastName]
@@ -281,8 +319,8 @@ export async function POST(request: Request) {
         .join(" ")
         .trim();
 
-      console.log("[NIN] NIN found. Updating verification record...");
-      
+      logger.info("[NIN] NIN found. Updating verification record...");
+
       await db
         .update(ninVerifications)
         .set({
@@ -291,7 +329,7 @@ export async function POST(request: Request) {
           dateOfBirth: details.dateOfBirth || null,
           phone: details.mobile || null,
           providerReference: details.id || null,
-          rawResponse: response as unknown as Record<string, unknown>
+          rawResponse: response as unknown as Record<string, unknown>,
         })
         .where(eq(ninVerifications.id, verificationId));
 
@@ -306,58 +344,58 @@ export async function POST(request: Request) {
         session.userId,
         masked,
         "success",
-        { verificationId, fullName }
+        { verificationId, fullName },
       );
 
-      console.log("[NIN] Verification successful");
+      logger.info("[NIN] Verification successful");
       return NextResponse.json({
         status: "success",
         verificationId,
         data: {
           fullName,
           dateOfBirth: details.dateOfBirth,
-          phone: details.mobile
-        }
+          phone: details.mobile,
+        },
       });
     }
 
-    console.log("[NIN] NIN not found - refunding wallet");
-    
+    logger.info("[NIN] NIN not found - refunding wallet");
+
     // Log failed verification
     await logNINVerification(
       "nin.verification.failed",
       session.userId,
       masked,
       "failure",
-      { verificationId, reason: "NIN not found" }
+      { verificationId, reason: "NIN not found" },
     );
-    
+
     await handleRefund({
       verificationId,
       debitId,
       userId: session.userId,
       walletId: wallet.id,
       masked,
-      reason: "NIN not found"
+      reason: "NIN not found",
     });
 
     return NextResponse.json(
       { message: "NIN not found. Wallet refunded." },
-      { status: 404 }
+      { status: 404 },
     );
   } catch (error) {
-    console.error("[NIN] Verification error:", error);
+    logger.error("[NIN] Verification error:", { error: error });
     if (error instanceof Error) {
-      console.error("[NIN] Error message:", error.message);
-      console.error("[NIN] Error stack:", error.stack);
+      logger.error("[NIN] Error message:", { error: error.message });
+      logger.error("[NIN] Error stack:", { error: error.stack });
     }
-    
+
     // Log API error
     await logAPIError("/api/nin/verify", error, session.userId);
-    
+
     const message = getFriendlyErrorMessage(
       error,
-      "We couldn't complete the verification. Please try again in a few minutes."
+      "We couldn't complete the verification. Please try again in a few minutes.",
     );
     return NextResponse.json({ message }, { status: 500 });
   }
@@ -371,13 +409,15 @@ async function handleRefund(params: {
   masked: string;
   reason: string;
 }) {
-  console.log("[NIN] Starting refund process. Reason:", params.reason);
-  
+  logger.info("[NIN] Starting refund process. Reason:", {
+    value: params.reason,
+  });
+
   let lastError: unknown;
   for (let i = 0; i <= 2; i++) {
     try {
-      console.log(`[NIN] Refund attempt ${i + 1}/3`);
-      
+      logger.info(`[NIN] Refund attempt ${i + 1}/3`);
+
       // Update verification status (no transaction - neon-http doesn't support it)
       await db
         .update(ninVerifications)
@@ -399,30 +439,30 @@ async function handleRefund(params: {
         amount: VERIFICATION_FEE,
         provider: "system",
         description: "NIN verification refund",
-        ninMasked: params.masked
+        ninMasked: params.masked,
       });
 
       // Credit wallet back
       await db
         .update(wallets)
-        .set({ 
+        .set({
           balance: sql`${wallets.balance} + ${VERIFICATION_FEE}`,
-          updatedAt: sql`now()`
+          updatedAt: sql`now()`,
         })
         .where(eq(wallets.id, params.walletId));
 
-      console.log("[NIN] Refund completed successfully");
+      logger.info("[NIN] Refund completed successfully");
       return;
     } catch (error) {
       lastError = error;
-      console.error(`[NIN] Refund attempt ${i + 1} failed:`, error);
+      logger.error(`[NIN] Refund attempt ${i + 1} failed:`, error);
       if (i < 2) {
         const delay = Math.pow(2, i) * 100;
-        console.log(`[NIN] Retrying refund in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        logger.info(`[NIN] Retrying refund in ${delay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
-  console.error("[NIN] Refund failed after all retries:", lastError);
+  logger.error("[NIN] Refund failed after all retries:", { error: lastError });
   throw lastError;
 }
