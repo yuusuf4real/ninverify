@@ -4,12 +4,13 @@ import React, { memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavigationItem {
   name: string;
   href: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   badge?: string | number;
   disabled?: boolean;
 }
@@ -20,39 +21,7 @@ interface ActiveNavigationProps {
   className?: string;
   activeClassName?: string;
   itemClassName?: string;
-  iconClassName?: string;
 }
-
-const variantConfig = {
-  horizontal: {
-    container: "flex items-center gap-2 rounded-full border border-border/70 bg-white/90 px-3 py-2 shadow-sm",
-    item: "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all duration-200",
-    activeItem: "bg-primary text-primary-foreground shadow-sm",
-    inactiveItem: "text-foreground hover:bg-muted/70",
-    icon: "h-4 w-4",
-  },
-  vertical: {
-    container: "space-y-1",
-    item: "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-    activeItem: "bg-primary text-primary-foreground shadow-sm",
-    inactiveItem: "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-    icon: "h-5 w-5",
-  },
-  pills: {
-    container: "flex items-center gap-3 py-3",
-    item: "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200",
-    activeItem: "bg-primary text-primary-foreground",
-    inactiveItem: "bg-white text-foreground hover:bg-gray-50",
-    icon: "h-4 w-4",
-  },
-  sidebar: {
-    container: "space-y-1",
-    item: "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
-    activeItem: "bg-primary/10 text-primary border-r-2 border-primary",
-    inactiveItem: "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-    icon: "h-5 w-5",
-  },
-};
 
 export const ActiveNavigation = memo<ActiveNavigationProps>(
   ({
@@ -61,37 +30,66 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
     className = "",
     activeClassName = "",
     itemClassName = "",
-    iconClassName = "",
   }) => {
     const pathname = usePathname();
-    const config = variantConfig[variant];
 
     const isActive = (href: string) => {
-      if (href === "/") return pathname === "/";
-      if (href === "/admin") return pathname === "/admin";
-      if (href === "/dashboard") return pathname === "/dashboard";
+      if (href === "/") return pathname === href;
       return pathname.startsWith(href);
     };
 
+    const getVariantStyles = () => {
+      switch (variant) {
+        case "vertical":
+          return {
+            container: "flex flex-col space-y-1",
+            item: "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            active: "bg-primary text-white shadow-lg shadow-primary/25",
+            inactive: "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+          };
+        case "pills":
+          return {
+            container:
+              "flex items-center gap-2 rounded-full border border-border/70 bg-white/90 px-3 py-2 shadow-sm",
+            item: "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all duration-200",
+            active: "bg-primary text-white shadow-md",
+            inactive: "text-foreground hover:bg-muted/70",
+          };
+        case "sidebar":
+          return {
+            container: "space-y-1",
+            item: "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
+            active: "bg-primary/10 text-primary border-r-2 border-primary",
+            inactive: "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+          };
+        default: // horizontal
+          return {
+            container: "flex items-center space-x-1",
+            item: "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+            active: "bg-primary text-white shadow-md",
+            inactive: "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+          };
+      }
+    };
+
+    const styles = getVariantStyles();
+
     return (
-      <nav className={cn(config.container, className)}>
+      <nav className={cn(styles.container, className)}>
         {items.map((item) => {
           const active = isActive(item.href);
-          const IconComponent = item.icon;
 
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.disabled ? "#" : item.href}
               className={cn(
-                config.item,
-                active
-                  ? cn(config.activeItem, activeClassName)
-                  : config.inactiveItem,
+                styles.item,
+                active ? cn(styles.active, activeClassName) : styles.inactive,
                 item.disabled && "opacity-50 cursor-not-allowed",
                 itemClassName,
               )}
-              aria-current={active ? "page" : undefined}
+              onClick={item.disabled ? (e) => e.preventDefault() : undefined}
             >
               {/* Active indicator for sidebar variant */}
               {variant === "sidebar" && active && (
@@ -103,22 +101,38 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
                 />
               )}
 
-              {IconComponent && (
-                <IconComponent
-                  className={cn(
-                    config.icon,
-                    active ? "text-current" : "text-current opacity-70",
-                    iconClassName,
-                  )}
-                />
-              )}
-              
+              <item.icon
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  active && "scale-110",
+                )}
+              />
+
               <span className="truncate">{item.name}</span>
-              
+
               {item.badge && (
-                <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
+                <motion.span
+                  className={cn(
+                    "ml-auto rounded-full px-2 py-0.5 text-xs font-medium",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-200 text-gray-700",
+                  )}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                >
                   {item.badge}
-                </span>
+                </motion.span>
+              )}
+
+              {/* Hover effect */}
+              {!active && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl bg-gray-100 opacity-0"
+                  whileHover={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                />
               )}
             </Link>
           );
@@ -129,96 +143,3 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
 );
 
 ActiveNavigation.displayName = "ActiveNavigation";
-
-// Mobile Navigation Component
-interface MobileNavigationProps {
-  items: NavigationItem[];
-  className?: string;
-}
-
-export const MobileNavigation = memo<MobileNavigationProps>(
-  ({ items, className = "" }) => {
-    const pathname = usePathname();
-
-    const isActive = (href: string) => {
-      if (href === "/") return pathname === "/";
-      if (href === "/admin") return pathname === "/admin";
-      if (href === "/dashboard") return pathname === "/dashboard";
-      return pathname.startsWith(href);
-    };
-
-    return (
-      <nav className={cn("border-b border-border/70 bg-white/80 backdrop-blur", className)}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 py-3 overflow-x-auto">
-            {items.map((item) => {
-              const active = isActive(item.href);
-              const IconComponent = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200 whitespace-nowrap",
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-white text-foreground hover:bg-gray-50",
-                  )}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {IconComponent && <IconComponent className="h-4 w-4" />}
-                  {item.name}
-                  {item.badge && (
-                    <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-    );
-  },
-);
-
-MobileNavigation.displayName = "MobileNavigation";
-
-// Breadcrumb Navigation Component
-interface BreadcrumbItem {
-  name: string;
-  href?: string;
-}
-
-interface BreadcrumbNavigationProps {
-  items: BreadcrumbItem[];
-  className?: string;
-}
-
-export const BreadcrumbNavigation = memo<BreadcrumbNavigationProps>(
-  ({ items, className = "" }) => (
-    <nav className={cn("flex items-center space-x-2 text-sm", className)}>
-      {items.map((item, index) => (
-        <React.Fragment key={index}>
-          {index > 0 && (
-            <span className="text-gray-400">/</span>
-          )}
-          {item.href ? (
-            <Link
-              href={item.href}
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              {item.name}
-            </Link>
-          ) : (
-            <span className="text-gray-900 font-medium">{item.name}</span>
-          )}
-        </React.Fragment>
-      ))}
-    </nav>
-  ),
-);
-
-BreadcrumbNavigation.displayName = "BreadcrumbNavigation";

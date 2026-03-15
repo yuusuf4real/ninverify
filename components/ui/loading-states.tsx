@@ -1,24 +1,23 @@
 import React, { memo } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/loading-skeleton";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { cn } from "@/lib/utils";
 
-// Global loading overlay
+// Global loading overlay with animated logo
 export const LoadingOverlay = memo(
   ({ show, message = "Loading..." }: { show: boolean; message?: string }) => {
     if (!show) return null;
 
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <Card className="p-6">
-          <CardContent className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>{message}</span>
-          </CardContent>
-        </Card>
-      </div>
+      <AnimatedLogoLoader
+        show={show}
+        variant="overlay"
+        size="lg"
+        message={message}
+      />
     );
   },
 );
@@ -68,7 +67,7 @@ export const LoadingButton = memo(
       className={cn("flex items-center gap-2", className)}
       {...props}
     >
-      {loading && <LoadingSpinner size="sm" />}
+      {loading && <AnimatedLogoLoader size="sm" variant="inline" />}
       {loading ? loadingText : children}
     </Button>
   ),
@@ -135,14 +134,11 @@ export const ErrorState = memo(
 
 ErrorState.displayName = "ErrorState";
 
-// Page loading component
+// Page loading component with animated logo
 export const PageLoading = memo(
   ({ message = "Loading page..." }: { message?: string }) => (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <LoadingSpinner size="lg" className="mb-4" />
-        <p className="text-gray-600">{message}</p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <AnimatedLogoLoader size="xl" message={message} className="text-center" />
     </div>
   ),
 );

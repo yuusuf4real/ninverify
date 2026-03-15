@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/format";
 
@@ -194,7 +195,7 @@ export function TicketConversation({
   if (loading || !ticket) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <AnimatedLogoLoader size="md" message="Loading conversation..." />
       </div>
     );
   }

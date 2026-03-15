@@ -311,7 +311,7 @@ export function TransactionManagementClient() {
                   disabled={refreshing}
                 >
                   <RefreshCw
-                    className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                    className={`h-4 w-4 mr-2 ${refreshing ? "opacity-50" : ""}`}
                   />
                   Refresh
                 </Button>
