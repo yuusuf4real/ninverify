@@ -484,18 +484,20 @@ export function AdminTicketDetailClient({
           </Card>
 
           {/* Ticket Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+          <Card className="border-emerald-100/80 bg-white shadow-lg">
+            <CardHeader className="border-b border-emerald-100/70 pb-4">
+              <CardTitle className="flex items-center gap-2 text-base text-emerald-900">
+                <Settings className="h-5 w-5 text-emerald-700" />
                 Ticket Management
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Status</label>
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Status
+                </label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2 h-11 bg-white shadow-sm border-slate-200/80 focus:border-emerald-400 focus:ring-emerald-300/40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -508,12 +510,12 @@ export function AdminTicketDetailClient({
                 </Select>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Priority
                 </label>
                 <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2 h-11 bg-white shadow-sm border-slate-200/80 focus:border-emerald-400 focus:ring-emerald-300/40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -528,7 +530,7 @@ export function AdminTicketDetailClient({
               <Button
                 onClick={handleUpdateTicket}
                 disabled={updating}
-                className="w-full"
+                className="w-full rounded-2xl shadow-sm"
               >
                 {updating ? "Updating..." : "Update Ticket"}
               </Button>
