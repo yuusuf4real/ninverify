@@ -23,9 +23,20 @@ export const MobileNavigation = memo<MobileNavigationProps>(
   ({ items, className = "" }) => {
     const pathname = usePathname();
 
+    const normalizePath = (path: string) =>
+      path === "/" ? "/" : path.replace(/\/+$/, "");
+
     const isActive = (href: string) => {
-      if (href === "/") return pathname === href;
-      return pathname.startsWith(href);
+      const current = normalizePath(pathname);
+      const target = normalizePath(href);
+
+      if (target === "/") return current === target;
+      if (current === target) return true;
+
+      const isRootSection = target === "/dashboard" || target === "/admin";
+      if (isRootSection) return false;
+
+      return current.startsWith(`${target}/`);
     };
 
     return (
