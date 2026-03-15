@@ -85,6 +85,7 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
               href={item.disabled ? "#" : item.href}
               className={cn(
                 styles.item,
+                "relative overflow-hidden",
                 active ? cn(styles.active, activeClassName) : styles.inactive,
                 item.disabled && "opacity-50 cursor-not-allowed",
                 itemClassName,
@@ -94,7 +95,7 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
               {/* Active indicator for sidebar variant */}
               {variant === "sidebar" && active && (
                 <motion.div
-                  className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"
+                  className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full z-0"
                   layoutId="activeIndicator"
                   initial={false}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -103,17 +104,17 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
 
               <item.icon
                 className={cn(
-                  "h-4 w-4 transition-transform duration-200",
+                  "h-4 w-4 transition-transform duration-200 relative z-10",
                   active && "scale-110",
                 )}
               />
 
-              <span className="truncate">{item.name}</span>
+              <span className="truncate relative z-10">{item.name}</span>
 
               {item.badge && (
                 <motion.span
                   className={cn(
-                    "ml-auto rounded-full px-2 py-0.5 text-xs font-medium",
+                    "ml-auto rounded-full px-2 py-0.5 text-xs font-medium relative z-10",
                     active
                       ? "bg-white/20 text-white"
                       : "bg-gray-200 text-gray-700",
@@ -129,9 +130,10 @@ export const ActiveNavigation = memo<ActiveNavigationProps>(
               {/* Hover effect */}
               {!active && (
                 <motion.div
-                  className="absolute inset-0 rounded-xl bg-gray-100 opacity-0"
+                  className="absolute inset-0 rounded-xl bg-gray-100 opacity-0 pointer-events-none z-0"
                   whileHover={{ opacity: 1 }}
                   transition={{ duration: 0.2 }}
+                  aria-hidden="true"
                 />
               )}
             </Link>
