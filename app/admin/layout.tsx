@@ -2,21 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import {
-  BarChart3,
-  Users,
-  CreditCard,
-  Shield,
-  LifeBuoy,
-  TrendingUp,
-  Settings,
-  Bell,
-  Search,
-} from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 import { getSession } from "@/lib/auth";
 import { AdminLogoutButton } from "@/components/organisms/admin-logout-button";
-import { ActiveNavigation } from "@/components/ui/active-navigation";
+import { AdminNavigation } from "@/components/ui/admin-navigation";
 
 export default async function AdminLayout({
   children,
@@ -35,18 +25,6 @@ export default async function AdminLayout({
 
   const displayName = session.fullName || session.email;
   const isSuper = session.role === "super_admin";
-
-  const navigation = [
-    { name: "Dashboard", href: "/admin", icon: BarChart3 },
-    { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Transactions", href: "/admin/transactions", icon: CreditCard },
-    { name: "Verifications", href: "/admin/verifications", icon: Shield },
-    { name: "Support", href: "/admin/support", icon: LifeBuoy },
-    { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
-    ...(isSuper
-      ? [{ name: "System", href: "/admin/system", icon: Settings }]
-      : []),
-  ];
 
   return (
     <div className="relative min-h-screen bg-gray-50">
@@ -70,7 +48,7 @@ export default async function AdminLayout({
 
         {/* Navigation */}
         <div className="mt-6 px-3">
-          <ActiveNavigation items={navigation} variant="sidebar" />
+          <AdminNavigation isSuper={isSuper} variant="sidebar" />
         </div>
 
         {/* User Profile */}

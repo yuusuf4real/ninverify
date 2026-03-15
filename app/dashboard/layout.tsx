@@ -2,17 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import {
-  History,
-  RefreshCw,
-  UserCircle,
-  Wallet,
-  MessageSquare,
-} from "lucide-react";
+import { UserCircle } from "lucide-react";
 
 import { getSession } from "@/lib/auth";
 import { LogoutButton } from "@/components/organisms/logout-button";
-import { ActiveNavigation, MobileNavigation } from "@/components/ui/active-navigation";
+import {
+  DashboardMobileNavigation,
+  DashboardNavigation,
+} from "@/components/ui/dashboard-navigation";
 
 export default async function DashboardLayout({
   children,
@@ -26,13 +23,6 @@ export default async function DashboardLayout({
   }
 
   const displayName = session.fullName || session.email;
-
-  const navigationItems = [
-    { name: "Dashboard", href: "/dashboard", icon: Wallet },
-    { name: "History", href: "/dashboard/transactions", icon: History },
-    { name: "Recovery", href: "/dashboard/recovery", icon: RefreshCw },
-    { name: "Support", href: "/dashboard/support", icon: MessageSquare },
-  ];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -67,7 +57,7 @@ export default async function DashboardLayout({
             </Link>
 
             <div className="hidden md:block">
-              <ActiveNavigation items={navigationItems} variant="horizontal" />
+              <DashboardNavigation variant="horizontal" />
             </div>
 
             <div className="flex items-center gap-3">
@@ -88,7 +78,7 @@ export default async function DashboardLayout({
       </header>
 
       <div className="md:hidden">
-        <MobileNavigation items={navigationItems} />
+        <DashboardMobileNavigation />
       </div>
 
       <main className="relative z-10 container mx-auto px-4 pb-12 pt-8 max-w-6xl print:p-0 print:max-w-none">

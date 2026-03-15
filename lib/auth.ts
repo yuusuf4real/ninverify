@@ -38,7 +38,12 @@ export async function getSession(): Promise<SessionPayload | null> {
     return payload;
   } catch (error) {
     // If session parsing fails, clear the invalid session
-    await clearSessionCookie();
+    try {
+      await clearSessionCookie();
+    } catch {
+      // Cookie mutations are not allowed in Server Components.
+      // Swallow the error and treat the session as invalid.
+    }
     return null;
   }
 }
