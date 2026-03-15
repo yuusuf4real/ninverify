@@ -49,7 +49,7 @@ test.describe("Authentication Flow", () => {
 
 test.describe("Admin Authentication", () => {
   test("should display admin login page", async ({ page }) => {
-    await page.goto("/admin-login");
+    await page.goto("/adminlogin-cores");
 
     await expect(page).toHaveTitle(/VerifyNIN/);
     await expect(page.locator("h1")).toContainText("Admin Login");
@@ -58,7 +58,7 @@ test.describe("Admin Authentication", () => {
   test("should redirect to admin dashboard after successful admin login", async ({
     page,
   }) => {
-    await page.goto("/admin-login");
+    await page.goto("/adminlogin-cores");
 
     // Fill in admin credentials
     await page.fill('input[type="email"]', "admin@verifynin.ng");

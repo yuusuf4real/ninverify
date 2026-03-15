@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const SESSION_COOKIE = "verifynin_session";
+const ADMIN_LOGIN_PATH = "/adminlogin-cores";
+const USER_LOGIN_PATH = "/login";
 
 type SessionPayload = {
   userId: string;
@@ -79,18 +81,11 @@ export async function middleware(request: NextRequest) {
 
   // Check if this is an admin route
   const isAdminRoute = pathname.startsWith("/admin");
-  const isAdminLoginPage = false; // Admin login is now handled by route groups
-
-  // Skip middleware for admin login page
-  if (isAdminLoginPage) {
-    return NextResponse.next();
-  }
-
   // Require authentication for dashboard and admin routes
   if (pathname.startsWith("/dashboard") || isAdminRoute) {
     if (!token) {
       const url = request.nextUrl.clone();
-      url.pathname = isAdminRoute ? "/admin-login" : "/login";
+      url.pathname = isAdminRoute ? ADMIN_LOGIN_PATH : USER_LOGIN_PATH;
       return NextResponse.redirect(url);
     }
 
@@ -99,7 +94,7 @@ export async function middleware(request: NextRequest) {
 
     if (!session) {
       const url = request.nextUrl.clone();
-      url.pathname = isAdminRoute ? "/admin-login" : "/login";
+      url.pathname = isAdminRoute ? ADMIN_LOGIN_PATH : USER_LOGIN_PATH;
       return NextResponse.redirect(url);
     }
 
@@ -143,5 +138,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard", "/dashboard/:path*", "/admin", "/admin/:path*"],
 };
