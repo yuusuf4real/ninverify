@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { formatNaira } from "@/lib/format";
 
 const fadeIn = {
@@ -174,7 +175,7 @@ export default function RecoveryPage() {
               >
                 {checking ? (
                   <>
-                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <AnimatedLogoLoader size="sm" variant="inline" />
                     Checking...
                   </>
                 ) : (

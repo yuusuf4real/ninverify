@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -479,8 +480,10 @@ function ContextStep({
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="text-gray-600 mt-2">Loading your recent activity...</p>
+        <AnimatedLogoLoader
+          size="md"
+          message="Loading your recent activity..."
+        />
       </div>
     );
   }

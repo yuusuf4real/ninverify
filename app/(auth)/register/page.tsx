@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { getFriendlyErrorMessage } from "@/lib/utils";
 import { UserPlus, AlertCircle, Eye, EyeOff } from "lucide-react";
 
@@ -247,7 +248,10 @@ export default function RegisterPage() {
 
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? (
-            "Creating account..."
+            <>
+              <AnimatedLogoLoader size="sm" variant="inline" />
+              Creating account...
+            </>
           ) : (
             <>
               <UserPlus className="h-4 w-4" />

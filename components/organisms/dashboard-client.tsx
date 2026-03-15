@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { formatNaira } from "@/lib/format";
 import { NIN_VERIFICATION_COST_KOBO } from "@/lib/constants";
 
@@ -272,7 +273,7 @@ export function DashboardClient() {
                   className="gap-2"
                 >
                   <RefreshCw
-                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                    className={`h-4 w-4 ${refreshing ? "opacity-50" : ""}`}
                   />
                   Refresh
                 </Button>
@@ -402,13 +403,13 @@ export function DashboardClient() {
                 >
                   {verifying ? (
                     <>
-                      <RefreshCw className="h-5 w-5 animate-spin" />
+                      <AnimatedLogoLoader size="sm" variant="inline" />
                       Verifying...
                     </>
                   ) : (
                     <>
                       <Fingerprint className="h-5 w-5" />
-                      Verify NIN Now
+                      Verify NIN
                     </>
                   )}
                 </Button>
@@ -628,7 +629,7 @@ export function DashboardClient() {
                 >
                   {loading ? (
                     <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <AnimatedLogoLoader size="sm" variant="inline" />
                       Processing...
                     </>
                   ) : (

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -177,7 +178,10 @@ export default function LoginPage() {
 
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? (
-            "Signing in..."
+            <>
+              <AnimatedLogoLoader size="sm" variant="inline" />
+              Signing in...
+            </>
           ) : (
             <>
               <LogIn className="h-4 w-4" />
