@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  useConfirmationModal,
+  confirmationActions,
+} from "@/components/ui/confirmation-modal";
 import { formatCurrency } from "@/lib/format";
 
 interface ReconciliationModalProps {
@@ -33,6 +37,7 @@ export function ReconciliationModal({
   onClose,
   onSuccess,
 }: ReconciliationModalProps) {
+  const { showConfirmation, ConfirmationModal } = useConfirmationModal();
   const [formData, setFormData] = useState({
     reference: "",
     userId: "",
@@ -81,61 +86,75 @@ export function ReconciliationModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
-    setSuccess("");
 
-    try {
-      if (!formData.reference.trim()) {
-        throw new Error("Payment reference is required");
-      }
-      if (!formData.userId) {
-        throw new Error("Please select a user");
-      }
-      if (!formData.amount || parseFloat(formData.amount) <= 0) {
-        throw new Error("Please enter a valid amount");
-      }
-
-      const response = await fetch("/api/admin/transactions/reconcile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reference: formData.reference.trim(),
-          userId: formData.userId,
-          amount: parseFloat(formData.amount),
-          description: formData.description.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to reconcile payment");
-      }
-
-      setSuccess("Payment reconciled successfully!");
-
-      // Reset form
-      setFormData({
-        reference: "",
-        userId: "",
-        amount: "",
-        description: "Manual reconciliation",
-      });
-      setSelectedUser(null);
-      setUserSearch("");
-
-      // Close modal after a short delay
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to reconcile payment",
-      );
-    } finally {
-      setLoading(false);
+    // Validate form
+    if (!formData.reference.trim()) {
+      setError("Payment reference is required");
+      return;
     }
+    if (!formData.userId) {
+      setError("Please select a user");
+      return;
+    }
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      setError("Please enter a valid amount");
+      return;
+    }
+
+    const amount = formatCurrency(parseFloat(formData.amount));
+
+    showConfirmation(
+      confirmationActions.reconcileTransaction(amount),
+      async () => {
+        setLoading(true);
+        setSuccess("");
+
+        try {
+          const response = await fetch("/api/admin/transactions/reconcile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reference: formData.reference.trim(),
+              userId: formData.userId,
+              amount: parseFloat(formData.amount),
+              description: formData.description.trim(),
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to reconcile payment");
+          }
+
+          setSuccess("Payment reconciled successfully!");
+
+          // Reset form
+          setFormData({
+            reference: "",
+            userId: "",
+            amount: "",
+            description: "Manual reconciliation",
+          });
+          setSelectedUser(null);
+          setUserSearch("");
+
+          // Close modal after a short delay
+          setTimeout(() => {
+            onSuccess();
+          }, 1500);
+        } catch (error) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Failed to reconcile payment",
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+    );
   };
 
   const handleClose = () => {
@@ -384,6 +403,9 @@ export function ReconciliationModal({
             </div>
           </div>
         </div>
+
+        {/* Confirmation Modal */}
+        {ConfirmationModal}
       </DialogContent>
     </Dialog>
   );
