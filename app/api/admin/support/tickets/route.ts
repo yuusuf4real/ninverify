@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { supportTickets, ticketMessages, users } from "@/db/schema";
+import { supportTickets, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq, desc, and, or, like, count, sql } from "drizzle-orm";
 
@@ -116,8 +116,11 @@ export async function GET(request: NextRequest) {
 
     const total = totalResult[0]?.count || 0;
 
-    // Fetch tickets with pagination
+    // Fetch tickets with pagination and message counts in a single query
     const offset = (query.page - 1) * query.limit;
+
+    // Create aliases for the joins
+    const userTable = users;
 
     const tickets = await db
       .select({
@@ -133,15 +136,25 @@ export async function GET(request: NextRequest) {
         createdAt: supportTickets.createdAt,
         updatedAt: supportTickets.updatedAt,
         resolvedAt: supportTickets.resolvedAt,
-        userEmail: users.email,
-        userFullName: users.fullName,
-        assignedAdminName: sql<string>`assigned_admin.full_name`,
+        userEmail: userTable.email,
+        userFullName: userTable.fullName,
+        assignedAdminEmail: sql<string | null>`assigned_admin.email`,
+        assignedAdminName: sql<string | null>`assigned_admin.full_name`,
+        messageCount: sql<number>`COALESCE(message_counts.count, 0)`,
       })
       .from(supportTickets)
-      .leftJoin(users, eq(supportTickets.userId, users.id))
+      .leftJoin(userTable, eq(supportTickets.userId, userTable.id))
       .leftJoin(
         sql`${users} as assigned_admin`,
         eq(supportTickets.assignedTo, sql`assigned_admin.id`),
+      )
+      .leftJoin(
+        sql`(
+          SELECT ticket_id, COUNT(*) as count 
+          FROM ticket_messages 
+          GROUP BY ticket_id
+        ) as message_counts`,
+        sql`message_counts.ticket_id = ${supportTickets.id}`,
       )
       .where(whereClause)
       .orderBy(
@@ -152,20 +165,7 @@ export async function GET(request: NextRequest) {
       .limit(query.limit)
       .offset(offset);
 
-    // Get message counts for each ticket
-    const ticketsWithCounts = await Promise.all(
-      tickets.map(async (ticket) => {
-        const messageCountResult = await db
-          .select({ count: count() })
-          .from(ticketMessages)
-          .where(eq(ticketMessages.ticketId, ticket.id));
-
-        return {
-          ...ticket,
-          messageCount: messageCountResult[0]?.count || 0,
-        };
-      }),
-    );
+    const ticketsWithCounts = tickets;
 
     // Calculate summary statistics
     const summaryResult = await db

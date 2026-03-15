@@ -28,6 +28,9 @@
     "validate:quick": "npm run lint && npm run type-check && npm run test:security",
     "validate:full": "npm run validate",
     "pre-commit-check": "npm run validate:quick && npm run build",
+    "perf:analyze": "npm run build && npx @next/bundle-analyzer",
+    "perf:lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html",
+    "perf:monitor": "tsx scripts/performance-monitor.ts",
     "prepare": "husky install",
     "ci:full": "npm run lint && npm run lint:security && npm run format:check && npm run type-check && npm run test && npm run test:security && npm run build"
   },
@@ -43,6 +46,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@types/glob": "^8.1.0",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -62,7 +66,8 @@
     "server-only": "^0.0.1",
     "swr": "^2.4.1",
     "tailwind-merge": "^2.5.4",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
