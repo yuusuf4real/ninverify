@@ -2,11 +2,18 @@ import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { getSession } from "@/lib/auth";
 import { PrintButton } from "@/components/organisms/print-button";
-import { CheckCircle2, Calendar, Phone, User, MapPin, Shield } from "lucide-react";
+import {
+  CheckCircle2,
+  Calendar,
+  Phone,
+  User,
+  MapPin,
+  Shield,
+} from "lucide-react";
 import Image from "next/image";
 
 export default async function ReceiptPage({
-  params
+  params,
 }: {
   params: Promise<{ id: string }>;
 }) {
@@ -18,7 +25,7 @@ export default async function ReceiptPage({
 
   const verification = await db.query.ninVerifications.findFirst({
     where: (table, { eq, and }) =>
-      and(eq(table.id, id), eq(table.userId, session.userId))
+      and(eq(table.id, id), eq(table.userId, session.userId)),
   });
 
   if (!verification) {
@@ -29,26 +36,29 @@ export default async function ReceiptPage({
   const rawData = verification.rawResponse as Record<string, unknown> | null;
   const details = (rawData?.data as Record<string, unknown>) || {};
   const address = (details.address as Record<string, unknown>) || {};
-  
+
   const fullName = verification.fullName || "-";
   const dateOfBirth = verification.dateOfBirth || "-";
   const phone = verification.phone || "-";
   const gender = (details.gender as string) || "-";
   const imageUrl = (details.image as string) || null;
-  const addressLine = [
-    address.addressLine as string,
-    address.town as string,
-    address.lga as string,
-    address.state as string
-  ].filter(Boolean).join(", ") || "-";
-  
-  const verificationDate = verification.createdAt 
+  const addressLine =
+    [
+      address.addressLine as string,
+      address.town as string,
+      address.lga as string,
+      address.state as string,
+    ]
+      .filter(Boolean)
+      .join(", ") || "-";
+
+  const verificationDate = verification.createdAt
     ? new Date(verification.createdAt).toLocaleDateString("en-NG", {
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
       })
     : "-";
 
@@ -59,9 +69,12 @@ export default async function ReceiptPage({
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">
           Verification Document
         </p>
-        <h1 className="font-heading text-3xl font-semibold">NIN Verification Result</h1>
+        <h1 className="font-heading text-3xl font-semibold">
+          NIN Verification Result
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Official verification document for banking, education, travel, and other purposes.
+          Official verification document for banking, education, travel, and
+          other purposes.
         </p>
       </div>
 
@@ -97,7 +110,9 @@ export default async function ReceiptPage({
                     height={42}
                     className="h-7 w-auto"
                   />
-                  <p className="text-xs text-muted-foreground">Official Verification Document</p>
+                  <p className="text-xs text-muted-foreground">
+                    Official Verification Document
+                  </p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -107,7 +122,7 @@ export default async function ReceiptPage({
                 Document ID: {verification.id}
               </p>
             </div>
-            
+
             <div className="flex flex-col items-end gap-3">
               <div className="text-right">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-2">
@@ -128,7 +143,7 @@ export default async function ReceiptPage({
                   NIMC Official
                 </p>
               </div>
-              
+
               <div className="print:hidden mt-2">
                 <PrintButton />
               </div>
@@ -143,9 +158,13 @@ export default async function ReceiptPage({
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <p className="font-bold text-emerald-900">VERIFICATION SUCCESSFUL</p>
+              <p className="font-bold text-emerald-900">
+                VERIFICATION SUCCESSFUL
+              </p>
               <div className="flex items-center gap-2 text-sm text-emerald-700">
-                <span>This NIN has been verified against official identity records</span>
+                <span>
+                  This NIN has been verified against official identity records
+                </span>
                 <Image
                   src="/images/nimc.png"
                   alt="NIMC logo"
@@ -167,7 +186,7 @@ export default async function ReceiptPage({
               <User className="h-5 w-5 text-primary" />
               Candidate Information
             </h2>
-            
+
             <div className="grid gap-6 md:grid-cols-[auto_1fr] print:grid-cols-[auto_1fr]">
               {/* Photo */}
               {imageUrl && (
@@ -183,7 +202,7 @@ export default async function ReceiptPage({
                   </div>
                 </div>
               )}
-              
+
               {/* Details Grid */}
               <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2">
                 <div className="rounded-lg border border-border/70 bg-muted/30 p-4 print:bg-gray-50">
@@ -254,34 +273,46 @@ export default async function ReceiptPage({
             </h3>
             <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2">
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Verification Date</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Verification Date
+                </p>
                 <p className="mt-1 font-semibold">{verificationDate}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Verification Status</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Verification Status
+                </p>
                 <p className="mt-1 font-semibold text-emerald-600">
                   {verification.status === "success" ? "VERIFIED" : "FAILED"}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Provider Reference</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Provider Reference
+                </p>
                 <p className="mt-1 font-mono text-sm font-semibold">
                   {verification.providerReference || "N/A"}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Document ID</p>
-                <p className="mt-1 font-mono text-sm font-semibold">{verification.id}</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Document ID
+                </p>
+                <p className="mt-1 font-mono text-sm font-semibold">
+                  {verification.id}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Important Notice */}
           <div className="rounded-lg border-l-4 border-primary bg-primary/5 p-4 print:bg-blue-50">
-            <p className="text-sm font-semibold text-primary">Important Notice</p>
+            <p className="text-sm font-semibold text-primary">
+              Important Notice
+            </p>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              This document serves as proof of NIN verification. It has been verified against the
-              National Identity Management Commission{" "}
+              This document serves as proof of NIN verification. It has been
+              verified against the National Identity Management Commission{" "}
               <Image
                 src="/images/nimc.png"
                 alt="NIMC logo"
@@ -290,9 +321,9 @@ export default async function ReceiptPage({
                 unoptimized
                 className="inline-block h-4 w-4 align-text-bottom"
               />{" "}
-              database. This document is valid for
-              banking, education, travel, employment, and other official purposes. Keep this document safe and do not
-              share with unauthorized persons.
+              database. This document is valid for banking, education, travel,
+              employment, and other official purposes. Keep this document safe
+              and do not share with unauthorized persons.
             </p>
           </div>
 
@@ -301,11 +332,14 @@ export default async function ReceiptPage({
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <p className="text-sm font-bold text-green-900">Official Verification</p>
+                <p className="text-sm font-bold text-green-900">
+                  Official Verification
+                </p>
               </div>
               <p className="text-xs text-green-700">
-                This verification document is accepted for banking, JAMB, WAEC, NECO, passport applications,
-                employment verification, and other official purposes across Nigeria.
+                This verification document is accepted for banking, JAMB, WAEC,
+                NECO, passport applications, employment verification, and other
+                official purposes across Nigeria.
               </p>
             </div>
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -321,7 +355,8 @@ export default async function ReceiptPage({
                 <p className="text-sm font-bold text-blue-900">Verified</p>
               </div>
               <p className="text-xs text-blue-700">
-                Data verified directly from the official national identity database using authorized API access.
+                Data verified directly from the official national identity
+                database using authorized API access.
               </p>
             </div>
           </div>
@@ -337,7 +372,7 @@ export default async function ReceiptPage({
                 Authorized NIN Verification Service
               </p>
             </div>
-            
+
             <div className="flex items-center justify-center gap-8 mb-4 text-xs text-muted-foreground">
               <div className="text-center">
                 <div className="flex items-center justify-center">
@@ -367,12 +402,13 @@ export default async function ReceiptPage({
                 <p className="text-[10px]">Verified Data</p>
               </div>
             </div>
-            
+
             <p className="text-center text-xs text-muted-foreground">
-              Generated on {new Date().toLocaleDateString("en-NG", { 
-                year: "numeric", 
-                month: "long", 
-                day: "numeric" 
+              Generated on{" "}
+              {new Date().toLocaleDateString("en-NG", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </p>
             <p className="mt-1 text-center text-xs text-muted-foreground">

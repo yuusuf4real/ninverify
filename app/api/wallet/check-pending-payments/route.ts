@@ -6,6 +6,7 @@ import { eq, sql } from "drizzle-orm";
 import { verifyPaystackPayment } from "@/lib/paystack";
 import { logPaymentEvent, logAPIError } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 /**
@@ -19,7 +20,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  console.log("[CHECK-PENDING] Starting check for user:", session.userId);
+  logger.info("[CHECK-PENDING] Starting check for user:", {
+    value: session.userId,
+  });
 
   try {
     const body = await request.json();
@@ -28,35 +31,41 @@ export async function POST(request: Request) {
     if (!reference) {
       return NextResponse.json(
         { message: "Payment reference is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log("[CHECK-PENDING] Checking reference:", reference);
+    logger.info("[CHECK-PENDING] Checking reference:", { value: reference });
 
     // Check if transaction already exists in our database
     const existingTx = await db.query.walletTransactions.findFirst({
-      where: (transactions, { eq }) => eq(transactions.reference, reference)
+      where: (transactions, { eq }) => eq(transactions.reference, reference),
     });
 
     if (existingTx) {
-      console.log("[CHECK-PENDING] Transaction found:", {
-        status: existingTx.status,
-        amount: existingTx.amount
+      logger.info("[CHECK-PENDING] Transaction found:", {
+        value: {
+          status: existingTx.status,
+          amount: existingTx.amount,
+        },
       });
 
       if (existingTx.status === "completed") {
         return NextResponse.json({
           message: "Payment already processed",
           status: "completed",
-          amount: existingTx.amount
+          amount: existingTx.amount,
         });
       }
 
       // Transaction exists but not completed - verify with Paystack
-      console.log("[CHECK-PENDING] Transaction pending, verifying with Paystack...");
+      logger.info(
+        "[CHECK-PENDING] Transaction pending, verifying with Paystack...",
+      );
     } else {
-      console.log("[CHECK-PENDING] Transaction not found in database, checking Paystack...");
+      logger.info(
+        "[CHECK-PENDING] Transaction not found in database, checking Paystack...",
+      );
     }
 
     // Verify payment status with Paystack
@@ -70,28 +79,32 @@ export async function POST(request: Request) {
 
     // Check if payment belongs to this user
     if (txData.customer?.email !== session.email) {
-      console.error("[CHECK-PENDING] Payment belongs to different user");
+      logger.error("[CHECK-PENDING] Payment belongs to different user");
       return NextResponse.json(
         { message: "Payment not found or does not belong to you" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (txData.status !== "success") {
-      console.log("[CHECK-PENDING] Payment not successful on Paystack:", txData.status);
+      logger.info("[CHECK-PENDING] Payment not successful on Paystack:", {
+        value: txData.status,
+      });
       return NextResponse.json({
         message: "Payment was not successful",
         status: txData.status,
-        reference
+        reference,
       });
     }
 
     const amountInKobo = txData.amount;
-    console.log("[CHECK-PENDING] Payment successful on Paystack. Amount:", amountInKobo);
+    logger.info("[CHECK-PENDING] Payment successful on Paystack. Amount:", {
+      value: amountInKobo,
+    });
 
     // Get user's wallet
     const wallet = await db.query.wallets.findFirst({
-      where: (wallets, { eq }) => eq(wallets.userId, session.userId)
+      where: (wallets, { eq }) => eq(wallets.userId, session.userId),
     });
 
     if (!wallet) {
@@ -100,19 +113,19 @@ export async function POST(request: Request) {
 
     if (existingTx) {
       // Update existing pending transaction
-      console.log("[CHECK-PENDING] Updating existing transaction to completed");
-      
+      logger.info("[CHECK-PENDING] Updating existing transaction to completed");
+
       await db
         .update(walletTransactions)
-        .set({ 
+        .set({
           status: "completed",
-          amount: amountInKobo // Update amount in case it was wrong
+          amount: amountInKobo, // Update amount in case it was wrong
         })
         .where(eq(walletTransactions.id, existingTx.id));
     } else {
       // Create new transaction record
-      console.log("[CHECK-PENDING] Creating new transaction record");
-      
+      logger.info("[CHECK-PENDING] Creating new transaction record");
+
       await db.insert(walletTransactions).values({
         id: reference,
         userId: session.userId,
@@ -122,23 +135,25 @@ export async function POST(request: Request) {
         provider: "paystack",
         reference: reference,
         description: "Wallet funding via Paystack (recovered)",
-        metadata: { recovered: true, recoveredAt: new Date().toISOString() }
+        metadata: { recovered: true, recoveredAt: new Date().toISOString() },
       });
     }
 
     // Update wallet balance
-    console.log("[CHECK-PENDING] Updating wallet balance");
-    
+    logger.info("[CHECK-PENDING] Updating wallet balance");
+
     const updatedWallet = await db
       .update(wallets)
       .set({
         balance: sql`${wallets.balance} + ${amountInKobo}`,
-        updatedAt: sql`now()`
+        updatedAt: sql`now()`,
       })
       .where(eq(wallets.id, wallet.id))
       .returning();
 
-    console.log("[CHECK-PENDING] Wallet updated. New balance:", updatedWallet[0].balance);
+    logger.info("[CHECK-PENDING] Wallet updated. New balance:", {
+      value: updatedWallet[0].balance,
+    });
 
     // Log successful recovery
     await logPaymentEvent(
@@ -147,7 +162,7 @@ export async function POST(request: Request) {
       amountInKobo,
       reference,
       "success",
-      { recovered: true, method: "user_self_service" }
+      { recovered: true, method: "user_self_service" },
     );
 
     return NextResponse.json({
@@ -155,21 +170,26 @@ export async function POST(request: Request) {
       reference,
       amount: amountInKobo,
       newBalance: updatedWallet[0].balance,
-      recovered: true
+      recovered: true,
     });
   } catch (error) {
-    console.error("[CHECK-PENDING] Error:", error);
-    
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    
-    await logAPIError("/api/wallet/check-pending-payments", error, session.userId);
+    logger.error("[CHECK-PENDING] Error:", { error: error });
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logAPIError(
+      "/api/wallet/check-pending-payments",
+      error,
+      session.userId,
+    );
 
     return NextResponse.json(
       {
         message: "Failed to check payment status",
-        error: errorMessage
+        error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

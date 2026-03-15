@@ -11,7 +11,7 @@ const officialSources = [
     description: "Official NIN database authority",
     accent: "text-emerald-700",
     type: "logo" as const,
-    logo: "/images/nimc.png"
+    logo: "/images/nimc.png",
   },
   {
     name: "Federal Identity",
@@ -19,26 +19,26 @@ const officialSources = [
     description: "Official records used for compliant verification",
     accent: "text-emerald-700",
     type: "logo" as const,
-    logo: "/images/naija.png"
-  }
+    logo: "/images/naija.png",
+  },
 ];
 
 const features = [
   {
     icon: CheckCircle2,
     title: "Application-ready",
-    description: "Receipts formatted for official submissions and onboarding"
+    description: "Receipts formatted for official submissions and onboarding",
   },
   {
     icon: FileCheck,
     title: "NIMC-Verified",
-    description: "Direct integration with official NIN database"
+    description: "Direct integration with official NIN database",
   },
   {
     icon: Shield,
     title: "Secure & Trusted",
-    description: "Government-approved verification process"
-  }
+    description: "Government-approved verification process",
+  },
 ];
 
 export function PartnersSection() {
@@ -59,8 +59,8 @@ export function PartnersSection() {
             Powered by Official Sources
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Our verification service integrates directly with government-approved databases
-            to ensure authenticity and compliance
+            Our verification service integrates directly with
+            government-approved databases to ensure authenticity and compliance
           </p>
         </motion.div>
 
@@ -89,7 +89,9 @@ export function PartnersSection() {
                           className="h-16 w-16 object-contain"
                         />
                       ) : (
-                        <span className={`text-3xl font-heading font-bold ${source.accent}`}>
+                        <span
+                          className={`text-3xl font-heading font-bold ${source.accent}`}
+                        >
                           {source.name}
                         </span>
                       )}
@@ -155,9 +157,13 @@ export function PartnersSection() {
               className="pointer-events-none absolute -right-6 -bottom-6 h-24 w-24 opacity-10"
             />
             <p className="relative text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Official Compliance:</span> All NIN verifications
-              are performed through authorized channels and generate official verification documents accepted
-              for banking, education, travel, employment, and government services across Nigeria.
+              <span className="font-semibold text-foreground">
+                Official Compliance:
+              </span>{" "}
+              All NIN verifications are performed through authorized channels
+              and generate official verification documents accepted for banking,
+              education, travel, employment, and government services across
+              Nigeria.
             </p>
           </div>
         </motion.div>

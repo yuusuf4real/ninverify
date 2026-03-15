@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  MoreHorizontal,
+import { useSearchParams } from "next/navigation";
+import {
+  Search,
+  Download,
   Eye,
-  RefreshCw,
   MessageSquare,
   Clock,
   AlertTriangle,
   CheckCircle,
   User,
-  Calendar
+  Calendar,
+  RefreshCw,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatDate, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
 
 interface SupportTicket {
   id: string;
@@ -76,9 +75,8 @@ interface TicketListResponse {
 }
 
 export function SupportTicketManagementClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [summary, setSummary] = useState<TicketSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,16 +85,20 @@ export function SupportTicketManagementClient() {
     page: 1,
     limit: 50,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
-  
+
   // Filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
-  const [priority, setPriority] = useState(searchParams.get("priority") || "all");
-  const [category, setCategory] = useState(searchParams.get("category") || "all");
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "created_at");
-  const [sortOrder, setSortOrder] = useState(searchParams.get("order") || "desc");
+  const [priority, setPriority] = useState(
+    searchParams.get("priority") || "all",
+  );
+  const [category, setCategory] = useState(
+    searchParams.get("category") || "all",
+  );
+  const [sortBy] = useState(searchParams.get("sort") || "created_at");
+  const [sortOrder] = useState(searchParams.get("order") || "desc");
 
   const fetchTickets = useCallback(async () => {
     setLoading(true);
@@ -109,12 +111,12 @@ export function SupportTicketManagementClient() {
         category,
         sort: sortBy,
         order: sortOrder,
-        ...(search && { search })
+        ...(search && { search }),
       });
 
       const response = await fetch(`/api/admin/support/tickets?${params}`);
       if (!response.ok) throw new Error("Failed to fetch tickets");
-      
+
       const data: TicketListResponse = await response.json();
       setTickets(data.tickets);
       setPagination(data.pagination);
@@ -124,7 +126,16 @@ export function SupportTicketManagementClient() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search, status, priority, category, sortBy, sortOrder]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    search,
+    status,
+    priority,
+    category,
+    sortBy,
+    sortOrder,
+  ]);
 
   useEffect(() => {
     fetchTickets();
@@ -138,51 +149,48 @@ export function SupportTicketManagementClient() {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleStatusChange = (value: string) => {
     setStatus(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handlePriorityChange = (value: string) => {
     setPriority(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleCategoryChange = (value: string) => {
     setCategory(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  const handleSortChange = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortOrder("desc");
-    }
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       open: { className: "bg-blue-100 text-blue-800", label: "Open" },
-      assigned: { className: "bg-purple-100 text-purple-800", label: "Assigned" },
-      in_progress: { className: "bg-amber-100 text-amber-800", label: "In Progress" },
-      resolved: { className: "bg-emerald-100 text-emerald-800", label: "Resolved" },
-      closed: { className: "bg-gray-100 text-gray-800", label: "Closed" }
+      assigned: {
+        className: "bg-purple-100 text-purple-800",
+        label: "Assigned",
+      },
+      in_progress: {
+        className: "bg-amber-100 text-amber-800",
+        label: "In Progress",
+      },
+      resolved: {
+        className: "bg-emerald-100 text-emerald-800",
+        label: "Resolved",
+      },
+      closed: { className: "bg-gray-100 text-gray-800", label: "Closed" },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: status };
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+    };
 
-    return (
-      <Badge className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -190,17 +198,15 @@ export function SupportTicketManagementClient() {
       urgent: { className: "bg-red-100 text-red-800", label: "Urgent" },
       high: { className: "bg-orange-100 text-orange-800", label: "High" },
       medium: { className: "bg-yellow-100 text-yellow-800", label: "Medium" },
-      low: { className: "bg-green-100 text-green-800", label: "Low" }
+      low: { className: "bg-green-100 text-green-800", label: "Low" },
     };
 
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: priority };
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: priority,
+    };
 
-    return (
-      <Badge className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const getCategoryLabel = (category: string) => {
@@ -209,15 +215,10 @@ export function SupportTicketManagementClient() {
       verification_problem: "Verification Problem",
       account_access: "Account Access",
       technical_support: "Technical Support",
-      general_inquiry: "General Inquiry"
+      general_inquiry: "General Inquiry",
     };
 
     return categoryLabels[category as keyof typeof categoryLabels] || category;
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortBy !== field) return null;
-    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   return (
@@ -242,7 +243,9 @@ export function SupportTicketManagementClient() {
                 <Clock className="h-4 w-4 text-amber-500" />
                 <div>
                   <p className="text-sm font-medium">In Progress</p>
-                  <p className="text-2xl font-bold">{summary.inProgressCount}</p>
+                  <p className="text-2xl font-bold">
+                    {summary.inProgressCount}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -318,21 +321,29 @@ export function SupportTicketManagementClient() {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="payment_issue">Payment Issue</SelectItem>
-                  <SelectItem value="verification_problem">Verification Problem</SelectItem>
+                  <SelectItem value="verification_problem">
+                    Verification Problem
+                  </SelectItem>
                   <SelectItem value="account_access">Account Access</SelectItem>
-                  <SelectItem value="technical_support">Technical Support</SelectItem>
-                  <SelectItem value="general_inquiry">General Inquiry</SelectItem>
+                  <SelectItem value="technical_support">
+                    Technical Support
+                  </SelectItem>
+                  <SelectItem value="general_inquiry">
+                    General Inquiry
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={refreshing}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                />
                 Refresh
               </Button>
               <Button variant="outline" size="sm">
@@ -347,19 +358,27 @@ export function SupportTicketManagementClient() {
       {/* Tickets List */}
       <Card>
         <CardHeader>
-          <CardTitle>Support Tickets ({pagination.total.toLocaleString()})</CardTitle>
+          <CardTitle>
+            Support Tickets ({pagination.total.toLocaleString()})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-4">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-20 bg-gray-100 rounded animate-pulse" />
+                <div
+                  key={i}
+                  className="h-20 bg-gray-100 rounded animate-pulse"
+                />
               ))}
             </div>
           ) : (
             <div className="space-y-4">
               {tickets.map((ticket) => (
-                <Card key={ticket.id} className="hover:shadow-md transition-shadow">
+                <Card
+                  key={ticket.id}
+                  className="hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 space-y-3">
@@ -367,7 +386,9 @@ export function SupportTicketManagementClient() {
                         <div className="flex items-start gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-lg">{ticket.subject}</h3>
+                              <h3 className="font-semibold text-lg">
+                                {ticket.subject}
+                              </h3>
                               {getStatusBadge(ticket.status)}
                               {getPriorityBadge(ticket.priority)}
                             </div>
@@ -376,8 +397,12 @@ export function SupportTicketManagementClient() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium">#{ticket.id.slice(0, 8)}</p>
-                            <p className="text-xs text-gray-500">{getCategoryLabel(ticket.category)}</p>
+                            <p className="text-sm font-medium">
+                              #{ticket.id.slice(0, 8)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {getCategoryLabel(ticket.category)}
+                            </p>
                           </div>
                         </div>
 
@@ -386,7 +411,9 @@ export function SupportTicketManagementClient() {
                           <div className="flex items-center gap-1">
                             <User className="h-4 w-4" />
                             <span>{ticket.userFullName}</span>
-                            <span className="text-gray-400">({ticket.userEmail})</span>
+                            <span className="text-gray-400">
+                              ({ticket.userEmail})
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MessageSquare className="h-4 w-4" />
@@ -399,7 +426,9 @@ export function SupportTicketManagementClient() {
                           {ticket.assignedAdminName && (
                             <div className="flex items-center gap-1">
                               <User className="h-4 w-4" />
-                              <span>Assigned to {ticket.assignedAdminName}</span>
+                              <span>
+                                Assigned to {ticket.assignedAdminName}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -453,16 +482,24 @@ export function SupportTicketManagementClient() {
               {/* Pagination */}
               <div className="flex items-center justify-between pt-4">
                 <p className="text-sm text-gray-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{" "}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                  {pagination.total} tickets
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                  {Math.min(
+                    pagination.page * pagination.limit,
+                    pagination.total,
+                  )}{" "}
+                  of {pagination.total} tickets
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={pagination.page <= 1}
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page - 1,
+                      }))
+                    }
                   >
                     Previous
                   </Button>
@@ -470,7 +507,12 @@ export function SupportTicketManagementClient() {
                     variant="outline"
                     size="sm"
                     disabled={pagination.page >= pagination.totalPages}
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page + 1,
+                      }))
+                    }
                   >
                     Next
                   </Button>

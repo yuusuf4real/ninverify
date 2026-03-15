@@ -12,7 +12,7 @@ export function Checkbox({ className, ...props }: CheckboxProps) {
           type="checkbox"
           className={cn(
             "peer h-5 w-5 appearance-none rounded border border-input bg-white/80 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            className
+            className,
           )}
           {...props}
         />

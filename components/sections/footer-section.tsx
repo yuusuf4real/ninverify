@@ -49,7 +49,8 @@ export function FooterSection() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Fast, secure, and NDPR-compliant NIN verification for all your needs.
+              Fast, secure, and NDPR-compliant NIN verification for all your
+              needs.
             </p>
             <div className="flex items-center gap-3">
               <motion.a
@@ -97,7 +98,7 @@ export function FooterSection() {
                 { label: "Features", href: "#features" },
                 { label: "How it works", href: "#how-it-works" },
                 { label: "Use cases", href: "#use-cases" },
-                { label: "Privacy & Security", href: "#security" }
+                { label: "Privacy & Security", href: "#security" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
@@ -150,7 +151,7 @@ export function FooterSection() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               {[
                 { label: "Privacy Policy", href: "/privacy" },
-                { label: "Terms of Service", href: "/terms" }
+                { label: "Terms of Service", href: "/terms" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link

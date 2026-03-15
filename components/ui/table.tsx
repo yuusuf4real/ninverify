@@ -1,17 +1,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="w-full overflow-auto rounded-2xl border border-border/70">
-      <table
-        ref={ref}
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
-    </div>
-  )
-);
+const Table = React.forwardRef<
+  HTMLTableElement,
+  React.HTMLAttributes<HTMLTableElement>
+>(({ className, ...props }, ref) => (
+  <div className="w-full overflow-auto rounded-2xl border border-border/70">
+    <table
+      ref={ref}
+      className={cn("w-full caption-bottom text-sm", className)}
+      {...props}
+    />
+  </div>
+));
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<
@@ -26,7 +27,11 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn("divide-y divide-border/70", className)} {...props} />
+  <tbody
+    ref={ref}
+    className={cn("divide-y divide-border/70", className)}
+    {...props}
+  />
 ));
 TableBody.displayName = "TableBody";
 
@@ -44,7 +49,10 @@ const TableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn("px-4 py-3 text-left font-semibold text-muted-foreground", className)}
+    className={cn(
+      "px-4 py-3 text-left font-semibold text-muted-foreground",
+      className,
+    )}
     {...props}
   />
 ));

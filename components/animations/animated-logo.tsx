@@ -3,7 +3,11 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-export function AnimatedLogo({ size = "default" }: { size?: "default" | "large" }) {
+export function AnimatedLogo({
+  size = "default",
+}: {
+  size?: "default" | "large";
+}) {
   const dimensions = size === "large" ? "h-16 w-16" : "h-11 w-11";
   const iconSize = size === "large" ? "h-12 w-12" : "h-9 w-9";
 
@@ -18,12 +22,12 @@ export function AnimatedLogo({ size = "default" }: { size?: "default" | "large" 
         className="absolute inset-0 rounded-2xl bg-primary/10"
         animate={{
           scale: [1, 1.12, 1],
-          opacity: [0.5, 0.1, 0.5]
+          opacity: [0.5, 0.1, 0.5],
         }}
         transition={{
           duration: 2.2,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
       <motion.div

@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { 
-  X, 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
   DollarSign,
   Activity,
   CreditCard,
   Shield,
   UserX,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,12 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { NIN_VERIFICATION_COST_NAIRA } from "@/lib/constants";
 
@@ -81,7 +75,12 @@ interface UserDetailModalProps {
   onUserUpdated: () => void;
 }
 
-export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDetailModalProps) {
+export function UserDetailModal({
+  userId,
+  open,
+  onClose,
+  onUserUpdated,
+}: UserDetailModalProps) {
   const [userDetail, setUserDetail] = useState<UserDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -91,7 +90,7 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
     try {
       const response = await fetch(`/api/admin/users/${userId}`);
       if (!response.ok) throw new Error("Failed to fetch user details");
-      
+
       const data: UserDetailResponse = await response.json();
       setUserDetail(data);
     } catch (error) {
@@ -109,25 +108,32 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
 
   const handleUserAction = async (action: "suspend" | "activate") => {
     if (!userDetail) return;
-    
+
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/users/${userId}?action=${action}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reason: action === "suspend" ? "Administrative action" : undefined
-        })
-      });
+      const response = await fetch(
+        `/api/admin/users/${userId}?action=${action}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason: action === "suspend" ? "Administrative action" : undefined,
+          }),
+        },
+      );
 
       if (!response.ok) throw new Error(`Failed to ${action} user`);
-      
+
       // Update local state
-      setUserDetail(prev => prev ? {
-        ...prev,
-        user: { ...prev.user, isSuspended: action === "suspend" }
-      } : null);
-      
+      setUserDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              user: { ...prev.user, isSuspended: action === "suspend" },
+            }
+          : null,
+      );
+
       // Notify parent to refresh
       onUserUpdated();
     } catch (error) {
@@ -148,11 +154,16 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
     const statusColors = {
       completed: "bg-emerald-100 text-emerald-800",
       pending: "bg-amber-100 text-amber-800",
-      failed: "bg-red-100 text-red-800"
+      failed: "bg-red-100 text-red-800",
     };
-    
+
     return (
-      <Badge className={statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}>
+      <Badge
+        className={
+          statusColors[status as keyof typeof statusColors] ||
+          "bg-gray-100 text-gray-800"
+        }
+      >
         {status}
       </Badge>
     );
@@ -162,11 +173,16 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
     const statusColors = {
       success: "bg-emerald-100 text-emerald-800",
       failed: "bg-red-100 text-red-800",
-      pending: "bg-amber-100 text-amber-800"
+      pending: "bg-amber-100 text-amber-800",
     };
-    
+
     return (
-      <Badge className={statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}>
+      <Badge
+        className={
+          statusColors[status as keyof typeof statusColors] ||
+          "bg-gray-100 text-gray-800"
+        }
+      >
         {status}
       </Badge>
     );
@@ -202,7 +218,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold">{userDetail.user.fullName}</h3>
+                      <h3 className="text-xl font-semibold">
+                        {userDetail.user.fullName}
+                      </h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <Mail className="h-4 w-4" />
@@ -257,7 +275,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                     <DollarSign className="h-4 w-4 text-primary" />
                     <div>
                       <p className="text-sm font-medium">Wallet Balance</p>
-                      <p className="text-xl font-bold">{formatCurrency(userDetail.user.balance || 0)}</p>
+                      <p className="text-xl font-bold">
+                        {formatCurrency(userDetail.user.balance || 0)}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -268,7 +288,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                     <CreditCard className="h-4 w-4 text-blue-500" />
                     <div>
                       <p className="text-sm font-medium">Total Spent</p>
-                      <p className="text-xl font-bold">{formatCurrency(userDetail.stats.totalSpent)}</p>
+                      <p className="text-xl font-bold">
+                        {formatCurrency(userDetail.stats.totalSpent)}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -279,7 +301,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                     <Shield className="h-4 w-4 text-emerald-500" />
                     <div>
                       <p className="text-sm font-medium">Verifications</p>
-                      <p className="text-xl font-bold">{userDetail.stats.successfulVerifications}</p>
+                      <p className="text-xl font-bold">
+                        {userDetail.stats.successfulVerifications}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -290,7 +314,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                     <Calendar className="h-4 w-4 text-amber-500" />
                     <div>
                       <p className="text-sm font-medium">Account Age</p>
-                      <p className="text-xl font-bold">{userDetail.stats.accountAge} days</p>
+                      <p className="text-xl font-bold">
+                        {userDetail.stats.accountAge} days
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -312,29 +338,51 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                   </CardHeader>
                   <CardContent>
                     {userDetail.transactions.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No transactions found</p>
+                      <p className="text-center text-gray-500 py-8">
+                        No transactions found
+                      </p>
                     ) : (
                       <div className="space-y-4">
                         {userDetail.transactions.map((transaction) => (
-                          <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div
+                            key={transaction.id}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-full ${
-                                transaction.type === "credit" ? "bg-emerald-100" : "bg-red-100"
-                              }`}>
-                                <CreditCard className={`h-4 w-4 ${
-                                  transaction.type === "credit" ? "text-emerald-600" : "text-red-600"
-                                }`} />
+                              <div
+                                className={`p-2 rounded-full ${
+                                  transaction.type === "credit"
+                                    ? "bg-emerald-100"
+                                    : "bg-red-100"
+                                }`}
+                              >
+                                <CreditCard
+                                  className={`h-4 w-4 ${
+                                    transaction.type === "credit"
+                                      ? "text-emerald-600"
+                                      : "text-red-600"
+                                  }`}
+                                />
                               </div>
                               <div>
-                                <p className="font-medium">{transaction.description}</p>
-                                <p className="text-sm text-gray-500">{formatDate(transaction.createdAt)}</p>
+                                <p className="font-medium">
+                                  {transaction.description}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {formatDate(transaction.createdAt)}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className={`font-semibold ${
-                                transaction.type === "credit" ? "text-emerald-600" : "text-red-600"
-                              }`}>
-                                {transaction.type === "credit" ? "+" : "-"}{formatCurrency(transaction.amount)}
+                              <p
+                                className={`font-semibold ${
+                                  transaction.type === "credit"
+                                    ? "text-emerald-600"
+                                    : "text-red-600"
+                                }`}
+                              >
+                                {transaction.type === "credit" ? "+" : "-"}
+                                {formatCurrency(transaction.amount)}
                               </p>
                               {getTransactionStatusBadge(transaction.status)}
                             </div>
@@ -353,22 +401,33 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                   </CardHeader>
                   <CardContent>
                     {userDetail.verifications.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No verifications found</p>
+                      <p className="text-center text-gray-500 py-8">
+                        No verifications found
+                      </p>
                     ) : (
                       <div className="space-y-4">
                         {userDetail.verifications.map((verification) => (
-                          <div key={verification.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div
+                            key={verification.id}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
                             <div className="flex items-center gap-3">
                               <div className="p-2 rounded-full bg-blue-100">
                                 <Shield className="h-4 w-4 text-blue-600" />
                               </div>
                               <div>
-                                <p className="font-medium">NIN: {verification.nin}</p>
-                                <p className="text-sm text-gray-500">{formatDate(verification.createdAt)}</p>
+                                <p className="font-medium">
+                                  NIN: {verification.nin}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {formatDate(verification.createdAt)}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-semibold">₦{NIN_VERIFICATION_COST_NAIRA}</p>
+                              <p className="font-semibold">
+                                ₦{NIN_VERIFICATION_COST_NAIRA}
+                              </p>
                               {getVerificationStatusBadge(verification.status)}
                             </div>
                           </div>
@@ -392,7 +451,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                         </div>
                         <div>
                           <p className="font-medium">Account created</p>
-                          <p className="text-sm text-gray-500">{formatDate(userDetail.user.createdAt)}</p>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(userDetail.user.createdAt)}
+                          </p>
                         </div>
                       </div>
                       {userDetail.user.lastLoginAt && (
@@ -402,7 +463,9 @@ export function UserDetailModal({ userId, open, onClose, onUserUpdated }: UserDe
                           </div>
                           <div>
                             <p className="font-medium">Last login</p>
-                            <p className="text-sm text-gray-500">{formatDate(userDetail.user.lastLoginAt)}</p>
+                            <p className="text-sm text-gray-500">
+                              {formatDate(userDetail.user.lastLoginAt)}
+                            </p>
                           </div>
                         </div>
                       )}

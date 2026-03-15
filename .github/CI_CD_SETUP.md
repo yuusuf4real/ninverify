@@ -11,6 +11,7 @@ This document outlines our comprehensive CI/CD pipeline that ensures 100% bug-fr
 Our CI pipeline runs on every push and pull request to `main` and `develop` branches. It consists of multiple parallel jobs that validate different aspects of code quality:
 
 #### 1. **Code Quality & Linting**
+
 - **ESLint**: Standard code quality checks
 - **Security ESLint**: Security-focused linting rules
 - **Prettier**: Code formatting validation
@@ -18,31 +19,37 @@ Our CI pipeline runs on every push and pull request to `main` and `develop` bran
 - **Dependency Check**: Unused dependency detection
 
 #### 2. **Test Suite** (Matrix Strategy)
+
 - **Unit Tests**: Component and function testing with coverage
 - **Security Tests**: Security-focused test suite
 - **Integration Tests**: End-to-end security integration tests
 
 #### 3. **Build Validation**
+
 - **Production Build**: Validates that code builds successfully
 - **Build Size Check**: Monitors bundle size
 - **Artifact Validation**: Ensures build outputs are correct
 
 #### 4. **Database Validation**
+
 - **Migration Tests**: Validates database migrations
 - **Schema Validation**: Ensures database schema integrity
 - **PostgreSQL Integration**: Tests against real database
 
 #### 5. **Performance Tests**
+
 - **Lighthouse CI**: Performance, accessibility, SEO, best practices
 - **Performance Budget**: Enforces performance thresholds
 - **Core Web Vitals**: Monitors user experience metrics
 
 #### 6. **End-to-End Tests**
+
 - **Playwright**: Cross-browser testing (Chrome, Firefox, Safari)
 - **Mobile Testing**: Responsive design validation
 - **User Journey Testing**: Critical path validation
 
 #### 7. **Accessibility Tests**
+
 - **Axe Core**: Automated accessibility testing
 - **Pa11y**: Additional accessibility validation
 - **WCAG Compliance**: Ensures accessibility standards
@@ -52,25 +59,30 @@ Our CI pipeline runs on every push and pull request to `main` and `develop` bran
 Runs in parallel with CI pipeline and includes:
 
 #### 1. **Static Analysis Security Testing (SAST)**
+
 - **CodeQL**: GitHub's semantic code analysis
 - **Semgrep**: Pattern-based security scanning
 - **Custom Security Rules**: Project-specific security patterns
 
 #### 2. **Dependency Security**
+
 - **npm audit**: Known vulnerability scanning
 - **Snyk**: Advanced vulnerability detection
 - **License Compliance**: Ensures approved licenses only
 
 #### 3. **Secret Detection**
+
 - **TruffleHog**: Git history secret scanning
 - **GitLeaks**: Additional secret detection
 - **Custom Patterns**: Project-specific secret patterns
 
 #### 4. **Container Security** (if applicable)
+
 - **Trivy**: Container vulnerability scanning
 - **Docker Best Practices**: Dockerfile security validation
 
 #### 5. **Infrastructure Security**
+
 - **Checkov**: Infrastructure as Code scanning
 - **Security Misconfigurations**: Cloud security validation
 
@@ -146,20 +158,20 @@ All of these checks must pass before merge:
 
 ```yaml
 Required Checks:
-- code-quality
-- test-suite (unit)
-- test-suite (security) 
-- test-suite (integration)
-- build-validation
-- database-validation
-- performance-tests
-- e2e-tests
-- accessibility-tests
-- security-lint
-- dependency-scan
-- sast-scan
-- secret-scan
-- security-tests
+  - code-quality
+  - test-suite (unit)
+  - test-suite (security)
+  - test-suite (integration)
+  - build-validation
+  - database-validation
+  - performance-tests
+  - e2e-tests
+  - accessibility-tests
+  - security-lint
+  - dependency-scan
+  - sast-scan
+  - secret-scan
+  - security-tests
 ```
 
 ## Pre-commit Hooks
@@ -184,17 +196,20 @@ If ANY check fails, the commit is blocked.
 ### 📋 **Step-by-Step Process**
 
 1. **Create Feature Branch**
+
    ```bash
    git checkout -b feature/JIRA-123-new-feature
    ```
 
 2. **Develop with Local Validation**
+
    ```bash
    # Pre-commit hooks run automatically
    git commit -m "feat: add new feature"
    ```
 
 3. **Push and Create PR**
+
    ```bash
    git push origin feature/JIRA-123-new-feature
    # Create PR on GitHub
@@ -255,6 +270,7 @@ When any gate fails:
 ### 🔧 **Common Issues**
 
 #### Pipeline Failures
+
 ```bash
 # Check specific job logs
 gh run view <run-id>
@@ -264,6 +280,7 @@ gh run rerun <run-id> --failed
 ```
 
 #### Local Pre-commit Issues
+
 ```bash
 # Fix formatting
 npm run format
@@ -276,6 +293,7 @@ npm run ci:full
 ```
 
 #### Security Scan Failures
+
 ```bash
 # Update dependencies
 npm audit fix

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { 
-  Send, 
-  Paperclip, 
-  User, 
-  Bot, 
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Send,
+  Paperclip,
+  User,
+  Bot,
   Clock,
   CheckCircle,
   AlertTriangle,
@@ -13,10 +13,9 @@ import {
   Star,
   RotateCcw,
   Phone,
-  Flag
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,7 +29,7 @@ interface TicketMessage {
   message: string;
   messageType: "text" | "image" | "file" | "system_note";
   isInternal: boolean;
-  attachments?: Array<{ name: string; url: string; type: string; }>;
+  attachments?: Array<{ name: string; url: string; type: string }>;
   createdAt: string;
   readAt?: string;
 }
@@ -66,7 +65,12 @@ interface TicketConversationProps {
   onBack?: () => void;
 }
 
-export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: TicketConversationProps) {
+export function TicketConversation({
+  ticketId,
+  user,
+  isAdmin = false,
+  onBack,
+}: TicketConversationProps) {
   const [ticket, setTicket] = useState<TicketDetails | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -74,32 +78,23 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchTicketDetails();
-    fetchMessages();
-  }, [ticketId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const fetchTicketDetails = async () => {
+  const fetchTicketDetails = useCallback(async () => {
     try {
       const response = await fetch(`/api/support/tickets/${ticketId}`);
       if (!response.ok) throw new Error("Failed to fetch ticket");
-      
+
       const data = await response.json();
       setTicket(data.ticket);
     } catch (error) {
       console.error("Error fetching ticket:", error);
     }
-  };
+  }, [ticketId]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(`/api/support/tickets/${ticketId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch messages");
-      
+
       const data = await response.json();
       setMessages(data.messages || []);
     } catch (error) {
@@ -107,21 +102,33 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
     } finally {
       setLoading(false);
     }
-  };
+  }, [ticketId]);
+
+  useEffect(() => {
+    fetchTicketDetails();
+    fetchMessages();
+  }, [ticketId, fetchTicketDetails, fetchMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
 
     setSending(true);
     try {
-      const response = await fetch(`/api/support/tickets/${ticketId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: newMessage })
-      });
+      const response = await fetch(
+        `/api/support/tickets/${ticketId}/messages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: newMessage }),
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to send message");
-      
+
       setNewMessage("");
       fetchMessages();
     } catch (error) {
@@ -141,14 +148,25 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       open: { className: "bg-blue-100 text-blue-800", label: "Open" },
-      assigned: { className: "bg-purple-100 text-purple-800", label: "Assigned" },
-      in_progress: { className: "bg-amber-100 text-amber-800", label: "In Progress" },
-      resolved: { className: "bg-emerald-100 text-emerald-800", label: "Resolved" },
-      closed: { className: "bg-gray-100 text-gray-800", label: "Closed" }
+      assigned: {
+        className: "bg-purple-100 text-purple-800",
+        label: "Assigned",
+      },
+      in_progress: {
+        className: "bg-amber-100 text-amber-800",
+        label: "In Progress",
+      },
+      resolved: {
+        className: "bg-emerald-100 text-emerald-800",
+        label: "Resolved",
+      },
+      closed: { className: "bg-gray-100 text-gray-800", label: "Closed" },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: status };
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+    };
 
     return <Badge className={config.className}>{config.label}</Badge>;
   };
@@ -158,13 +176,19 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
       urgent: { className: "bg-red-100 text-red-800", label: "Urgent" },
       high: { className: "bg-orange-100 text-orange-800", label: "High" },
       medium: { className: "bg-yellow-100 text-yellow-800", label: "Medium" },
-      low: { className: "bg-green-100 text-green-800", label: "Low" }
+      low: { className: "bg-green-100 text-green-800", label: "Low" },
     };
 
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || 
-                  { className: "bg-gray-100 text-gray-800", label: priority };
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || {
+      className: "bg-gray-100 text-gray-800",
+      label: priority,
+    };
 
-    return <Badge variant="default" className={config.className}>{config.label}</Badge>;
+    return (
+      <Badge variant="default" className={config.className}>
+        {config.label}
+      </Badge>
+    );
   };
 
   if (loading || !ticket) {
@@ -189,7 +213,8 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
             <div>
               <h1 className="text-xl font-semibold">{ticket.subject}</h1>
               <p className="text-sm text-gray-600">
-                Ticket #{ticket.id.slice(-8)} • Created {formatRelativeTime(ticket.createdAt)}
+                Ticket #{ticket.id.slice(-8)} • Created{" "}
+                {formatRelativeTime(ticket.createdAt)}
               </p>
             </div>
           </div>
@@ -229,13 +254,17 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
               {ticket.firstResponseDue && (
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4 text-blue-500" />
-                  <span>Response due: {formatRelativeTime(ticket.firstResponseDue)}</span>
+                  <span>
+                    Response due: {formatRelativeTime(ticket.firstResponseDue)}
+                  </span>
                 </div>
               )}
               {ticket.resolutionDue && (
                 <div className="flex items-center gap-1">
                   <AlertTriangle className="h-4 w-4 text-orange-500" />
-                  <span>Resolution due: {formatRelativeTime(ticket.resolutionDue)}</span>
+                  <span>
+                    Resolution due: {formatRelativeTime(ticket.resolutionDue)}
+                  </span>
                 </div>
               )}
             </div>
@@ -289,12 +318,14 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
       <div className="border-t p-4 bg-white">
         <div className="flex justify-between">
           <div className="flex gap-2">
-            {ticket.status === "resolved" && !ticket.satisfactionRating && !isAdmin && (
-              <Button variant="outline" size="sm">
-                <Star className="h-4 w-4 mr-2" />
-                Rate Support
-              </Button>
-            )}
+            {ticket.status === "resolved" &&
+              !ticket.satisfactionRating &&
+              !isAdmin && (
+                <Button variant="outline" size="sm">
+                  <Star className="h-4 w-4 mr-2" />
+                  Rate Support
+                </Button>
+              )}
             {ticket.status === "closed" && !isAdmin && (
               <Button variant="outline" size="sm">
                 <RotateCcw className="h-4 w-4 mr-2" />
@@ -302,7 +333,7 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
               </Button>
             )}
           </div>
-          
+
           <div className="flex gap-2">
             {isAdmin && (
               <>
@@ -329,13 +360,12 @@ export function TicketConversation({ ticketId, user, isAdmin = false, onBack }: 
   );
 }
 
-function MessageBubble({ 
-  message, 
-  isOwn, 
-  isAdmin 
-}: { 
-  message: TicketMessage; 
-  isOwn: boolean; 
+function MessageBubble({
+  message,
+  isOwn,
+}: {
+  message: TicketMessage;
+  isOwn: boolean;
   isAdmin: boolean;
 }) {
   const getSenderIcon = () => {
@@ -396,15 +426,16 @@ function MessageBubble({
         </div>
 
         {/* Message Content */}
-        <div className="text-sm whitespace-pre-wrap">
-          {message.message}
-        </div>
+        <div className="text-sm whitespace-pre-wrap">{message.message}</div>
 
         {/* Attachments */}
         {message.attachments && message.attachments.length > 0 && (
           <div className="mt-2 space-y-1">
             {message.attachments.map((attachment, index) => (
-              <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
+              <div
+                key={index}
+                className="flex items-center gap-2 text-xs text-gray-600"
+              >
                 <Paperclip className="h-3 w-3" />
                 <span>{attachment.name}</span>
               </div>

@@ -3,49 +3,48 @@
  * Comprehensive logging for security events, compliance, and monitoring
  */
 
-import { db } from '@/db/client';
-import { auditLogs } from '@/db/schema';
-import { SecureLogger } from './secure-logger';
+import { db } from "@/db/client";
+import { auditLogs } from "@/db/schema";
+import { SecureLogger } from "./secure-logger";
 
 export interface AuditEvent {
   userId?: string;
   action: string;
   resource: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   sessionId?: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  category: 'auth' | 'data' | 'system' | 'security' | 'compliance';
+  severity: "low" | "medium" | "high" | "critical";
+  category: "auth" | "data" | "system" | "security" | "compliance";
 }
 
 export interface SecurityEvent {
   type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  details: Record<string, any>;
+  severity: "low" | "medium" | "high" | "critical";
+  details: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   userId?: string;
 }
 
 export class AuditLogger {
-  
   /**
    * Log audit event to database and monitoring systems
    */
   static async logAuditEvent(event: AuditEvent): Promise<void> {
     try {
       // Map to actual database schema
-      const { nanoid } = await import('nanoid');
-      
+      const { nanoid } = await import("nanoid");
+
       // Log to database for compliance
       await db.insert(auditLogs).values({
         id: nanoid(),
-        eventType: 'system.security' as any, // Use a valid enum value
+        eventType: "api.error",
         userId: event.userId || null,
         action: event.action,
         resource: event.resource || null,
-        status: 'success' as any,
+        status: "success",
         metadata: event.details ? event.details : null,
         ipAddress: event.ipAddress || null,
         userAgent: event.userAgent || null,
@@ -60,12 +59,11 @@ export class AuditLogger {
       });
 
       // Send to monitoring system for high/critical events
-      if (event.severity === 'high' || event.severity === 'critical') {
+      if (event.severity === "high" || event.severity === "critical") {
         await this.sendToMonitoring(event);
       }
-
     } catch (error) {
-      SecureLogger.error('Failed to log audit event', error, { event });
+      SecureLogger.error("Failed to log audit event", error, { event });
     }
   }
 
@@ -77,12 +75,12 @@ export class AuditLogger {
       const auditEvent: AuditEvent = {
         userId: event.userId,
         action: event.type,
-        resource: 'security_system',
+        resource: "security_system",
         details: event.details,
         ipAddress: event.ipAddress,
         userAgent: event.userAgent,
         severity: event.severity,
-        category: 'security',
+        category: "security",
       };
 
       await this.logAuditEvent(auditEvent);
@@ -96,12 +94,11 @@ export class AuditLogger {
       });
 
       // Send security alerts for high/critical events
-      if (event.severity === 'high' || event.severity === 'critical') {
+      if (event.severity === "high" || event.severity === "critical") {
         await this.sendSecurityAlert(event);
       }
-
     } catch (error) {
-      SecureLogger.error('Failed to log security event', error, { event });
+      SecureLogger.error("Failed to log security event", error, { event });
     }
   }
 
@@ -109,23 +106,31 @@ export class AuditLogger {
    * Log authentication events
    */
   static async logAuthEvent(
-    action: 'login' | 'logout' | 'login_failed' | 'account_locked' | 'password_reset',
+    action:
+      | "login"
+      | "logout"
+      | "login_failed"
+      | "account_locked"
+      | "password_reset",
     userId?: string,
-    details?: Record<string, any>,
+    details?: Record<string, unknown>,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<void> {
-    const severity = action === 'login_failed' || action === 'account_locked' ? 'medium' : 'low';
-    
+    const severity =
+      action === "login_failed" || action === "account_locked"
+        ? "medium"
+        : "low";
+
     await this.logAuditEvent({
       userId,
       action,
-      resource: 'authentication',
+      resource: "authentication",
       details,
       ipAddress,
       userAgent,
       severity,
-      category: 'auth',
+      category: "auth",
     });
   }
 
@@ -133,15 +138,15 @@ export class AuditLogger {
    * Log data access events
    */
   static async logDataAccess(
-    action: 'read' | 'create' | 'update' | 'delete',
+    action: "read" | "create" | "update" | "delete",
     resource: string,
     userId?: string,
     recordId?: string,
-    details?: Record<string, any>,
-    ipAddress?: string
+    details?: Record<string, unknown>,
+    ipAddress?: string,
   ): Promise<void> {
-    const severity = action === 'delete' ? 'medium' : 'low';
-    
+    const severity = action === "delete" ? "medium" : "low";
+
     await this.logAuditEvent({
       userId,
       action: `data_${action}`,
@@ -149,7 +154,7 @@ export class AuditLogger {
       details: { recordId, ...details },
       ipAddress,
       severity,
-      category: 'data',
+      category: "data",
     });
   }
 
@@ -158,15 +163,15 @@ export class AuditLogger {
    */
   static async logSystemEvent(
     action: string,
-    details?: Record<string, any>,
-    severity: 'low' | 'medium' | 'high' | 'critical' = 'low'
+    details?: Record<string, unknown>,
+    severity: "low" | "medium" | "high" | "critical" = "low",
   ): Promise<void> {
     await this.logAuditEvent({
       action,
-      resource: 'system',
+      resource: "system",
       details,
       severity,
-      category: 'system',
+      category: "system",
     });
   }
 
@@ -177,15 +182,15 @@ export class AuditLogger {
     action: string,
     resource: string,
     userId?: string,
-    details?: Record<string, any>
+    details?: Record<string, unknown>,
   ): Promise<void> {
     await this.logAuditEvent({
       userId,
       action,
       resource,
       details,
-      severity: 'medium',
-      category: 'compliance',
+      severity: "medium",
+      category: "compliance",
     });
   }
 
@@ -198,10 +203,10 @@ export class AuditLogger {
     // - New Relic
     // - Splunk
     // - ELK Stack
-    
-    if (process.env.NODE_ENV === 'production') {
+
+    if (process.env.NODE_ENV === "production") {
       // TODO: Implement monitoring integration
-      SecureLogger.info('Sending to monitoring system', { event });
+      SecureLogger.info("Sending to monitoring system", { event });
     }
   }
 
@@ -214,10 +219,10 @@ export class AuditLogger {
     // - Slack
     // - Email alerts
     // - SMS alerts
-    
-    if (process.env.NODE_ENV === 'production') {
+
+    if (process.env.NODE_ENV === "production") {
       // TODO: Implement alerting integration
-      SecureLogger.error('SECURITY ALERT', null, { event });
+      SecureLogger.error("SECURITY ALERT", null, { event });
     }
   }
 
@@ -234,19 +239,21 @@ export class AuditLogger {
     endDate?: Date;
     limit?: number;
     offset?: number;
-  }): Promise<any[]> {
+  }): Promise<unknown[]> {
     try {
       // Build query with filters
-      let query = db.select().from(auditLogs);
-      
+      const query = db.select().from(auditLogs);
+
       // Apply filters (simplified - in production use proper query builder)
       // This is a basic implementation - enhance with proper filtering
-      
-      const results = await query.limit(filters.limit || 100).offset(filters.offset || 0);
-      
+
+      const results = await query
+        .limit(filters.limit || 100)
+        .offset(filters.offset || 0);
+
       return results;
     } catch (error) {
-      SecureLogger.error('Failed to retrieve audit logs', error, { filters });
+      SecureLogger.error("Failed to retrieve audit logs", error, { filters });
       return [];
     }
   }
@@ -256,7 +263,7 @@ export class AuditLogger {
    */
   static async generateComplianceReport(
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<{
     totalEvents: number;
     eventsByCategory: Record<string, number>;
@@ -282,22 +289,24 @@ export class AuditLogger {
         authEvents: 0,
       };
 
-      logs.forEach(log => {
+      (logs as Array<{ category: string; severity: string }>).forEach((log) => {
         // Count by category
-        report.eventsByCategory[log.category] = (report.eventsByCategory[log.category] || 0) + 1;
-        
+        report.eventsByCategory[log.category] =
+          (report.eventsByCategory[log.category] || 0) + 1;
+
         // Count by severity
-        report.eventsBySeverity[log.severity] = (report.eventsBySeverity[log.severity] || 0) + 1;
-        
+        report.eventsBySeverity[log.severity] =
+          (report.eventsBySeverity[log.severity] || 0) + 1;
+
         // Count specific event types
-        if (log.category === 'security') report.securityEvents++;
-        if (log.category === 'data') report.dataAccessEvents++;
-        if (log.category === 'auth') report.authEvents++;
+        if (log.category === "security") report.securityEvents++;
+        if (log.category === "data") report.dataAccessEvents++;
+        if (log.category === "auth") report.authEvents++;
       });
 
       return report;
     } catch (error) {
-      SecureLogger.error('Failed to generate compliance report', error);
+      SecureLogger.error("Failed to generate compliance report", error);
       return {
         totalEvents: 0,
         eventsByCategory: {},
@@ -318,15 +327,17 @@ export class AuditLogger {
       cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
       // In production, implement proper cleanup with archiving
-      SecureLogger.info(`Cleaning up audit logs older than ${retentionDays} days`, {
-        cutoffDate: cutoffDate.toISOString(),
-      });
+      SecureLogger.info(
+        `Cleaning up audit logs older than ${retentionDays} days`,
+        {
+          cutoffDate: cutoffDate.toISOString(),
+        },
+      );
 
       // TODO: Implement actual cleanup query
       // await db.delete(auditLogs).where(lt(auditLogs.timestamp, cutoffDate));
-
     } catch (error) {
-      SecureLogger.error('Failed to cleanup old audit logs', error);
+      SecureLogger.error("Failed to cleanup old audit logs", error);
     }
   }
 }
@@ -336,8 +347,8 @@ export class AuditLogger {
  */
 export async function logSecurityEvent(
   type: string,
-  details: Record<string, any>,
-  severity: 'low' | 'medium' | 'high' | 'critical' = 'medium'
+  details: Record<string, unknown>,
+  severity: "low" | "medium" | "high" | "critical" = "medium",
 ): Promise<void> {
   await AuditLogger.logSecurityEvent({
     type,
@@ -352,9 +363,9 @@ export async function logSecurityEvent(
 export async function logAuditEvent(
   action: string,
   resource: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
   userId?: string,
-  severity: 'low' | 'medium' | 'high' | 'critical' = 'low'
+  severity: "low" | "medium" | "high" | "critical" = "low",
 ): Promise<void> {
   await AuditLogger.logAuditEvent({
     userId,
@@ -362,6 +373,6 @@ export async function logAuditEvent(
     resource,
     details,
     severity,
-    category: 'system',
+    category: "system",
   });
 }

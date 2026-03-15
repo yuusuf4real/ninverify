@@ -1,26 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { users, wallets, walletTransactions, ninVerifications } from "@/db/schema";
+import {
+  users,
+  wallets,
+  walletTransactions,
+  ninVerifications,
+} from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq, desc } from "drizzle-orm";
 import { logAuditEvent } from "@/lib/audit-log";
 
+import { logger } from "../../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const suspendSchema = z.object({
   reason: z.string().min(1, "Reason is required"),
-  duration: z.number().optional()
+  duration: z.number().optional(),
 });
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,7 +45,7 @@ export async function GET(
         isSuspended: users.isSuspended,
         createdAt: users.createdAt,
         balance: wallets.balance,
-        walletId: wallets.id
+        walletId: wallets.id,
       })
       .from(users)
       .leftJoin(wallets, eq(users.id, wallets.userId))
@@ -54,7 +63,7 @@ export async function GET(
         amount: walletTransactions.amount,
         status: walletTransactions.status,
         description: walletTransactions.description,
-        createdAt: walletTransactions.createdAt
+        createdAt: walletTransactions.createdAt,
       })
       .from(walletTransactions)
       .where(eq(walletTransactions.userId, userId))
@@ -68,7 +77,7 @@ export async function GET(
         ninMasked: ninVerifications.ninMasked,
         status: ninVerifications.status,
         purpose: ninVerifications.purpose,
-        createdAt: ninVerifications.createdAt
+        createdAt: ninVerifications.createdAt,
       })
       .from(ninVerifications)
       .where(eq(ninVerifications.userId, userId))
@@ -77,10 +86,12 @@ export async function GET(
 
     // Calculate stats
     const totalSpent = recentTransactions
-      .filter(t => t.type === "debit" && t.status === "completed")
+      .filter((t) => t.type === "debit" && t.status === "completed")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const successfulVerifications = recentVerifications.filter(v => v.status === "success").length;
+    const successfulVerifications = recentVerifications.filter(
+      (v) => v.status === "success",
+    ).length;
 
     // Log admin action
     await logAuditEvent({
@@ -93,8 +104,8 @@ export async function GET(
       status: "success",
       metadata: {
         targetUserId: userId,
-        targetUserEmail: userDetail.email
-      }
+        targetUserEmail: userDetail.email,
+      },
     });
 
     return NextResponse.json({
@@ -104,27 +115,31 @@ export async function GET(
       stats: {
         totalSpent,
         successfulVerifications,
-        accountAge: Math.floor((Date.now() - userDetail.createdAt.getTime()) / (1000 * 60 * 60 * 24))
-      }
+        accountAge: Math.floor(
+          (Date.now() - userDetail.createdAt.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      },
     });
-
   } catch (error) {
-    console.error("Admin user detail error:", error);
+    logger.error("Admin user detail error:", error);
     return NextResponse.json(
       { error: "Failed to fetch user details" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -154,12 +169,14 @@ export async function POST(
         metadata: {
           targetUserId: userId,
           reason: data.reason,
-          duration: data.duration
-        }
+          duration: data.duration,
+        },
       });
 
-      return NextResponse.json({ success: true, message: "User suspended successfully" });
-
+      return NextResponse.json({
+        success: true,
+        message: "User suspended successfully",
+      });
     } else if (action === "activate") {
       // Update user suspension status
       await db
@@ -177,21 +194,22 @@ export async function POST(
         action: "activate",
         status: "success",
         metadata: {
-          targetUserId: userId
-        }
+          targetUserId: userId,
+        },
       });
 
-      return NextResponse.json({ success: true, message: "User activated successfully" });
-
+      return NextResponse.json({
+        success: true,
+        message: "User activated successfully",
+      });
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
-
   } catch (error) {
-    console.error("Admin user action error:", error);
+    logger.error("Admin user action error:", error);
     return NextResponse.json(
       { error: "Failed to perform user action" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

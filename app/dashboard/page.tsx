@@ -5,7 +5,10 @@ import { getSession } from "@/lib/auth";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const displayName = session?.fullName?.split(" ")[0] || session?.email?.split("@")[0] || "there";
+  const displayName =
+    session?.fullName?.split(" ")[0] ||
+    session?.email?.split("@")[0] ||
+    "there";
 
   return (
     <div className="space-y-6">

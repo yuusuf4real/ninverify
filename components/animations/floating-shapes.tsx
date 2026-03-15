@@ -8,7 +8,7 @@ const particlePositions = [
   { left: 45, top: 75 },
   { left: 70, top: 15 },
   { left: 25, top: 60 },
-  { left: 90, top: 80 }
+  { left: 90, top: 80 },
 ];
 
 export function FloatingShapes() {
@@ -20,12 +20,12 @@ export function FloatingShapes() {
         animate={{
           x: [0, 30, 0],
           y: [0, 50, 0],
-          scale: [1, 1.1, 1]
+          scale: [1, 1.1, 1],
         }}
         transition={{
           duration: 20,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
 
@@ -35,13 +35,13 @@ export function FloatingShapes() {
         animate={{
           x: [0, -40, 0],
           y: [0, 30, 0],
-          scale: [1, 1.15, 1]
+          scale: [1, 1.15, 1],
         }}
         transition={{
           duration: 18,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 1
+          delay: 1,
         }}
       />
 
@@ -51,13 +51,13 @@ export function FloatingShapes() {
         animate={{
           x: [0, 50, 0],
           y: [0, -30, 0],
-          scale: [1, 1.2, 1]
+          scale: [1, 1.2, 1],
         }}
         transition={{
           duration: 15,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 2
+          delay: 2,
         }}
       />
 
@@ -68,17 +68,17 @@ export function FloatingShapes() {
           className="absolute h-2 w-2 rounded-full bg-primary/20"
           style={{
             left: `${pos.left}%`,
-            top: `${pos.top}%`
+            top: `${pos.top}%`,
           }}
           animate={{
             y: [0, -100, 0],
-            opacity: [0, 1, 0]
+            opacity: [0, 1, 0],
           }}
           transition={{
             duration: 5 + i,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: i * 0.8
+            delay: i * 0.8,
           }}
         />
       ))}

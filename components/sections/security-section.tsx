@@ -4,53 +4,65 @@ import { motion } from "framer-motion";
 import { SectionTitle } from "@/components/atoms/section-title";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock, ShieldCheck, Smartphone, Eye, Database, FileKey } from "lucide-react";
+import {
+  Lock,
+  ShieldCheck,
+  Smartphone,
+  Eye,
+  Database,
+  FileKey,
+} from "lucide-react";
 
 const safeguards = [
   {
     title: "Consent-driven requests",
-    description: "Every verification requires explicit consent recorded per request.",
+    description:
+      "Every verification requires explicit consent recorded per request.",
     icon: ShieldCheck,
-    color: "from-emerald-500/20 to-primary/10"
+    color: "from-emerald-500/20 to-primary/10",
   },
   {
     title: "Masked NIN history",
     description: "Transaction logs only store masked NIN values for privacy.",
     icon: Eye,
-    color: "from-blue-500/20 to-accent/10"
+    color: "from-blue-500/20 to-accent/10",
   },
   {
     title: "Encrypted data storage",
     description: "All sensitive data is encrypted at rest and in transit.",
     icon: Lock,
-    color: "from-purple-500/20 to-primary/10"
+    color: "from-purple-500/20 to-primary/10",
   },
   {
     title: "Document access on any device",
-    description: "Download verification documents securely from mobile or desktop dashboards.",
+    description:
+      "Download verification documents securely from mobile or desktop dashboards.",
     icon: Smartphone,
-    color: "from-orange-500/20 to-secondary/10"
+    color: "from-orange-500/20 to-secondary/10",
   },
   {
     title: "Audit trail logging",
     description: "Complete audit logs for compliance and transparency.",
     icon: Database,
-    color: "from-pink-500/20 to-secondary/10"
+    color: "from-pink-500/20 to-secondary/10",
   },
   {
     title: "Secure API integration",
     description: "Industry-standard security with YouVerify and Paystack.",
     icon: FileKey,
-    color: "from-teal-500/20 to-accent/10"
-  }
+    color: "from-teal-500/20 to-accent/10",
+  },
 ];
 
 export function SecuritySection() {
   return (
-    <section id="security" className="py-24 relative overflow-hidden bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+    <section
+      id="security"
+      className="py-24 relative overflow-hidden bg-gradient-to-b from-transparent via-muted/30 to-transparent"
+    >
       {/* Animated grid background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-      
+
       <div className="container relative z-10 space-y-16">
         <motion.div
           initial={{ opacity: 1, y: 0 }}
@@ -78,7 +90,7 @@ export function SecuritySection() {
             </motion.div>
           </div>
         </motion.div>
-        
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {safeguards.map((item, index) => (
             <motion.div
@@ -90,8 +102,10 @@ export function SecuritySection() {
             >
               <Card className="group relative overflow-hidden border-border/60 bg-white/90 hover:shadow-glow transition-all duration-300 h-full">
                 {/* Gradient overlay on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                />
+
                 <div className="relative space-y-4 p-6">
                   {/* Icon with animation */}
                   <motion.div
@@ -101,16 +115,16 @@ export function SecuritySection() {
                   >
                     <item.icon className="h-6 w-6" />
                   </motion.div>
-                  
+
                   <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
-                  
+
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {item.description}
                   </p>
                 </div>
-                
+
                 {/* Animated corner accent */}
                 <motion.div
                   className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-bl-full"
@@ -123,7 +137,7 @@ export function SecuritySection() {
             </motion.div>
           ))}
         </div>
-        
+
         {/* Trust indicators */}
         <motion.div
           initial={{ opacity: 1, y: 0 }}

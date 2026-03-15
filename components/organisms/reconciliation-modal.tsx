@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  CreditCard, 
-  Search,
-  AlertCircle,
-  CheckCircle
-} from "lucide-react";
+import { CreditCard, Search, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/format";
 
@@ -32,16 +27,22 @@ interface UserSearchResult {
   balance: number;
 }
 
-export function ReconciliationModal({ open, onClose, onSuccess }: ReconciliationModalProps) {
+export function ReconciliationModal({
+  open,
+  onClose,
+  onSuccess,
+}: ReconciliationModalProps) {
   const [formData, setFormData] = useState({
     reference: "",
     userId: "",
     amount: "",
-    description: "Manual reconciliation"
+    description: "Manual reconciliation",
   });
   const [userSearch, setUserSearch] = useState("");
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
-  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
@@ -55,9 +56,11 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
 
     setSearching(true);
     try {
-      const response = await fetch(`/api/admin/users?search=${encodeURIComponent(query)}&limit=5`);
+      const response = await fetch(
+        `/api/admin/users?search=${encodeURIComponent(query)}&limit=5`,
+      );
       if (!response.ok) throw new Error("Failed to search users");
-      
+
       const data = await response.json();
       setSearchResults(data.users || []);
     } catch (error) {
@@ -70,7 +73,7 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
 
   const handleUserSelect = (user: UserSearchResult) => {
     setSelectedUser(user);
-    setFormData(prev => ({ ...prev, userId: user.id }));
+    setFormData((prev) => ({ ...prev, userId: user.id }));
     setUserSearch(user.email);
     setSearchResults([]);
   };
@@ -99,8 +102,8 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
           reference: formData.reference.trim(),
           userId: formData.userId,
           amount: parseFloat(formData.amount),
-          description: formData.description.trim()
-        })
+          description: formData.description.trim(),
+        }),
       });
 
       const data = await response.json();
@@ -110,24 +113,25 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
       }
 
       setSuccess("Payment reconciled successfully!");
-      
+
       // Reset form
       setFormData({
         reference: "",
         userId: "",
         amount: "",
-        description: "Manual reconciliation"
+        description: "Manual reconciliation",
       });
       setSelectedUser(null);
       setUserSearch("");
-      
+
       // Close modal after a short delay
       setTimeout(() => {
         onSuccess();
       }, 1500);
-
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to reconcile payment");
+      setError(
+        error instanceof Error ? error.message : "Failed to reconcile payment",
+      );
     } finally {
       setLoading(false);
     }
@@ -139,7 +143,7 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
         reference: "",
         userId: "",
         amount: "",
-        description: "Manual reconciliation"
+        description: "Manual reconciliation",
       });
       setSelectedUser(null);
       setUserSearch("");
@@ -186,7 +190,12 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
               <Input
                 placeholder="Enter Paystack reference or transaction ID"
                 value={formData.reference}
-                onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    reference: e.target.value,
+                  }))
+                }
                 disabled={loading}
                 required
               />
@@ -210,7 +219,7 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
                     handleUserSearch(e.target.value);
                     if (!e.target.value) {
                       setSelectedUser(null);
-                      setFormData(prev => ({ ...prev, userId: "" }));
+                      setFormData((prev) => ({ ...prev, userId: "" }));
                     }
                   }}
                   className="pl-10"
@@ -239,10 +248,14 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">{user.fullName}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
+                              <p className="text-sm text-gray-500">
+                                {user.email}
+                              </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-medium">{formatCurrency(user.balance)}</p>
+                              <p className="text-sm font-medium">
+                                {formatCurrency(user.balance)}
+                              </p>
                               <p className="text-xs text-gray-500">Balance</p>
                             </div>
                           </div>
@@ -260,10 +273,14 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{selectedUser.fullName}</p>
-                        <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                        <p className="text-sm text-gray-500">
+                          {selectedUser.email}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <Badge className="bg-emerald-100 text-emerald-800">Selected</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-800">
+                          Selected
+                        </Badge>
                         <p className="text-sm text-gray-500 mt-1">
                           Balance: {formatCurrency(selectedUser.balance)}
                         </p>
@@ -285,7 +302,9 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
                 min="0"
                 placeholder="0.00"
                 value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, amount: e.target.value }))
+                }
                 disabled={loading}
                 required
               />
@@ -299,7 +318,12 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
               <Input
                 placeholder="Description for this reconciliation"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 disabled={loading}
               />
             </div>
@@ -317,7 +341,12 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
               </Button>
               <Button
                 type="submit"
-                disabled={loading || !formData.reference || !formData.userId || !formData.amount}
+                disabled={
+                  loading ||
+                  !formData.reference ||
+                  !formData.userId ||
+                  !formData.amount
+                }
                 className="flex-1"
               >
                 {loading ? (
@@ -342,10 +371,13 @@ export function ReconciliationModal({ open, onClose, onSuccess }: Reconciliation
                 <div className="h-2 w-2 rounded-full bg-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-blue-900">Manual Reconciliation</p>
+                <p className="text-sm font-medium text-blue-900">
+                  Manual Reconciliation
+                </p>
                 <p className="mt-1 text-xs text-blue-800">
-                  Use this tool to manually credit a user&apos;s wallet when a payment was successful 
-                  but not automatically processed. Always verify the payment with your payment provider first.
+                  Use this tool to manually credit a user&apos;s wallet when a
+                  payment was successful but not automatically processed. Always
+                  verify the payment with your payment provider first.
                 </p>
               </div>
             </div>

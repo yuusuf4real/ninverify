@@ -16,7 +16,7 @@ import {
   RefreshCw,
   Shield,
   Wallet,
-  Zap
+  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,12 +31,12 @@ const feeKobo = NIN_VERIFICATION_COST_KOBO;
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 export function DashboardClient() {
@@ -91,7 +91,7 @@ export function DashboardClient() {
       const res = await fetch("/api/paystack/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountNumber })
+        body: JSON.stringify({ amount: amountNumber }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -106,9 +106,12 @@ export function DashboardClient() {
 
         for (let i = 0; i < 3; i++) {
           try {
-            const verifyRes = await fetch(`/api/paystack/verify?reference=${reference}`, {
-              cache: "no-store"
-            });
+            const verifyRes = await fetch(
+              `/api/paystack/verify?reference=${reference}`,
+              {
+                cache: "no-store",
+              },
+            );
             const contentType = verifyRes.headers.get("content-type");
 
             if (contentType && contentType.includes("application/json")) {
@@ -131,7 +134,7 @@ export function DashboardClient() {
             if (balanceData.balance > previousBalance) {
               setResult({
                 status: "success",
-                message: `Wallet funded! New balance: ${formatNaira(balanceData.balance)}`
+                message: `Wallet funded! New balance: ${formatNaira(balanceData.balance)}`,
               });
               return;
             }
@@ -141,7 +144,7 @@ export function DashboardClient() {
 
         setResult({
           status: "success",
-          message: "Payment verified! Refresh if balance doesn't update."
+          message: "Payment verified! Refresh if balance doesn't update.",
         });
       };
 
@@ -153,13 +156,19 @@ export function DashboardClient() {
           setResult({ status: "error", message: "Payment cancelled." });
         },
         onError: (error: { message?: string }) => {
-          setResult({ status: "error", message: error?.message || "Payment failed." });
-        }
+          setResult({
+            status: "error",
+            message: error?.message || "Payment failed.",
+          });
+        },
       });
     } catch (error) {
       setResult({
         status: "error",
-        message: getFriendlyErrorMessage(error, "Couldn't start payment. Try again.")
+        message: getFriendlyErrorMessage(
+          error,
+          "Couldn't start payment. Try again.",
+        ),
       });
     } finally {
       setLoading(false);
@@ -173,15 +182,17 @@ export function DashboardClient() {
       const res = await fetch("/api/nin/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nin, consent })
+        body: JSON.stringify({ nin, consent }),
       });
-      
+
       // Check if response is JSON
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server returned an invalid response. Please try again.");
+        throw new Error(
+          "Server returned an invalid response. Please try again.",
+        );
       }
-      
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.message || "Verification failed");
@@ -189,12 +200,13 @@ export function DashboardClient() {
         setNin("");
         setConsent(false);
         loadBalance();
-        
+
         // Automatically redirect to receipt page
         window.location.href = `/dashboard/receipts/${data.verificationId}`;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       setResult({ status: "error", message: errorMessage });
       loadBalance();
     } finally {
@@ -203,17 +215,29 @@ export function DashboardClient() {
   };
 
   const normalizedNin = nin.replace(/\D/g, "").slice(0, 11);
-  const formattedNin = normalizedNin.replace(/(\d{3})(\d{4})(\d{0,4})/, (_m, p1, p2, p3) => {
-    if (p3) return `${p1} ${p2} ${p3}`;
-    if (p2) return `${p1} ${p2}`;
-    return p1;
-  }).trim();
+  const formattedNin = normalizedNin
+    .replace(/(\d{3})(\d{4})(\d{0,4})/, (_m, p1, p2, p3) => {
+      if (p3) return `${p1} ${p2} ${p3}`;
+      if (p2) return `${p1} ${p2}`;
+      return p1;
+    })
+    .trim();
   const hasInsufficientBalance = balance !== null && balance < feeKobo;
-  const canVerify = normalizedNin.length === 11 && consent && !hasInsufficientBalance && !verifying;
-  const verificationsLeft = balance === null ? null : Math.floor(balance / feeKobo);
+  const canVerify =
+    normalizedNin.length === 11 &&
+    consent &&
+    !hasInsufficientBalance &&
+    !verifying;
+  const verificationsLeft =
+    balance === null ? null : Math.floor(balance / feeKobo);
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 pb-12">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 pb-12"
+    >
       {/* Wallet Balance Header - Compact */}
       <motion.div variants={fadeIn}>
         <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-white to-accent/5 shadow-sm">
@@ -229,7 +253,11 @@ export function DashboardClient() {
                   </p>
                   {balance !== null && (
                     <span className="text-sm text-muted-foreground">
-                      ({verificationsLeft} {verificationsLeft === 1 ? "verification" : "verifications"})
+                      ({verificationsLeft}{" "}
+                      {verificationsLeft === 1
+                        ? "verification"
+                        : "verifications"}
+                      )
                     </span>
                   )}
                 </div>
@@ -243,13 +271,17 @@ export function DashboardClient() {
                   disabled={refreshing}
                   className="gap-2"
                 >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                  />
                   Refresh
                 </Button>
                 <Button
                   size="sm"
                   onClick={() =>
-                    document.getElementById("fund-section")?.scrollIntoView({ behavior: "smooth" })
+                    document
+                      .getElementById("fund-section")
+                      ?.scrollIntoView({ behavior: "smooth" })
                   }
                   className="gap-2"
                 >
@@ -276,9 +308,12 @@ export function DashboardClient() {
                 <div className="flex gap-3">
                   <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
                   <div>
-                    <p className="font-semibold text-amber-900">Insufficient Balance</p>
+                    <p className="font-semibold text-amber-900">
+                      Insufficient Balance
+                    </p>
                     <p className="mt-1 text-sm text-amber-800">
-                      You need at least {formatNaira(feeKobo)} to verify a NIN. Please add money to continue.
+                      You need at least {formatNaira(feeKobo)} to verify a NIN.
+                      Please add money to continue.
                     </p>
                   </div>
                 </div>
@@ -289,7 +324,10 @@ export function DashboardClient() {
       </AnimatePresence>
 
       {/* Main Content - Two Column on Desktop */}
-      <motion.div variants={fadeIn} className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <motion.div
+        variants={fadeIn}
+        className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
+      >
         {/* Left Column - NIN Verification */}
         <div className="space-y-6">
           {/* NIN Verification Card - Hero */}
@@ -301,7 +339,9 @@ export function DashboardClient() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Verify Your NIN</h2>
-                  <p className="text-sm text-muted-foreground">Quick and secure verification</p>
+                  <p className="text-sm text-muted-foreground">
+                    Quick and secure verification
+                  </p>
                 </div>
               </div>
 
@@ -321,11 +361,20 @@ export function DashboardClient() {
                     disabled={verifying}
                   />
                   <div className="flex items-center justify-between text-xs">
-                    <span className={normalizedNin.length === 11 ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
+                    <span
+                      className={
+                        normalizedNin.length === 11
+                          ? "text-emerald-600 font-medium"
+                          : "text-muted-foreground"
+                      }
+                    >
                       {normalizedNin.length}/11 digits
                     </span>
                     <span className="text-muted-foreground">
-                      Fee: <span className="font-semibold text-foreground">{formatNaira(feeKobo)}</span>
+                      Fee:{" "}
+                      <span className="font-semibold text-foreground">
+                        {formatNaira(feeKobo)}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -381,8 +430,8 @@ export function DashboardClient() {
                     result.status === "success"
                       ? "border-emerald-200 bg-emerald-50"
                       : result.status === "info"
-                      ? "border-blue-200 bg-blue-50"
-                      : "border-red-200 bg-red-50"
+                        ? "border-blue-200 bg-blue-50"
+                        : "border-red-200 bg-red-50"
                   }`}
                 >
                   <CardContent className="p-5">
@@ -392,8 +441,8 @@ export function DashboardClient() {
                           result.status === "success"
                             ? "bg-emerald-100"
                             : result.status === "info"
-                            ? "bg-blue-100"
-                            : "bg-red-100"
+                              ? "bg-blue-100"
+                              : "bg-red-100"
                         }`}
                       >
                         {result.status === "success" ? (
@@ -410,19 +459,23 @@ export function DashboardClient() {
                             result.status === "success"
                               ? "text-emerald-900"
                               : result.status === "info"
-                              ? "text-blue-900"
-                              : "text-red-900"
+                                ? "text-blue-900"
+                                : "text-red-900"
                           }`}
                         >
-                          {result.status === "success" ? "Verification Successful!" : result.status === "info" ? "Information" : "Verification Failed"}
+                          {result.status === "success"
+                            ? "Verification Successful!"
+                            : result.status === "info"
+                              ? "Information"
+                              : "Verification Failed"}
                         </p>
                         <p
                           className={`mt-1 text-sm ${
                             result.status === "success"
                               ? "text-emerald-800"
                               : result.status === "info"
-                              ? "text-blue-800"
-                              : "text-red-800"
+                                ? "text-blue-800"
+                                : "text-red-800"
                           }`}
                         >
                           {result.message}
@@ -433,7 +486,9 @@ export function DashboardClient() {
                             size="sm"
                             className="mt-3 gap-2 bg-emerald-600 hover:bg-emerald-700"
                           >
-                            <Link href={`/dashboard/receipts/${result.verificationId}`}>
+                            <Link
+                              href={`/dashboard/receipts/${result.verificationId}`}
+                            >
                               <Eye className="h-4 w-4" />
                               View Your Data
                               <ArrowRight className="h-4 w-4" />
@@ -463,7 +518,9 @@ export function DashboardClient() {
                     <p className="text-2xl font-bold">
                       {verificationsLeft === null ? "—" : verificationsLeft}
                     </p>
-                    <p className="text-xs text-muted-foreground">verifications left</p>
+                    <p className="text-xs text-muted-foreground">
+                      verifications left
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -479,8 +536,12 @@ export function DashboardClient() {
                     <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Security
                     </p>
-                    <p className="text-lg font-bold text-emerald-800">Protected</p>
-                    <p className="text-xs text-muted-foreground">Data is encrypted</p>
+                    <p className="text-lg font-bold text-emerald-800">
+                      Protected
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Data is encrypted
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -495,7 +556,9 @@ export function DashboardClient() {
                   <History className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-semibold">Transaction History</p>
-                    <p className="text-sm text-muted-foreground">View all your activity</p>
+                    <p className="text-sm text-muted-foreground">
+                      View all your activity
+                    </p>
                   </div>
                 </div>
                 <Button asChild variant="ghost" size="sm">
@@ -519,7 +582,9 @@ export function DashboardClient() {
                 </div>
                 <div>
                   <h3 className="font-bold">Add Money</h3>
-                  <p className="text-xs text-muted-foreground">Fund your wallet</p>
+                  <p className="text-xs text-muted-foreground">
+                    Fund your wallet
+                  </p>
                 </div>
               </div>
 
@@ -591,15 +656,22 @@ export function DashboardClient() {
                 </div>
                 <div>
                   <h3 className="font-bold text-blue-900">Payment Recovery</h3>
-                  <p className="text-xs text-blue-700">Fix a debit that didn&apos;t reflect</p>
+                  <p className="text-xs text-blue-700">
+                    Fix a debit that didn&apos;t reflect
+                  </p>
                 </div>
               </div>
 
               <p className="text-sm text-blue-800 leading-relaxed">
-                Use your payment reference to recover a wallet top-up that didn&apos;t update after checkout.
+                Use your payment reference to recover a wallet top-up that
+                didn&apos;t update after checkout.
               </p>
 
-              <Button asChild size="lg" className="mt-4 w-full font-semibold bg-blue-600 hover:bg-blue-700">
+              <Button
+                asChild
+                size="lg"
+                className="mt-4 w-full font-semibold bg-blue-600 hover:bg-blue-700"
+              >
                 <Link href="/dashboard/recovery">
                   <RefreshCw className="h-4 w-4" />
                   Open recovery
@@ -607,7 +679,8 @@ export function DashboardClient() {
               </Button>
 
               <p className="mt-3 text-xs text-blue-700 leading-relaxed">
-                Have your payment reference and amount ready before you continue.
+                Have your payment reference and amount ready before you
+                continue.
               </p>
             </CardContent>
           </Card>
@@ -659,9 +732,12 @@ export function DashboardClient() {
               <div className="flex gap-3">
                 <Shield className="h-5 w-5 shrink-0 text-emerald-600" />
                 <div>
-                  <p className="font-semibold text-emerald-900">Your Privacy Matters</p>
+                  <p className="font-semibold text-emerald-900">
+                    Your Privacy Matters
+                  </p>
                   <p className="mt-1 text-sm text-emerald-800">
-                    Your NIN is masked in history and verification documents. We never store sensitive data.
+                    Your NIN is masked in history and verification documents. We
+                    never store sensitive data.
                   </p>
                 </div>
               </div>
@@ -694,20 +770,31 @@ export function DashboardClient() {
 
           <div className="relative grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <h4 className="mb-3 text-sm font-semibold text-foreground">Quick Links</h4>
+              <h4 className="mb-3 text-sm font-semibold text-foreground">
+                Quick Links
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/dashboard/transactions" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/dashboard/transactions"
+                    className="hover:text-primary transition-colors"
+                  >
                     Transaction History
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/recovery" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/dashboard/recovery"
+                    className="hover:text-primary transition-colors"
+                  >
                     Payment Recovery
                   </Link>
                 </li>
                 <li>
-                  <Link href="/support" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/support"
+                    className="hover:text-primary transition-colors"
+                  >
                     Help & Support
                   </Link>
                 </li>
@@ -715,15 +802,23 @@ export function DashboardClient() {
             </div>
 
             <div>
-              <h4 className="mb-3 text-sm font-semibold text-foreground">Legal</h4>
+              <h4 className="mb-3 text-sm font-semibold text-foreground">
+                Legal
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/privacy" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/privacy"
+                    className="hover:text-primary transition-colors"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/terms"
+                    className="hover:text-primary transition-colors"
+                  >
                     Terms of Service
                   </Link>
                 </li>
@@ -731,7 +826,9 @@ export function DashboardClient() {
             </div>
 
             <div>
-              <h4 className="mb-3 text-sm font-semibold text-foreground">Compliance</h4>
+              <h4 className="mb-3 text-sm font-semibold text-foreground">
+                Compliance
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <Shield className="h-3.5 w-3.5 text-emerald-600" />
@@ -745,16 +842,19 @@ export function DashboardClient() {
             </div>
 
             <div>
-              <h4 className="mb-3 text-sm font-semibold text-foreground">Contact</h4>
+              <h4 className="mb-3 text-sm font-semibold text-foreground">
+                Contact
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="mailto:support@verifynin.ng" className="hover:text-primary transition-colors">
+                  <a
+                    href="mailto:support@verifynin.ng"
+                    className="hover:text-primary transition-colors"
+                  >
                     support@verifynin.ng
                   </a>
                 </li>
-                <li className="text-xs">
-                  Made with ❤️ in Nigeria
-                </li>
+                <li className="text-xs">Made with ❤️ in Nigeria</li>
               </ul>
             </div>
           </div>

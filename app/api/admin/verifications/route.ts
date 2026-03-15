@@ -3,9 +3,10 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { ninVerifications, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, ilike, and, gte, lte, desc, asc, count, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, count, sql } from "drizzle-orm";
 import { logAuditEvent } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const querySchema = z.object({
@@ -13,19 +14,37 @@ const querySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
   search: z.string().optional(),
   status: z.enum(["all", "pending", "success", "failed"]).default("all"),
-  purpose: z.enum(["all", "banking", "education_jamb", "education_waec", "education_neco", "education_nysc", "passport", "drivers_license", "employment", "telecommunications", "government_service", "other"]).default("all"),
+  purpose: z
+    .enum([
+      "all",
+      "banking",
+      "education_jamb",
+      "education_waec",
+      "education_neco",
+      "education_nysc",
+      "passport",
+      "drivers_license",
+      "employment",
+      "telecommunications",
+      "government_service",
+      "other",
+    ])
+    .default("all"),
   sort: z.enum(["created_at", "status", "purpose"]).default("created_at"),
   order: z.enum(["asc", "desc"]).default("desc"),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getSession();
-    if (!session || (session.role !== "admin" && session.role !== "super_admin")) {
+    if (
+      !session ||
+      (session.role !== "admin" && session.role !== "super_admin")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -41,7 +60,7 @@ export async function GET(request: NextRequest) {
         sql`(${users.email} ILIKE ${`%${query.search}%`} OR 
             ${users.fullName} ILIKE ${`%${query.search}%`} OR 
             ${ninVerifications.ninMasked} ILIKE ${`%${query.search}%`} OR
-            ${ninVerifications.providerReference} ILIKE ${`%${query.search}%`})`
+            ${ninVerifications.providerReference} ILIKE ${`%${query.search}%`})`,
       );
     }
 
@@ -57,7 +76,9 @@ export async function GET(request: NextRequest) {
 
     // Date range filter
     if (query.dateFrom) {
-      conditions.push(gte(ninVerifications.createdAt, new Date(query.dateFrom)));
+      conditions.push(
+        gte(ninVerifications.createdAt, new Date(query.dateFrom)),
+      );
     }
     if (query.dateTo) {
       conditions.push(lte(ninVerifications.createdAt, new Date(query.dateTo)));
@@ -81,7 +102,8 @@ export async function GET(request: NextRequest) {
 
     // Get verifications with user data
     const offset = (query.page - 1) * query.limit;
-    const orderColumn = ninVerifications[query.sort === "created_at" ? "createdAt" : query.sort];
+    const orderColumn =
+      ninVerifications[query.sort === "created_at" ? "createdAt" : query.sort];
     const orderDirection = query.order === "asc" ? asc : desc;
 
     const verificationsList = await db
@@ -99,7 +121,7 @@ export async function GET(request: NextRequest) {
         errorMessage: ninVerifications.errorMessage,
         createdAt: ninVerifications.createdAt,
         userEmail: users.email,
-        userFullName: users.fullName
+        userFullName: users.fullName,
       })
       .from(ninVerifications)
       .leftJoin(users, eq(ninVerifications.userId, users.id))
@@ -114,15 +136,18 @@ export async function GET(request: NextRequest) {
         totalVerifications: count(),
         successfulVerifications: sql<number>`COALESCE(SUM(CASE WHEN ${ninVerifications.status} = 'success' THEN 1 ELSE 0 END), 0)`,
         failedVerifications: sql<number>`COALESCE(SUM(CASE WHEN ${ninVerifications.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
-        pendingVerifications: sql<number>`COALESCE(SUM(CASE WHEN ${ninVerifications.status} = 'pending' THEN 1 ELSE 0 END), 0)`
+        pendingVerifications: sql<number>`COALESCE(SUM(CASE WHEN ${ninVerifications.status} = 'pending' THEN 1 ELSE 0 END), 0)`,
       })
       .from(ninVerifications)
       .leftJoin(users, eq(ninVerifications.userId, users.id))
       .where(whereClause);
 
-    const successRate = summaryResult.totalVerifications > 0 
-      ? (Number(summaryResult.successfulVerifications) / summaryResult.totalVerifications) * 100 
-      : 0;
+    const successRate =
+      summaryResult.totalVerifications > 0
+        ? (Number(summaryResult.successfulVerifications) /
+            summaryResult.totalVerifications) *
+          100
+        : 0;
 
     // Get today's count
     const today = new Date();
@@ -143,8 +168,8 @@ export async function GET(request: NextRequest) {
       status: "success",
       metadata: {
         query: query,
-        resultCount: verificationsList.length
-      }
+        resultCount: verificationsList.length,
+      },
     });
 
     return NextResponse.json({
@@ -153,7 +178,7 @@ export async function GET(request: NextRequest) {
         page: query.page,
         limit: query.limit,
         total,
-        totalPages: Math.ceil(total / query.limit)
+        totalPages: Math.ceil(total / query.limit),
       },
       summary: {
         totalVerifications: summaryResult.totalVerifications,
@@ -161,15 +186,14 @@ export async function GET(request: NextRequest) {
         failedVerifications: Number(summaryResult.failedVerifications),
         pendingVerifications: Number(summaryResult.pendingVerifications),
         successRate: Math.round(successRate * 10) / 10,
-        todayCount: todayResult.count
-      }
+        todayCount: todayResult.count,
+      },
     });
-
   } catch (error) {
-    console.error("Admin verifications list error:", error);
+    logger.error("Admin verifications list error:", error);
     return NextResponse.json(
       { error: "Failed to fetch verifications" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

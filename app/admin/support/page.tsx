@@ -33,7 +33,8 @@ export default function SupportTicketManagementPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
         <p className="text-gray-600">
-          Manage user support requests, assign tickets, and track resolution progress.
+          Manage user support requests, assign tickets, and track resolution
+          progress.
         </p>
       </div>
 

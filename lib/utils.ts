@@ -33,7 +33,10 @@ export function getFriendlyErrorMessage(error: unknown, fallback: string) {
       return "Our verification or payment provider is currently unavailable. Please try again in a few minutes.";
     }
 
-    if (lowered.includes("failed to fetch") || lowered.includes("networkerror")) {
+    if (
+      lowered.includes("failed to fetch") ||
+      lowered.includes("networkerror")
+    ) {
       return "We couldn’t reach the server. Please check your connection and try again.";
     }
 

@@ -26,9 +26,12 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Analytics & Reports
+        </h1>
         <p className="text-gray-600">
-          Comprehensive analytics and insights for your NIN verification platform.
+          Comprehensive analytics and insights for your NIN verification
+          platform.
         </p>
       </div>
 

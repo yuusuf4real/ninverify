@@ -12,7 +12,10 @@ interface DashboardTicketClientProps {
   };
 }
 
-export function DashboardTicketClient({ ticketId, user }: DashboardTicketClientProps) {
+export function DashboardTicketClient({
+  ticketId,
+  user,
+}: DashboardTicketClientProps) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -20,9 +23,13 @@ export function DashboardTicketClient({ ticketId, user }: DashboardTicketClientP
   };
 
   return (
-    <TicketConversation 
-      ticketId={ticketId} 
-      user={user} 
+    <TicketConversation
+      ticketId={ticketId}
+      user={{
+        id: user.userId,
+        email: user.email,
+        fullName: user.fullName,
+      }}
       onBack={handleBack}
     />
   );

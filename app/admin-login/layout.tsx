@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export default function AdminLoginLayout({
-  children
+  children,
 }: {
   children: ReactNode;
 }) {

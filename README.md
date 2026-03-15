@@ -23,7 +23,7 @@ A secure, fast NIN verification platform for banking, education, travel, and mor
 
 ## Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - PostgreSQL database
 - Paystack account (for payments)
 - YouVerify account (for NIN verification)
@@ -134,6 +134,7 @@ See `docs/YOUVERIFY_SETUP_GUIDE.md` for detailed setup instructions.
 **Problem Solved:** If payment is deducted but doesn't reflect in wallet due to network issues.
 
 **User Self-Service:**
+
 1. Go to dashboard
 2. Find "Payment Not Showing?" card
 3. Enter payment reference from Paystack
@@ -141,6 +142,7 @@ See `docs/YOUVERIFY_SETUP_GUIDE.md` for detailed setup instructions.
 5. Wallet automatically credited if payment was successful
 
 **Admin Manual Recovery:**
+
 - Endpoint: `/api/admin/reconcile-payment`
 - Requires admin authentication
 - See `docs/PAYMENT_RECONCILIATION_SOLUTION.md` for details
@@ -163,23 +165,28 @@ See `docs/YOUVERIFY_SETUP_GUIDE.md` for detailed setup instructions.
 ## API Routes
 
 ### Authentication
+
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
 
 ### NIN Verification
+
 - `POST /api/nin/verify` - Verify NIN
 
 ### Wallet
+
 - `GET /api/wallet/balance` - Get wallet balance
 - `POST /api/wallet/check-pending-payments` - Check and recover missed payments
 
 ### Paystack
+
 - `POST /api/paystack/initialize` - Initialize payment
 - `GET /api/paystack/verify` - Verify payment
 - `POST /api/paystack/webhook` - Payment webhook
 
 ### Admin (Protected)
+
 - `POST /api/admin/reconcile-payment` - Manually reconcile payment (requires admin key)
 
 ## Development
@@ -223,18 +230,22 @@ npm run type-check
 ## Troubleshooting
 
 ### Payment Deducted But Not Showing in Wallet
+
 **Cause:** Network interruption during payment verification  
 **Solution:** Use "Check Payment Status" button on dashboard with your payment reference
 
 ### 402 Error - Insufficient Funds
+
 **Cause:** YouVerify wallet balance too low  
 **Solution:** Top up wallet at os.youverify.co
 
 ### 403 Error - Permission Denied
+
 **Cause:** API key missing NIN permission  
 **Solution:** Regenerate key with NIN permission enabled
 
 ### NIN Not Found
+
 **Cause:** Invalid NIN or not in NIMC database  
 **Solution:** Verify NIN is correct, wallet is automatically refunded
 
@@ -260,6 +271,7 @@ MIT
 ## Support
 
 For issues or questions:
+
 - Check documentation in `docs/` folder
 - Review `.env.example` for configuration
 - Contact YouVerify support for API issues

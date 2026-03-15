@@ -4,7 +4,7 @@ import { UserTicketDashboard } from "@/components/organisms/user-ticket-dashboar
 
 export default async function DashboardSupportPage() {
   const session = await getSession();
-  
+
   if (!session) {
     redirect("/login");
   }

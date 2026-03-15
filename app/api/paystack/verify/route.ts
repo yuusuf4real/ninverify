@@ -6,9 +6,13 @@ import { eq, sql } from "drizzle-orm";
 import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 import { logPaymentEvent, logAPIError } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
-async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+async function queryWithRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
@@ -16,7 +20,9 @@ async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> 
     } catch (error) {
       lastError = error;
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 100));
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 100),
+        );
       }
     }
   }
@@ -33,16 +39,16 @@ export async function GET(request: Request) {
   const rateLimitResult = rateLimitMiddleware(
     `payment-verify:${session.userId}`,
     RATE_LIMITS.paymentVerify,
-    "/api/paystack/verify"
+    "/api/paystack/verify",
   );
-  
+
   if (rateLimitResult) {
     return NextResponse.json(
       { message: rateLimitResult.message },
-      { 
+      {
         status: rateLimitResult.status,
-        headers: { "Retry-After": String(rateLimitResult.retryAfter) }
-      }
+        headers: { "Retry-After": String(rateLimitResult.retryAfter) },
+      },
     );
   }
 
@@ -52,11 +58,13 @@ export async function GET(request: Request) {
   if (!reference) {
     return NextResponse.json(
       { message: "Payment reference is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  console.log("[VERIFY] Starting verification for reference:", reference);
+  logger.info("[VERIFY] Starting verification for reference:", {
+    value: reference,
+  });
 
   try {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
@@ -65,56 +73,64 @@ export async function GET(request: Request) {
     }
 
     // Verify payment with Paystack
-    console.log("[VERIFY] Calling Paystack API...");
+    logger.info("[VERIFY] Calling Paystack API...");
     const paystackResponse = await fetch(
       `https://api.paystack.co/transaction/verify/${reference}`,
       {
         headers: {
           Authorization: `Bearer ${secretKey}`,
-          "Content-Type": "application/json"
-        }
-      }
+          "Content-Type": "application/json",
+        },
+      },
     );
 
-    console.log("[VERIFY] Paystack response status:", paystackResponse.status);
+    logger.info("[VERIFY] Paystack response status:", {
+      value: paystackResponse.status,
+    });
 
     if (!paystackResponse.ok) {
       const errorText = await paystackResponse.text();
-      console.error("[VERIFY] Paystack error response:", errorText);
-      
+      logger.error("[VERIFY] Paystack error response:", { error: errorText });
+
       await logPaymentEvent(
         "payment.failed",
         session.userId,
         0,
         reference,
         "failure",
-        { error: errorText, httpStatus: paystackResponse.status }
+        { error: errorText, httpStatus: paystackResponse.status },
       );
-      
-      throw new Error(`Paystack verification failed: ${paystackResponse.status} - ${errorText}`);
+
+      throw new Error(
+        `Paystack verification failed: ${paystackResponse.status} - ${errorText}`,
+      );
     }
 
     let paystackData;
     try {
       const responseText = await paystackResponse.text();
-      console.log("[VERIFY] Raw response:", responseText.substring(0, 200));
+      logger.info("[VERIFY] Raw response:", {
+        response: responseText.substring(0, 200),
+      });
       paystackData = JSON.parse(responseText);
     } catch (parseError) {
-      console.error("[VERIFY] JSON parse error:", parseError);
-      
+      logger.error("[VERIFY] JSON parse error:", { error: parseError });
+
       await logPaymentEvent(
         "payment.failed",
         session.userId,
         0,
         reference,
         "failure",
-        { error: "JSON parse error" }
+        { error: "JSON parse error" },
       );
-      
+
       throw new Error("Invalid response from payment provider");
     }
 
-    console.log("[VERIFY] Paystack data:", JSON.stringify(paystackData, null, 2));
+    logger.info("[VERIFY] Paystack data:", {
+      data: JSON.stringify(paystackData, null, 2),
+    });
 
     if (!paystackData.status || !paystackData.data) {
       throw new Error("Invalid payment verification response");
@@ -123,44 +139,48 @@ export async function GET(request: Request) {
     const { data: txData } = paystackData;
 
     if (txData.status !== "success") {
-      console.log("[VERIFY] Payment not successful. Status:", txData.status);
+      logger.info("[VERIFY] Payment not successful. Status:", {
+        value: txData.status,
+      });
       return NextResponse.json(
         { message: "Payment was not successful", reference },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const amountInKobo = txData.amount;
-    console.log("[VERIFY] Payment successful. Amount:", amountInKobo);
+    logger.info("[VERIFY] Payment successful. Amount:", {
+      value: amountInKobo,
+    });
 
     // Check if transaction already exists
     const existingTx = await queryWithRetry(() =>
       db.query.walletTransactions.findFirst({
-        where: (transactions, { eq }) => eq(transactions.reference, reference)
-      })
+        where: (transactions, { eq }) => eq(transactions.reference, reference),
+      }),
     );
 
     if (existingTx) {
-      console.log("[VERIFY] Transaction already processed");
+      logger.info("[VERIFY] Transaction already processed");
       return NextResponse.json({
         message: "Payment already processed",
         reference,
-        amount: amountInKobo
+        amount: amountInKobo,
       });
     }
 
     // Get user's wallet
     const wallet = await queryWithRetry(() =>
       db.query.wallets.findFirst({
-        where: (wallets, { eq }) => eq(wallets.userId, session.userId)
-      })
+        where: (wallets, { eq }) => eq(wallets.userId, session.userId),
+      }),
     );
 
     if (!wallet) {
       throw new Error("Wallet not found");
     }
 
-    console.log("[VERIFY] Creating transaction record...");
+    logger.info("[VERIFY] Creating transaction record...");
 
     // Create transaction record (no transaction wrapper - neon-http doesn't support it)
     await queryWithRetry(() =>
@@ -172,11 +192,11 @@ export async function GET(request: Request) {
         amount: amountInKobo,
         provider: "paystack",
         reference: reference,
-        description: "Wallet funding via Paystack"
-      })
+        description: "Wallet funding via Paystack",
+      }),
     );
 
-    console.log("[VERIFY] Updating wallet balance...");
+    logger.info("[VERIFY] Updating wallet balance...");
 
     // Update wallet balance
     await queryWithRetry(() =>
@@ -184,12 +204,12 @@ export async function GET(request: Request) {
         .update(wallets)
         .set({
           balance: sql`${wallets.balance} + ${amountInKobo}`,
-          updatedAt: sql`now()`
+          updatedAt: sql`now()`,
         })
-        .where(eq(wallets.id, wallet.id))
+        .where(eq(wallets.id, wallet.id)),
     );
 
-    console.log("[VERIFY] Verification completed successfully");
+    logger.info("[VERIFY] Verification completed successfully");
 
     // Log successful payment
     await logPaymentEvent(
@@ -197,33 +217,38 @@ export async function GET(request: Request) {
       session.userId,
       amountInKobo,
       reference,
-      "success"
+      "success",
     );
 
     return NextResponse.json({
       message: "Payment verified and wallet updated",
       reference,
-      amount: amountInKobo
+      amount: amountInKobo,
     });
   } catch (error) {
-    console.error("[VERIFY] Verification error:", error);
-    
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("[VERIFY] Error details:", {
-      message: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined
+    logger.error("[VERIFY] Verification error:", { error: error });
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("[VERIFY] Error details:", {
+      error: {
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+      },
     });
 
     // Log API error
-    await logAPIError("/api/paystack/verify", error, session.userId, { reference });
+    await logAPIError("/api/paystack/verify", error, session.userId, {
+      reference,
+    });
 
     return NextResponse.json(
       {
         message: "Failed to update wallet",
         error: errorMessage,
-        reference
+        reference,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

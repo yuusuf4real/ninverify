@@ -84,12 +84,8 @@
           "name": "audit_logs_user_id_users_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -209,12 +205,8 @@
           "name": "nin_verifications_user_id_users_id_fk",
           "tableFrom": "nin_verifications",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -274,9 +266,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -363,12 +353,8 @@
           "name": "wallet_transactions_user_id_users_id_fk",
           "tableFrom": "wallet_transactions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -423,12 +409,8 @@
           "name": "wallets_user_id_users_id_fk",
           "tableFrom": "wallets",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -438,9 +420,7 @@
         "wallets_user_id_unique": {
           "name": "wallets_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -475,30 +455,17 @@
     "public.audit_status": {
       "name": "audit_status",
       "schema": "public",
-      "values": [
-        "success",
-        "failure",
-        "pending"
-      ]
+      "values": ["success", "failure", "pending"]
     },
     "public.transaction_status": {
       "name": "transaction_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "completed",
-        "failed",
-        "refunded"
-      ]
+      "values": ["pending", "completed", "failed", "refunded"]
     },
     "public.transaction_type": {
       "name": "transaction_type",
       "schema": "public",
-      "values": [
-        "credit",
-        "debit",
-        "refund"
-      ]
+      "values": ["credit", "debit", "refund"]
     },
     "public.verification_purpose": {
       "name": "verification_purpose",
@@ -520,11 +487,7 @@
     "public.verification_status": {
       "name": "verification_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "success",
-        "failed"
-      ]
+      "values": ["pending", "success", "failed"]
     }
   },
   "schemas": {},

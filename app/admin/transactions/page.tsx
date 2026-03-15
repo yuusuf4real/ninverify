@@ -31,9 +31,12 @@ export default function TransactionManagementPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Transaction Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Transaction Management
+        </h1>
         <p className="text-gray-600">
-          Monitor and manage all financial transactions, reconcile payments, and handle refunds.
+          Monitor and manage all financial transactions, reconcile payments, and
+          handle refunds.
         </p>
       </div>
 

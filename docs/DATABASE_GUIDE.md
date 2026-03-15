@@ -9,6 +9,7 @@ The JAMB Verification System uses PostgreSQL with Drizzle ORM for type-safe data
 ### Core Tables
 
 #### Users Table
+
 The central table for all user accounts (regular users and admins).
 
 ```sql
@@ -31,6 +32,7 @@ CREATE INDEX idx_users_suspended ON users(is_suspended);
 ```
 
 **Key Points:**
+
 - `id`: Generated using nanoid() for URL-safe IDs
 - `password_hash`: Hashed using bcryptjs with salt
 - `role`: Enum type for role-based access control
@@ -38,6 +40,7 @@ CREATE INDEX idx_users_suspended ON users(is_suspended);
 - Suspension fields for admin user management
 
 #### Wallets Table
+
 One-to-one relationship with users for wallet functionality.
 
 ```sql
@@ -51,11 +54,13 @@ CREATE TABLE wallets (
 ```
 
 **Key Points:**
+
 - `balance`: Stored in kobo (smallest NGN unit) for precision
 - `user_id`: Unique constraint ensures one wallet per user
 - Cascade delete when user is deleted
 
 #### Wallet Transactions
+
 Records all financial transactions.
 
 ```sql
@@ -75,12 +80,15 @@ CREATE TABLE wallet_transactions (
 ```
 
 **Key Points:**
+
 - `type`: Credit (wallet funding), Debit (verification cost), Refund
 - `status`: Transaction lifecycle tracking
 - `provider`: Source of the transaction
 - `metadata`: Flexible JSON storage for additional data
-- `nin_masked`: Privacy-compliant NIN storage (e.g., "123****4567")
+- `nin_masked`: Privacy-compliant NIN storage (e.g., "123\*\*\*\*4567")
+
 #### NIN Verifications
+
 Records all NIN verification attempts and results.
 
 ```sql
@@ -105,6 +113,7 @@ CREATE INDEX idx_verifications_purpose ON nin_verifications(purpose);
 ```
 
 **Key Points:**
+
 - `nin_masked`: Never store full NIN for privacy compliance
 - `purpose`: Categorizes verification use case
 - `raw_response`: Stores full API response for debugging
@@ -113,6 +122,7 @@ CREATE INDEX idx_verifications_purpose ON nin_verifications(purpose);
 ### Admin Tables
 
 #### Support Tickets
+
 Customer support ticket management.
 
 ```sql
@@ -142,6 +152,7 @@ CREATE INDEX idx_tickets_created ON support_tickets(created_at);
 ```
 
 #### Ticket Messages
+
 Conversation thread for support tickets.
 
 ```sql
@@ -162,6 +173,7 @@ CREATE INDEX idx_ticket_messages_user ON ticket_messages(user_id);
 ```
 
 #### Audit Logs
+
 Compliance and security logging.
 
 ```sql
@@ -181,12 +193,14 @@ CREATE TABLE audit_logs (
 ```
 
 **Key Points:**
+
 - Immutable log entries for compliance
 - `event_type`: Categorized audit events
 - `metadata`: Flexible storage for context
 - `user_id`: SET NULL on user deletion to preserve logs
 
 #### Admin Actions
+
 Tracks all administrative actions.
 
 ```sql
@@ -213,17 +227,20 @@ CREATE INDEX idx_admin_actions_created ON admin_actions(created_at);
 ## Enum Types
 
 ### User Roles
+
 ```sql
 CREATE TYPE admin_role AS ENUM ('user', 'admin', 'super_admin');
 ```
 
 ### Transaction Types
+
 ```sql
 CREATE TYPE transaction_type AS ENUM ('credit', 'debit', 'refund');
 CREATE TYPE transaction_status AS ENUM ('pending', 'completed', 'failed', 'refunded');
 ```
 
 ### Verification Types
+
 ```sql
 CREATE TYPE verification_status AS ENUM ('pending', 'success', 'failed');
 CREATE TYPE verification_purpose AS ENUM (
@@ -242,6 +259,7 @@ CREATE TYPE verification_purpose AS ENUM (
 ```
 
 ### Support System Types
+
 ```sql
 CREATE TYPE ticket_status AS ENUM ('open', 'assigned', 'in_progress', 'resolved', 'closed');
 CREATE TYPE ticket_priority AS ENUM ('low', 'medium', 'high', 'urgent');
@@ -255,6 +273,7 @@ CREATE TYPE ticket_category AS ENUM (
 ```
 
 ### Audit Types
+
 ```sql
 CREATE TYPE audit_event_type AS ENUM (
   'user.registered',
@@ -278,16 +297,30 @@ CREATE TYPE audit_event_type AS ENUM (
 
 CREATE TYPE audit_status AS ENUM ('success', 'failure', 'pending');
 ```
+
 ## Drizzle ORM Usage
 
 ### Schema Definition
+
 ```typescript
 // db/schema.ts
-import { pgTable, text, integer, timestamp, boolean, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  integer,
+  timestamp,
+  boolean,
+  jsonb,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 
 // Define enums
 export const adminRole = pgEnum("admin_role", ["user", "admin", "super_admin"]);
-export const transactionType = pgEnum("transaction_type", ["credit", "debit", "refund"]);
+export const transactionType = pgEnum("transaction_type", [
+  "credit",
+  "debit",
+  "refund",
+]);
 
 // Define tables
 export const users = pgTable("users", {
@@ -298,7 +331,9 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: adminRole("role").default("user").notNull(),
   isSuspended: boolean("is_suspended").default(false).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const wallets = pgTable("wallets", {
@@ -309,13 +344,16 @@ export const wallets = pgTable("wallets", {
     .unique(),
   balance: integer("balance").notNull().default(0),
   currency: text("currency").notNull().default("NGN"),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 ```
 
 ### Common Queries
 
 #### User Management
+
 ```typescript
 import { db } from "@/db/client";
 import { users, wallets } from "@/db/schema";
@@ -329,28 +367,23 @@ const getUserWithWallet = async (userId: string) => {
       fullName: users.fullName,
       email: users.email,
       balance: wallets.balance,
-      isSuspended: users.isSuspended
+      isSuspended: users.isSuspended,
     })
     .from(users)
     .leftJoin(wallets, eq(users.id, wallets.userId))
     .where(eq(users.id, userId));
-  
+
   return user;
 };
 
 // Search users with pagination
 const searchUsers = async (search: string, page: number, limit: number) => {
   const offset = (page - 1) * limit;
-  
+
   return await db
     .select()
     .from(users)
-    .where(
-      and(
-        ilike(users.email, `%${search}%`),
-        eq(users.isSuspended, false)
-      )
-    )
+    .where(and(ilike(users.email, `%${search}%`), eq(users.isSuspended, false)))
     .orderBy(desc(users.createdAt))
     .limit(limit)
     .offset(offset);
@@ -358,6 +391,7 @@ const searchUsers = async (search: string, page: number, limit: number) => {
 ```
 
 #### Transaction Operations
+
 ```typescript
 import { walletTransactions } from "@/db/schema";
 import { sql } from "drizzle-orm";
@@ -365,9 +399,9 @@ import { sql } from "drizzle-orm";
 // Create transaction and update wallet balance
 const processWalletTransaction = async (
   userId: string,
-  type: 'credit' | 'debit',
+  type: "credit" | "debit",
   amount: number,
-  description: string
+  description: string,
 ) => {
   return await db.transaction(async (tx) => {
     // Insert transaction record
@@ -377,20 +411,20 @@ const processWalletTransaction = async (
         id: nanoid(),
         userId,
         type,
-        status: 'completed',
+        status: "completed",
         amount,
-        provider: 'system',
-        description
+        provider: "system",
+        description,
       })
       .returning();
 
     // Update wallet balance
-    const balanceChange = type === 'credit' ? amount : -amount;
+    const balanceChange = type === "credit" ? amount : -amount;
     await tx
       .update(wallets)
       .set({
         balance: sql`${wallets.balance} + ${balanceChange}`,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(wallets.userId, userId));
 
@@ -400,6 +434,7 @@ const processWalletTransaction = async (
 ```
 
 #### Analytics Queries
+
 ```typescript
 import { count, sum, avg } from "drizzle-orm";
 
@@ -410,7 +445,7 @@ const getDashboardMetrics = async () => {
     .select({
       totalUsers: count(),
       activeUsers: sql<number>`COUNT(CASE WHEN ${users.isSuspended} = false THEN 1 END)`,
-      newToday: sql<number>`COUNT(CASE WHEN DATE(${users.createdAt}) = CURRENT_DATE THEN 1 END)`
+      newToday: sql<number>`COUNT(CASE WHEN DATE(${users.createdAt}) = CURRENT_DATE THEN 1 END)`,
     })
     .from(users);
 
@@ -421,7 +456,7 @@ const getDashboardMetrics = async () => {
       avgAmount: avg(walletTransactions.amount),
       successRate: sql<number>`
         (COUNT(CASE WHEN ${walletTransactions.status} = 'completed' THEN 1 END) * 100.0) / COUNT(*)
-      `
+      `,
     })
     .from(walletTransactions);
 
@@ -432,6 +467,7 @@ const getDashboardMetrics = async () => {
 ## Migration Management
 
 ### Creating Migrations
+
 ```bash
 # Generate migration from schema changes
 npm run db:generate
@@ -441,6 +477,7 @@ npm run db:generate
 ```
 
 ### Migration Files
+
 ```sql
 -- db/migrations/0004_add_support_system.sql
 CREATE TYPE "public"."ticket_status" AS ENUM('open', 'assigned', 'in_progress', 'resolved', 'closed');
@@ -455,7 +492,7 @@ CREATE TABLE IF NOT EXISTS "support_tickets" (
 );
 
 DO $$ BEGIN
- ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_user_id_users_id_fk" 
+ ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_user_id_users_id_fk"
  FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -465,6 +502,7 @@ CREATE INDEX IF NOT EXISTS "idx_tickets_status" ON "support_tickets" USING btree
 ```
 
 ### Applying Migrations
+
 ```bash
 # Apply all pending migrations
 npm run db:migrate
@@ -474,6 +512,7 @@ npx drizzle-kit migrate
 ```
 
 ### Migration Best Practices
+
 1. **Always backup before migrations** in production
 2. **Test migrations** on a copy of production data
 3. **Use transactions** for complex migrations
@@ -483,6 +522,7 @@ npx drizzle-kit migrate
 ## Database Operations
 
 ### Connection Management
+
 ```typescript
 // db/client.ts
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -494,13 +534,14 @@ const connectionString = process.env.DATABASE_URL!;
 const client = postgres(connectionString, {
   max: 10, // Connection pool size
   idle_timeout: 20,
-  connect_timeout: 10
+  connect_timeout: 10,
 });
 
 export const db = drizzle(client);
 ```
 
 ### Transaction Handling
+
 ```typescript
 // Use database transactions for related operations
 const createUserWithWallet = async (userData: UserData) => {
@@ -511,18 +552,16 @@ const createUserWithWallet = async (userData: UserData) => {
       .values({
         id: nanoid(),
         ...userData,
-        passwordHash: await bcrypt.hash(userData.password, 10)
+        passwordHash: await bcrypt.hash(userData.password, 10),
       })
       .returning();
 
     // Create wallet
-    await tx
-      .insert(wallets)
-      .values({
-        id: nanoid(),
-        userId: user.id,
-        balance: 0
-      });
+    await tx.insert(wallets).values({
+      id: nanoid(),
+      userId: user.id,
+      balance: 0,
+    });
 
     return user;
   });
@@ -530,16 +569,19 @@ const createUserWithWallet = async (userData: UserData) => {
 ```
 
 ### Error Handling
+
 ```typescript
 try {
   const result = await db.select().from(users);
   return result;
 } catch (error) {
-  if (error.code === '23505') { // Unique constraint violation
-    throw new Error('Email already exists');
+  if (error.code === "23505") {
+    // Unique constraint violation
+    throw new Error("Email already exists");
   }
-  if (error.code === '23503') { // Foreign key violation
-    throw new Error('Referenced record not found');
+  if (error.code === "23503") {
+    // Foreign key violation
+    throw new Error("Referenced record not found");
   }
   throw error;
 }
@@ -548,6 +590,7 @@ try {
 ## Performance Optimization
 
 ### Indexing Strategy
+
 ```sql
 -- Primary indexes (automatically created)
 -- users(id), wallets(id), etc.
@@ -568,13 +611,14 @@ CREATE INDEX idx_transactions_status_type ON wallet_transactions(status, type);
 ```
 
 ### Query Optimization
+
 ```typescript
 // Use select() to limit returned columns
 const users = await db
   .select({
     id: users.id,
     email: users.email,
-    fullName: users.fullName
+    fullName: users.fullName,
   })
   .from(users)
   .limit(50);
@@ -584,7 +628,7 @@ const usersWithWallets = await db
   .select({
     userId: users.id,
     email: users.email,
-    balance: wallets.balance
+    balance: wallets.balance,
   })
   .from(users)
   .leftJoin(wallets, eq(users.id, wallets.userId));
@@ -593,29 +637,28 @@ const usersWithWallets = await db
 const stats = await db
   .select({
     totalUsers: count(),
-    totalBalance: sum(wallets.balance)
+    totalBalance: sum(wallets.balance),
   })
   .from(users)
   .leftJoin(wallets, eq(users.id, wallets.userId));
 ```
 
 ### Pagination Best Practices
+
 ```typescript
 // Offset-based pagination (current implementation)
 const getUsers = async (page: number, limit: number) => {
   const offset = (page - 1) * limit;
-  
+
   const users = await db
     .select()
     .from(users)
     .orderBy(desc(users.createdAt))
     .limit(limit)
     .offset(offset);
-    
-  const [{ count: total }] = await db
-    .select({ count: count() })
-    .from(users);
-    
+
+  const [{ count: total }] = await db.select({ count: count() }).from(users);
+
   return { users, total, totalPages: Math.ceil(total / limit) };
 };
 
@@ -626,19 +669,21 @@ const getUsersCursor = async (cursor?: string, limit: number = 50) => {
     .from(users)
     .orderBy(desc(users.createdAt))
     .limit(limit + 1); // Get one extra to check if there's a next page
-    
+
   if (cursor) {
     query.where(lt(users.createdAt, new Date(cursor)));
   }
-  
+
   const results = await query;
   const hasNextPage = results.length > limit;
   const users = hasNextPage ? results.slice(0, -1) : results;
-  
+
   return {
     users,
     hasNextPage,
-    nextCursor: hasNextPage ? users[users.length - 1].createdAt.toISOString() : null
+    nextCursor: hasNextPage
+      ? users[users.length - 1].createdAt.toISOString()
+      : null,
   };
 };
 ```
@@ -646,42 +691,45 @@ const getUsersCursor = async (cursor?: string, limit: number = 50) => {
 ## Data Integrity
 
 ### Foreign Key Constraints
+
 ```sql
 -- Cascade deletes for dependent data
-ALTER TABLE wallets ADD CONSTRAINT wallets_user_id_fk 
+ALTER TABLE wallets ADD CONSTRAINT wallets_user_id_fk
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 -- Set null for audit trail preservation
-ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_user_id_fk 
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_user_id_fk
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
 
 -- Restrict deletes for critical references
-ALTER TABLE support_tickets ADD CONSTRAINT tickets_assigned_to_fk 
+ALTER TABLE support_tickets ADD CONSTRAINT tickets_assigned_to_fk
   FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE RESTRICT;
 ```
 
 ### Data Validation
+
 ```typescript
 // Use Zod schemas for validation before database operations
 const userSchema = z.object({
   fullName: z.string().min(2).max(100),
   email: z.string().email(),
   phone: z.string().regex(/^(\+234|0)[789]\d{9}$/),
-  password: z.string().min(8)
+  password: z.string().min(8),
 });
 
 const createUser = async (data: unknown) => {
   const validatedData = userSchema.parse(data);
-  
+
   return await db.insert(users).values({
     id: nanoid(),
     ...validatedData,
-    passwordHash: await bcrypt.hash(validatedData.password, 10)
+    passwordHash: await bcrypt.hash(validatedData.password, 10),
   });
 };
 ```
 
 ### Backup and Recovery
+
 ```bash
 # Create backup
 pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
@@ -696,14 +744,15 @@ psql $DATABASE_URL < backup-20240101.sql
 ## Monitoring and Maintenance
 
 ### Database Health Checks
+
 ```sql
 -- Check database size
 SELECT pg_size_pretty(pg_database_size(current_database()));
 
 -- Check table sizes
-SELECT schemaname, tablename, 
+SELECT schemaname, tablename,
        pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM pg_tables 
+FROM pg_tables
 WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
@@ -714,12 +763,13 @@ ORDER BY idx_scan DESC;
 
 -- Check slow queries
 SELECT query, mean_exec_time, calls, total_exec_time
-FROM pg_stat_statements 
-ORDER BY mean_exec_time DESC 
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
 LIMIT 10;
 ```
 
 ### Maintenance Tasks
+
 ```sql
 -- Update table statistics
 ANALYZE;
@@ -728,7 +778,7 @@ ANALYZE;
 REINDEX INDEX idx_users_email;
 
 -- Clean up old audit logs (example: keep 1 year)
-DELETE FROM audit_logs 
+DELETE FROM audit_logs
 WHERE timestamp < NOW() - INTERVAL '1 year';
 
 -- Vacuum tables to reclaim space

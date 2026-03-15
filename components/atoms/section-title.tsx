@@ -11,7 +11,7 @@ export function SectionTitle({
   eyebrow,
   title,
   description,
-  className
+  className,
 }: SectionTitleProps) {
   return (
     <div className={cn("space-y-3", className)}>
@@ -24,7 +24,9 @@ export function SectionTitle({
         {title}
       </h2>
       {description ? (
-        <p className="max-w-2xl text-base text-muted-foreground mx-auto">{description}</p>
+        <p className="max-w-2xl text-base text-muted-foreground mx-auto">
+          {description}
+        </p>
       ) : null}
     </div>
   );

@@ -9,13 +9,17 @@ import { getFriendlyErrorMessage } from "@/lib/utils";
 import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 import { logPaymentEvent, logAPIError } from "@/lib/audit-log";
 
+import { logger } from "../../../../lib/security/secure-logger";
 export const runtime = "nodejs";
 
 const schema = z.object({
-  amount: z.number().min(500)
+  amount: z.number().min(500),
 });
 
-async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+async function queryWithRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
@@ -23,7 +27,9 @@ async function queryWithRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> 
     } catch (error) {
       lastError = error;
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 100));
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 100),
+        );
       }
     }
   }
@@ -40,7 +46,7 @@ export async function POST(request: Request) {
   const rateLimitResult = rateLimitMiddleware(
     `payment-init:${session.userId}`,
     RATE_LIMITS.paymentInitialize,
-    "/api/paystack/initialize"
+    "/api/paystack/initialize",
   );
 
   if (rateLimitResult) {
@@ -48,8 +54,8 @@ export async function POST(request: Request) {
       { message: rateLimitResult.message },
       {
         status: rateLimitResult.status,
-        headers: { "Retry-After": String(rateLimitResult.retryAfter) }
-      }
+        headers: { "Retry-After": String(rateLimitResult.retryAfter) },
+      },
     );
   }
 
@@ -59,24 +65,28 @@ export async function POST(request: Request) {
     const amountKobo = amount * 100;
     const reference = `jv_${nanoid(10)}`;
 
-    console.log("Initializing payment. User:", session.userId, "Amount:", amountKobo, "Reference:", reference);
+    logger.info("Initializing payment. User:", {
+      userId: session.userId,
+      amount: amountKobo,
+      reference,
+    });
 
     // Verify wallet exists
     const wallet = await queryWithRetry(() =>
       db.query.wallets.findFirst({
-        where: (wallets, { eq }) => eq(wallets.userId, session.userId)
-      })
+        where: (wallets, { eq }) => eq(wallets.userId, session.userId),
+      }),
     );
 
     if (!wallet) {
-      console.error("Wallet not found for user:", session.userId);
+      logger.error("Wallet not found for user:", { error: session.userId });
       return NextResponse.json(
         { message: "Wallet not found. Please try logging out and back in." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    console.log("Wallet found. Creating transaction record...");
+    logger.info("Wallet found. Creating transaction record...");
 
     await queryWithRetry(() =>
       db.insert(walletTransactions).values({
@@ -87,20 +97,16 @@ export async function POST(request: Request) {
         amount: amountKobo,
         provider: "paystack",
         reference,
-        description: "Wallet funding"
-      })
+        description: "Wallet funding",
+      }),
     );
 
-    console.log("Transaction record created. Initializing Paystack...");
+    logger.info("Transaction record created. Initializing Paystack...");
 
-    const init = await initializePaystackPayment(
-      session.email,
-      amountKobo,
-      {
-        userId: session.userId,
-        reference
-      }
-    );
+    const init = await initializePaystackPayment(session.email, amountKobo, {
+      userId: session.userId,
+      reference,
+    });
 
     // Log payment initialization
     await logPaymentEvent(
@@ -109,24 +115,26 @@ export async function POST(request: Request) {
       amountKobo,
       reference,
       "pending",
-      { email: session.email }
+      { email: session.email },
     );
 
-    console.log("Paystack initialized. Access code:", init.data.access_code);
+    logger.info("Paystack initialized. Access code:", {
+      value: init.data.access_code,
+    });
 
     return NextResponse.json({
       accessCode: init.data.access_code,
-      reference: init.data.reference
+      reference: init.data.reference,
     });
   } catch (error) {
-    console.error("Paystack initialization error:", error);
+    logger.error("Paystack initialization error:", { error: error });
 
     // Log error
     await logAPIError("/api/paystack/initialize", error, session.userId);
 
     const message = getFriendlyErrorMessage(
       error,
-      "We couldn't start the payment. Please try again in a few minutes."
+      "We couldn't start the payment. Please try again in a few minutes.",
     );
     return NextResponse.json({ message }, { status: 500 });
   }

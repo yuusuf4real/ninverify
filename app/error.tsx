@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Error({
   error,
-  reset
+  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -41,11 +41,15 @@ export default function Error({
               Something Went Wrong
             </h2>
             <p className="text-lg text-muted-foreground">
-              We encountered an unexpected error. Don&apos;t worry, our team has been notified and we&apos;re working on it.
+              We encountered an unexpected error. Don&apos;t worry, our team has
+              been notified and we&apos;re working on it.
             </p>
             {error.digest && (
               <p className="text-sm text-muted-foreground">
-                Error ID: <code className="rounded bg-muted px-2 py-1 font-mono text-xs">{error.digest}</code>
+                Error ID:{" "}
+                <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
+                  {error.digest}
+                </code>
               </p>
             )}
           </div>
@@ -86,7 +90,10 @@ export default function Error({
                 </div>
                 <p>
                   If the problem persists, contact{" "}
-                  <a href="mailto:support@verifynin.ng" className="font-semibold text-primary hover:underline">
+                  <a
+                    href="mailto:support@verifynin.ng"
+                    className="font-semibold text-primary hover:underline"
+                  >
                     support@verifynin.ng
                   </a>
                 </p>
