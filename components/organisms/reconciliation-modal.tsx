@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CreditCard, Search, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import {
   Dialog,
   DialogContent,
@@ -228,7 +229,7 @@ export function ReconciliationModal({
                 />
                 {searching && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <AnimatedLogoLoader size="sm" variant="inline" />
                   </div>
                 )}
               </div>
@@ -351,7 +352,7 @@ export function ReconciliationModal({
               >
                 {loading ? (
                   <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white mr-2" />
+                    <AnimatedLogoLoader size="sm" variant="inline" />
                     Reconciling...
                   </>
                 ) : (

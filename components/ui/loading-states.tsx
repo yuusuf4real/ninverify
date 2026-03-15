@@ -67,7 +67,7 @@ export const LoadingButton = memo(
       className={cn("flex items-center gap-2", className)}
       {...props}
     >
-      {loading && <LoadingSpinner size="sm" />}
+      {loading && <AnimatedLogoLoader size="sm" variant="inline" />}
       {loading ? loadingText : children}
     </Button>
   ),
