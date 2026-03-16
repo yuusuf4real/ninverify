@@ -6,7 +6,7 @@ import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { getFriendlyErrorMessage } from "@/lib/utils";
 
 export function AdminLoginForm() {
@@ -136,10 +136,10 @@ export function AdminLoginForm() {
         className="h-12 w-full text-base font-semibold"
       >
         {loading ? (
-          <>
-            <AnimatedLogoLoader size="sm" variant="inline" />
+          <div className="flex items-center gap-2">
+            <LoadingSpinner size="sm" />
             Signing in...
-          </>
+          </div>
         ) : (
           <>
             <LogIn className="h-5 w-5" />

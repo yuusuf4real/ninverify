@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -178,10 +178,10 @@ export default function LoginPage() {
 
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? (
-            <>
-              <AnimatedLogoLoader size="sm" variant="inline" />
+            <div className="flex items-center gap-2">
+              <LoadingSpinner size="sm" />
               Signing in...
-            </>
+            </div>
           ) : (
             <>
               <LogIn className="h-4 w-4" />
