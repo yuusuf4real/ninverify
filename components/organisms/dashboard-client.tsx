@@ -809,7 +809,6 @@ export function DashboardClient() {
                     support@verifynin.ng
                   </a>
                 </li>
-                <li className="text-xs">Made with ❤️ in Nigeria</li>
               </ul>
             </div>
           </div>
