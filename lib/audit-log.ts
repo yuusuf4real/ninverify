@@ -30,7 +30,11 @@ export type AuditEventType =
   | "webhook.processed"
   | "webhook.failed"
   | "api.error"
-  | "security.suspicious_activity";
+  | "security.suspicious_activity"
+  | "security.unauthorized_admin_access"
+  | "security.admin_user_portal_access"
+  | "security.ip_blocked"
+  | "security.rate_limit_exceeded";
 
 export interface AuditLogEntry {
   timestamp: string;
@@ -40,7 +44,7 @@ export interface AuditLogEntry {
   userAgent?: string;
   resource?: string;
   action: string;
-  status: "success" | "failure" | "pending";
+  status: "success" | "failure" | "pending" | "blocked";
   metadata?: Record<string, unknown>;
   errorMessage?: string;
 }

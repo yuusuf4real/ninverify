@@ -164,12 +164,17 @@ export const auditEventType = pgEnum("audit_event_type", [
   "webhook.failed",
   "api.error",
   "security.suspicious_activity",
+  "security.unauthorized_admin_access",
+  "security.admin_user_portal_access",
+  "security.ip_blocked",
+  "security.rate_limit_exceeded",
 ]);
 
 export const auditStatus = pgEnum("audit_status", [
   "success",
   "failure",
   "pending",
+  "blocked",
 ]);
 
 export const auditLogs = pgTable("audit_logs", {

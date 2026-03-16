@@ -6,7 +6,7 @@ import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { getFriendlyErrorMessage } from "@/lib/utils";
 
 export function AdminLoginForm() {
@@ -75,10 +75,7 @@ export function AdminLoginForm() {
 
       {/* Email Field */}
       <div className="space-y-2">
-        <label
-          htmlFor="email"
-          className="text-sm font-semibold text-foreground"
-        >
+        <label htmlFor="email" className="text-sm font-semibold text-slate-900">
           Admin Email
         </label>
         <Input
@@ -90,7 +87,7 @@ export function AdminLoginForm() {
           placeholder="admin@verifynin.ng"
           required
           disabled={loading}
-          className="h-12"
+          className="h-12 border-slate-200 bg-white focus:border-emerald-500 focus:ring-emerald-500"
         />
       </div>
 
@@ -98,7 +95,7 @@ export function AdminLoginForm() {
       <div className="space-y-2">
         <label
           htmlFor="password"
-          className="text-sm font-semibold text-foreground"
+          className="text-sm font-semibold text-slate-900"
         >
           Password
         </label>
@@ -112,12 +109,12 @@ export function AdminLoginForm() {
             placeholder="Enter your password"
             required
             disabled={loading}
-            className="h-12 pr-12"
+            className="h-12 pr-12 border-slate-200 bg-white focus:border-emerald-500 focus:ring-emerald-500"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
             disabled={loading}
           >
             {showPassword ? (
@@ -133,13 +130,13 @@ export function AdminLoginForm() {
       <Button
         type="submit"
         disabled={loading || !formData.email || !formData.password}
-        className="h-12 w-full text-base font-semibold"
+        className="h-12 w-full text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
       >
         {loading ? (
-          <>
-            <AnimatedLogoLoader size="sm" variant="inline" />
+          <div className="flex items-center gap-2">
+            <LoadingSpinner size="sm" />
             Signing in...
-          </>
+          </div>
         ) : (
           <>
             <LogIn className="h-5 w-5" />
@@ -149,7 +146,7 @@ export function AdminLoginForm() {
       </Button>
 
       {/* Security Notice */}
-      <div className="rounded-xl bg-blue-50 p-4">
+      <div className="rounded-xl bg-blue-50 p-4 border border-blue-200">
         <div className="flex gap-3">
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100">
             <div className="h-2 w-2 rounded-full bg-blue-600" />

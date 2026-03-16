@@ -6,6 +6,8 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./lib/**/*.{ts,tsx}",
+    // Explicitly include the admin login path
+    "./app/sys-4a7404d6f114b5b0/**/*.{ts,tsx}",
   ],
   theme: {
     container: {
