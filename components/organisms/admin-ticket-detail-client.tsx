@@ -508,8 +508,8 @@ export function AdminTicketDetailClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Button
             variant="outline"
             size="sm"
@@ -526,7 +526,7 @@ export function AdminTicketDetailClient({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="default"
             className={`${connectionConfig[connectionState].badge} flex items-center gap-2`}
@@ -560,7 +560,7 @@ export function AdminTicketDetailClient({
               {ticket.paymentReference && (
                 <div>
                   <h3 className="font-semibold mb-2">Payment Reference</h3>
-                  <p className="font-mono bg-gray-100 px-3 py-2 rounded">
+                  <p className="font-mono bg-gray-100 px-3 py-2 rounded break-all">
                     {ticket.paymentReference}
                   </p>
                 </div>
@@ -600,7 +600,7 @@ export function AdminTicketDetailClient({
           {/* Messages */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>Conversation ({filteredMessages.length})</CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
@@ -691,7 +691,7 @@ export function AdminTicketDetailClient({
                     onChange={(e) => setNewMessage(e.target.value)}
                     rows={4}
                   />
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="internal"
@@ -708,6 +708,7 @@ export function AdminTicketDetailClient({
                     <Button
                       onClick={handleSendMessage}
                       disabled={!newMessage.trim() || sending}
+                      className="w-full sm:w-auto"
                     >
                       <Send className="h-4 w-4 mr-2" />
                       {sending ? "Sending..." : "Send Response"}

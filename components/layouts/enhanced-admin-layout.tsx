@@ -4,20 +4,10 @@ import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-  BarChart3,
-  Users,
-  CreditCard,
-  Shield,
-  LifeBuoy,
-  TrendingUp,
-  Settings,
-  Bell,
-  Search,
-} from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 import { ResponsiveLayout } from "@/components/ui/responsive-layout";
-import { ActiveNavigation } from "@/components/ui/active-navigation";
+import { AdminNavigation } from "@/components/ui/admin-navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,18 +26,6 @@ export const EnhancedAdminLayout = memo<EnhancedAdminLayoutProps>(
   ({ children, user }) => {
     const displayName = user.fullName || user.email;
     const isSuper = user.role === "super_admin";
-
-    const navigationItems = [
-      { name: "Dashboard", href: "/admin", icon: BarChart3 },
-      { name: "Users", href: "/admin/users", icon: Users, badge: "1.2k" },
-      { name: "Transactions", href: "/admin/transactions", icon: CreditCard },
-      { name: "Verifications", href: "/admin/verifications", icon: Shield },
-      { name: "Support", href: "/admin/support", icon: LifeBuoy, badge: "5" },
-      { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
-      ...(isSuper
-        ? [{ name: "System", href: "/admin/system", icon: Settings }]
-        : []),
-    ];
 
     const Sidebar = () => (
       <>
@@ -73,8 +51,8 @@ export const EnhancedAdminLayout = memo<EnhancedAdminLayoutProps>(
 
         {/* Navigation */}
         <div className="flex-1 px-4 py-6">
-          <ActiveNavigation
-            items={navigationItems}
+          <AdminNavigation
+            isSuper={isSuper}
             variant="sidebar"
             className="space-y-2"
           />
@@ -104,7 +82,7 @@ export const EnhancedAdminLayout = memo<EnhancedAdminLayoutProps>(
     );
 
     const Header = () => (
-      <div className="flex items-center justify-between w-full">
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Mobile logo */}
         <Link href="/admin" className="flex items-center gap-3 md:hidden">
           <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-primary/10">
@@ -119,7 +97,7 @@ export const EnhancedAdminLayout = memo<EnhancedAdminLayoutProps>(
         </Link>
 
         {/* Search */}
-        <div className="flex-1 max-w-lg mx-4">
+        <div className="w-full sm:flex-1 sm:max-w-lg sm:mx-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
@@ -131,7 +109,7 @@ export const EnhancedAdminLayout = memo<EnhancedAdminLayoutProps>(
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:ml-auto">
           {/* Notifications */}
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-4 w-4" />

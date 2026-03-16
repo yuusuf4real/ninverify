@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ADMIN_SECURITY_CONFIG } from "@/lib/security/admin-security";
 
 export function AdminLogoutButton() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export function AdminLogoutButton() {
     setLoading(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/adminlogin-cores");
+      router.push(ADMIN_SECURITY_CONFIG.ADMIN_LOGIN_PATH);
       router.refresh();
     } catch (error) {
       console.error("Logout error:", error);

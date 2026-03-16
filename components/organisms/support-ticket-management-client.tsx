@@ -293,7 +293,7 @@ export function SupportTicketManagementClient() {
     <div className="space-y-6">
       {/* Summary Cards */}
       {summary && (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
@@ -346,9 +346,9 @@ export function SupportTicketManagementClient() {
       {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 gap-4">
-              <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-1 flex-col gap-4 lg:flex-row lg:flex-wrap">
+              <div className="relative flex-1 min-w-[220px] lg:max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Search tickets, users, or subjects..."
@@ -358,7 +358,7 @@ export function SupportTicketManagementClient() {
                 />
               </div>
               <Select value={status} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,7 +371,7 @@ export function SupportTicketManagementClient() {
                 </SelectContent>
               </Select>
               <Select value={priority} onValueChange={handlePriorityChange}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-full sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -383,7 +383,7 @@ export function SupportTicketManagementClient() {
                 </SelectContent>
               </Select>
               <Select value={category} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -402,7 +402,7 @@ export function SupportTicketManagementClient() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -448,12 +448,12 @@ export function SupportTicketManagementClient() {
                   className="hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="flex-1 space-y-3">
                         {/* Header */}
-                        <div className="flex items-start gap-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
                               <h3 className="font-semibold text-lg">
                                 {ticket.subject}
                               </h3>
@@ -464,7 +464,7 @@ export function SupportTicketManagementClient() {
                               {ticket.description}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="text-left sm:text-right">
                             <p className="text-sm font-medium">
                               #{ticket.id.slice(0, 8)}
                             </p>
@@ -475,7 +475,7 @@ export function SupportTicketManagementClient() {
                         </div>
 
                         {/* Details */}
-                        <div className="flex items-center gap-6 text-sm text-gray-600">
+                        <div className="flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:flex-wrap sm:items-center">
                           <div className="flex items-center gap-1">
                             <User className="h-4 w-4" />
                             <span>{ticket.userFullName}</span>
@@ -505,7 +505,7 @@ export function SupportTicketManagementClient() {
                         {ticket.paymentReference && (
                           <div className="text-sm">
                             <span className="text-gray-500">Payment Ref:</span>
-                            <span className="ml-2 font-mono bg-gray-100 px-2 py-1 rounded">
+                            <span className="ml-2 inline-block max-w-full break-all rounded bg-gray-100 px-2 py-1 font-mono">
                               {ticket.paymentReference}
                             </span>
                           </div>
@@ -513,7 +513,7 @@ export function SupportTicketManagementClient() {
                       </div>
 
                       {/* Actions */}
-                      <div className="ml-4">
+                      <div className="lg:ml-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">

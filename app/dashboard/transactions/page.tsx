@@ -44,11 +44,15 @@ export default async function TransactionsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Masked NIN</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="hidden sm:table-cell">Type</TableHead>
+              <TableHead className="hidden md:table-cell">
+                Description
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">Masked NIN</TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
+              <TableHead className="hidden sm:table-cell text-right">
+                Amount
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -65,12 +69,32 @@ export default async function TransactionsPage() {
               transactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>
-                    {new Date(tx.createdAt).toLocaleString()}
+                    <div className="space-y-1">
+                      <p>{new Date(tx.createdAt).toLocaleString()}</p>
+                      <div className="space-y-1 text-xs text-muted-foreground sm:hidden">
+                        <p className="capitalize">
+                          {tx.type} • {tx.status}
+                        </p>
+                        <p className="font-medium text-foreground">
+                          {formatNaira(tx.amount)}
+                        </p>
+                        <p className="line-clamp-2">{tx.description ?? "-"}</p>
+                        {tx.ninMasked && (
+                          <p className="font-mono">NIN: {tx.ninMasked}</p>
+                        )}
+                      </div>
+                    </div>
                   </TableCell>
-                  <TableCell className="capitalize">{tx.type}</TableCell>
-                  <TableCell>{tx.description ?? "-"}</TableCell>
-                  <TableCell>{tx.ninMasked ?? "-"}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell capitalize">
+                    {tx.type}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {tx.description ?? "-"}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {tx.ninMasked ?? "-"}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge
                       variant={
                         tx.status === "completed"
@@ -83,7 +107,7 @@ export default async function TransactionsPage() {
                       {tx.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="hidden sm:table-cell text-right">
                     {formatNaira(tx.amount)}
                   </TableCell>
                 </TableRow>
