@@ -164,7 +164,7 @@ export function AdminTicketDetailClient({
 
   const fetchLatestMessages = useCallback(async () => {
     try {
-      const response = await fetch(`/api/support/tickets/${ticketId}/messages`);
+      const response = await fetch(`/api/admin/support/tickets/${ticketId}`);
       if (!response.ok) throw new Error("Failed to fetch messages");
 
       const data = await response.json();

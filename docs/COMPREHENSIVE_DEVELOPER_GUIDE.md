@@ -256,7 +256,6 @@ verifynin/
 │   │   └── 📁 wallet/               # Wallet management
 │   ├── 📁 dashboard/                # User dashboard
 │   │   ├── 📁 receipts/             # Verification receipts
-│   │   ├── 📁 recovery/             # Account recovery
 │   │   ├── 📁 support/              # User support
 │   │   ├── 📁 transactions/         # Transaction history
 │   │   ├── layout.tsx               # Dashboard layout
@@ -1256,19 +1255,6 @@ interface WalletBalanceResponse {
   currency: "NGN";
   balanceFormatted: string; // "₦1,500.00"
   lastUpdated: string;
-}
-
-// POST /api/wallet/check-pending-payments
-interface CheckPendingPaymentsRequest {
-  reference: string; // Paystack reference
-}
-
-interface CheckPendingPaymentsResponse {
-  success: true;
-  found: boolean;
-  amount?: number;
-  status?: "success" | "failed";
-  message: string;
 }
 ```
 

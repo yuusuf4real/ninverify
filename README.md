@@ -129,24 +129,6 @@ See `docs/YOUVERIFY_SETUP_GUIDE.md` for detailed setup instructions.
 5. On success: Receipt generated
 6. On failure: Automatic wallet refund
 
-### Payment Reconciliation (NEW)
-
-**Problem Solved:** If payment is deducted but doesn't reflect in wallet due to network issues.
-
-**User Self-Service:**
-
-1. Go to dashboard
-2. Find "Payment Not Showing?" card
-3. Enter payment reference from Paystack
-4. Click "Check Payment Status"
-5. Wallet automatically credited if payment was successful
-
-**Admin Manual Recovery:**
-
-- Endpoint: `/api/admin/reconcile-payment`
-- Requires admin authentication
-- See `docs/PAYMENT_RECONCILIATION_SOLUTION.md` for details
-
 ### Security Features
 
 - Session-based authentication
@@ -177,7 +159,6 @@ See `docs/YOUVERIFY_SETUP_GUIDE.md` for detailed setup instructions.
 ### Wallet
 
 - `GET /api/wallet/balance` - Get wallet balance
-- `POST /api/wallet/check-pending-payments` - Check and recover missed payments
 
 ### Paystack
 
@@ -186,8 +167,6 @@ See `docs/YOUVERIFY_SETUP_GUIDE.md` for detailed setup instructions.
 - `POST /api/paystack/webhook` - Payment webhook
 
 ### Admin (Protected)
-
-- `POST /api/admin/reconcile-payment` - Manually reconcile payment (requires admin key)
 
 ## Development
 

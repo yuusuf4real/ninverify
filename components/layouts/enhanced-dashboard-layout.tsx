@@ -6,7 +6,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   History,
-  RefreshCw,
   UserCircle,
   Wallet,
   MessageSquare,
@@ -36,7 +35,6 @@ export const EnhancedDashboardLayout = memo<EnhancedDashboardLayoutProps>(
     const navigationItems = [
       { name: "Dashboard", href: "/dashboard", icon: Wallet },
       { name: "History", href: "/dashboard/transactions", icon: History },
-      { name: "Recovery", href: "/dashboard/recovery", icon: RefreshCw },
       {
         name: "Support",
         href: "/dashboard/support",
