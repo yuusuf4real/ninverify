@@ -648,44 +648,6 @@ export function DashboardClient() {
             </CardContent>
           </Card>
 
-          {/* Payment Recovery Shortcut */}
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardContent className="p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
-                  <RefreshCw className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-blue-900">Payment Recovery</h3>
-                  <p className="text-xs text-blue-700">
-                    Fix a debit that didn&apos;t reflect
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-sm text-blue-800 leading-relaxed">
-                Use your payment reference to recover a wallet top-up that
-                didn&apos;t update after checkout.
-              </p>
-
-              <Button
-                asChild
-                size="lg"
-                className="mt-4 w-full font-semibold bg-blue-600 hover:bg-blue-700"
-              >
-                <Link href="/dashboard/recovery">
-                  <RefreshCw className="h-4 w-4" />
-                  Open recovery
-                </Link>
-              </Button>
-
-              <p className="mt-3 text-xs text-blue-700 leading-relaxed">
-                Have your payment reference and amount ready before you
-                continue.
-              </p>
-            </CardContent>
-          </Card>
-
           {/* How It Works */}
           <Card className="border-border/50">
             <CardContent className="p-6">
@@ -785,14 +747,6 @@ export function DashboardClient() {
                 </li>
                 <li>
                   <Link
-                    href="/dashboard/recovery"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Payment Recovery
-                  </Link>
-                </li>
-                <li>
-                  <Link
                     href="/support"
                     className="hover:text-primary transition-colors"
                   >
@@ -855,7 +809,6 @@ export function DashboardClient() {
                     support@verifynin.ng
                   </a>
                 </li>
-                <li className="text-xs">Made with ❤️ in Nigeria</li>
               </ul>
             </div>
           </div>

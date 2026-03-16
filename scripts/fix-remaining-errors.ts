@@ -196,7 +196,6 @@ async function main() {
     "app/api/paystack/verify/route.ts",
     "app/api/paystack/webhook/route.ts",
     "app/api/wallet/balance/route.ts",
-    "app/api/wallet/check-pending-payments/route.ts",
     "lib/paystack.ts",
     "lib/youverify.ts",
   ];

@@ -28,7 +28,7 @@ export function AdminLoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, portal: "admin" }),
       });
 
       const data = await res.json();

@@ -310,7 +310,7 @@ class ValidationFixer {
     this.log("\n🔧 Fixing build issues...", "info");
 
     // Check if admin-login page exists
-    const adminLoginPath = "app/admin-login/page.tsx";
+    const adminLoginPath = "app/adminlogin-cores/page.tsx";
     try {
       const content = readFileSync(adminLoginPath, "utf8");
       if (!content.includes("export default")) {

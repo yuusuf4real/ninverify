@@ -584,7 +584,9 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
     if (!token) {
       const url = request.nextUrl.clone();
-      url.pathname = pathname.startsWith("/admin") ? "/admin-login" : "/login";
+      url.pathname = pathname.startsWith("/admin")
+        ? "/adminlogin-cores"
+        : "/login";
       return NextResponse.redirect(url);
     }
 
@@ -1288,7 +1290,7 @@ export function UserDetailModal({ userId, open, onClose }: UserDetailModalProps)
 Consistent form handling with react-hook-form and Zod:
 
 ```typescript
-// components/organisms/admin-login-form.tsx
+// components/organisms/adminlogin-cores-form.tsx
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8)
@@ -1679,7 +1681,7 @@ npm run db:studio
 npm run dev
 
 # Server runs on http://localhost:3000
-# Admin panel: http://localhost:3000/admin-login
+# Admin panel: http://localhost:3000/adminlogin-cores
 ```
 
 ### Code Organization
@@ -2226,7 +2228,7 @@ pm2 save
 ```bash
 # Test main endpoints
 curl https://your-domain.com/api/health
-curl https://your-domain.com/admin-login
+curl https://your-domain.com/adminlogin-cores
 
 # Check database connectivity
 # Verify external API connections (Paystack, YouVerify)

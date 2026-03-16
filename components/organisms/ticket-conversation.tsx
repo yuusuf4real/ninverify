@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AnimatedLogoLoader } from "@/components/ui/animated-logo-loader";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/format";
+import { cursorFromMessage, encodeTicketCursor } from "@/lib/support-stream";
 
 interface TicketMessage {
   id: string;
@@ -33,6 +34,7 @@ interface TicketMessage {
   attachments?: Array<{ name: string; url: string; type: string }>;
   createdAt: string;
   readAt?: string;
+  clientStatus?: "sending" | "sent" | "failed";
 }
 
 interface TicketDetails {
@@ -77,7 +79,29 @@ export function TicketConversation({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [connectionState, setConnectionState] = useState<
+    "connecting" | "live" | "reconnecting" | "error"
+  >("connecting");
+  const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const lastCursorRef = useRef<string | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const isAtBottomRef = useRef(true);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const updateScrollState = useCallback(() => {
+    const container = messageListRef.current;
+    if (!container) return;
+    const threshold = 120;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const atBottom = distanceFromBottom <= threshold;
+    isAtBottomRef.current = atBottom;
+    if (atBottom) {
+      setUnreadCount(0);
+    }
+  }, []);
 
   const fetchTicketDetails = useCallback(async () => {
     try {
@@ -97,7 +121,34 @@ export function TicketConversation({
       if (!response.ok) throw new Error("Failed to fetch messages");
 
       const data = await response.json();
-      setMessages(data.messages || []);
+      const fetchedMessages = data.messages || [];
+      setMessages((prev) => {
+        const pending = prev.filter(
+          (message) =>
+            message.clientStatus === "sending" ||
+            message.clientStatus === "failed",
+        );
+        const fetchedIds = new Set(
+          fetchedMessages.map((message: { id: string }) => message.id),
+        );
+        const merged = [...fetchedMessages];
+        for (const message of pending) {
+          if (!fetchedIds.has(message.id)) {
+            merged.push(message);
+          }
+        }
+        return merged;
+      });
+      if (fetchedMessages.length) {
+        lastCursorRef.current = encodeTicketCursor(
+          cursorFromMessage(fetchedMessages[fetchedMessages.length - 1]),
+        );
+      } else {
+        lastCursorRef.current = encodeTicketCursor({
+          timestamp: Date.now() - 5000,
+          id: "0",
+        });
+      }
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
@@ -111,12 +162,110 @@ export function TicketConversation({
   }, [ticketId, fetchTicketDetails, fetchMessages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const startPolling = () => {
+      if (pollIntervalRef.current) return;
+      pollIntervalRef.current = setInterval(fetchMessages, 5000);
+    };
+
+    const stopPolling = () => {
+      if (!pollIntervalRef.current) return;
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    };
+
+    if (typeof EventSource === "undefined") {
+      setConnectionState("error");
+      startPolling();
+      return () => stopPolling();
+    }
+
+    const cursor = lastCursorRef.current;
+    const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+    const eventSource = new EventSource(
+      `/api/support/tickets/${ticketId}/stream${query}`,
+    );
+    eventSourceRef.current = eventSource;
+    setConnectionState("connecting");
+
+    const handleMessages = (event: MessageEvent) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const incoming: TicketMessage[] = payload.messages || [];
+        if (!incoming.length) return;
+
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((message) => message.id));
+          const nextMessages = [...prev];
+          for (const message of incoming) {
+            if (!existingIds.has(message.id)) {
+              nextMessages.push(message);
+            }
+          }
+          return nextMessages;
+        });
+
+        if (!isAtBottomRef.current) {
+          setUnreadCount((count) => count + incoming.length);
+        }
+
+        if (payload.cursor) {
+          lastCursorRef.current = payload.cursor;
+        }
+      } catch (error) {
+        console.error("Error parsing stream message:", error);
+      }
+    };
+
+    const handleReady = () => {
+      setConnectionState("live");
+    };
+
+    eventSource.addEventListener("messages", handleMessages);
+    eventSource.addEventListener("ready", handleReady);
+    eventSource.onopen = () => {
+      stopPolling();
+      setConnectionState("live");
+    };
+    eventSource.onerror = () => {
+      setConnectionState("reconnecting");
+      startPolling();
+    };
+
+    return () => {
+      eventSource.removeEventListener("messages", handleMessages);
+      eventSource.removeEventListener("ready", handleReady);
+      eventSource.close();
+      stopPolling();
+    };
+  }, [ticketId, loading, fetchMessages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
 
+    const messagePayload = newMessage;
+    const optimisticId = `local_${Date.now()}`;
+    const optimisticMessage: TicketMessage = {
+      id: optimisticId,
+      senderId: user.id,
+      senderType: isAdmin ? "agent" : "user",
+      senderName: isAdmin ? "Support Agent" : user.fullName,
+      message: messagePayload,
+      messageType: "text",
+      isInternal: false,
+      createdAt: new Date().toISOString(),
+      clientStatus: "sending",
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setNewMessage("");
     setSending(true);
     try {
       const response = await fetch(
@@ -124,27 +273,79 @@ export function TicketConversation({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: newMessage }),
+          body: JSON.stringify({ message: messagePayload }),
         },
       );
 
       if (!response.ok) throw new Error("Failed to send message");
 
-      setNewMessage("");
-      fetchMessages();
+      const data = await response.json();
+      const resolvedId = data.messageId || optimisticId;
+      setMessages((prev) => {
+        const updated = prev.map((message) =>
+          message.id === optimisticId
+            ? {
+                ...message,
+                id: resolvedId,
+                clientStatus: "sent" as const,
+              }
+            : message,
+        );
+        const seen = new Set<string>();
+        return updated.filter((message) => {
+          if (seen.has(message.id)) return false;
+          seen.add(message.id);
+          return true;
+        });
+      });
     } catch (error) {
       console.error("Error sending message:", error);
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === optimisticId
+            ? { ...message, clientStatus: "failed" }
+            : message,
+        ),
+      );
     } finally {
       setSending(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
+
+  const scrollToLatest = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setUnreadCount(0);
+  };
+
+  const connectionConfig = {
+    live: {
+      label: "Live",
+      badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      dot: "bg-emerald-500",
+    },
+    connecting: {
+      label: "Connecting",
+      badge: "bg-blue-100 text-blue-700 border-blue-200",
+      dot: "bg-blue-500",
+    },
+    reconnecting: {
+      label: "Reconnecting",
+      badge: "bg-amber-100 text-amber-700 border-amber-200",
+      dot: "bg-amber-500",
+    },
+    error: {
+      label: "Offline",
+      badge: "bg-rose-100 text-rose-700 border-rose-200",
+      dot: "bg-rose-500",
+    },
+  } as const;
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -220,6 +421,15 @@ export function TicketConversation({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Badge
+              variant="default"
+              className={`${connectionConfig[connectionState].badge} flex items-center gap-2`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${connectionConfig[connectionState].dot}`}
+              />
+              {connectionConfig[connectionState].label}
+            </Badge>
             {getStatusBadge(ticket.status)}
             {getPriorityBadge(ticket.priority)}
           </div>
@@ -273,7 +483,11 @@ export function TicketConversation({
         )}
       </div>
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div
+        ref={messageListRef}
+        onScroll={updateScrollState}
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+      >
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -288,13 +502,21 @@ export function TicketConversation({
       {/* Message Input */}
       {ticket.status !== "closed" && (
         <div className="border-t p-4 bg-white">
+          {unreadCount > 0 && (
+            <div className="mb-3 flex justify-center">
+              <Button variant="outline" size="sm" onClick={scrollToLatest}>
+                {unreadCount} new message{unreadCount > 1 ? "s" : ""} • View
+                latest
+              </Button>
+            </div>
+          )}
           <div className="flex gap-2">
             <div className="flex-1">
               <Textarea
                 placeholder="Type your message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 className="min-h-[60px] resize-none"
                 disabled={sending}
               />
@@ -445,9 +667,15 @@ function MessageBubble({
         )}
 
         {/* Read Status */}
-        {isOwn && message.readAt && (
+        {isOwn && (
           <div className="text-xs text-gray-500 mt-1">
-            Read {formatRelativeTime(message.readAt)}
+            {message.clientStatus === "sending" && "Sending..."}
+            {message.clientStatus === "failed" && "Failed to send"}
+            {message.clientStatus === "sent" && "Sent"}
+            {!message.clientStatus &&
+              message.readAt &&
+              `Read ${formatRelativeTime(message.readAt)}`}
+            {!message.clientStatus && !message.readAt && "Sent"}
           </div>
         )}
       </div>

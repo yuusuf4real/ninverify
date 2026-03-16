@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 const schema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  portal: z.enum(["user", "admin"]).optional().default("user"),
 });
 
 async function queryWithRetry<T>(
@@ -107,6 +108,55 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { message: "Invalid credentials" },
         { status: 401 },
+      );
+    }
+
+    const isAdmin = user.role === "admin" || user.role === "super_admin";
+    const portal = data.portal ?? "user";
+
+    if (portal === "admin" && !isAdmin) {
+      await logAuditEvent({
+        timestamp: new Date().toISOString(),
+        eventType: "user.login",
+        userId: user.id,
+        ipAddress: ip,
+        userAgent: request.headers.get("user-agent") || undefined,
+        resource: "user",
+        action: "login",
+        status: "failure",
+        errorMessage: "Admin portal access denied",
+        metadata: { email: data.email, portal },
+      });
+
+      return NextResponse.json(
+        {
+          message:
+            "This account doesn't have admin access. Please use a valid admin account.",
+        },
+        { status: 403 },
+      );
+    }
+
+    if (portal === "user" && isAdmin) {
+      await logAuditEvent({
+        timestamp: new Date().toISOString(),
+        eventType: "user.login",
+        userId: user.id,
+        ipAddress: ip,
+        userAgent: request.headers.get("user-agent") || undefined,
+        resource: "user",
+        action: "login",
+        status: "failure",
+        errorMessage: "User portal access denied",
+        metadata: { email: data.email, portal },
+      });
+
+      return NextResponse.json(
+        {
+          message:
+            "This is an admin account. Please sign in via the admin portal.",
+        },
+        { status: 403 },
       );
     }
 

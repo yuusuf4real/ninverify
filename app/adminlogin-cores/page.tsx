@@ -1,10 +1,21 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Shield, ArrowLeft } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { AdminLoginForm } from "@/components/organisms/admin-login-form";
+import { getSession } from "@/lib/auth";
 
 export default async function AdminLoginPage() {
+  const session = await getSession();
+
+  if (session) {
+    if (session.role === "admin" || session.role === "super_admin") {
+      redirect("/admin");
+    }
+    redirect("/dashboard");
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Background Effects */}

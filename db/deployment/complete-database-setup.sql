@@ -352,7 +352,7 @@ RAISE NOTICE 'Indexes Created: 25+';
 RAISE NOTICE '==============================================';
 RAISE NOTICE 'NEXT STEPS:';
 RAISE NOTICE '1. Run: npm run create-super-admin';
-RAISE NOTICE '2. Login at: /admin-login';
+RAISE NOTICE '2. Login at: /adminlogin-cores';
 RAISE NOTICE '3. Email: admin@verifynin.ng';
 RAISE NOTICE '4. Password: YourSecurePassword123!';
 RAISE NOTICE '==============================================';

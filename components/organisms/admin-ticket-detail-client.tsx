@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -24,22 +24,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatRelativeTime } from "@/lib/format";
+import { cursorFromMessage, encodeTicketCursor } from "@/lib/support-stream";
 
 interface TicketMessage {
   id: string;
-  ticketId: string;
+  ticketId?: string;
   senderId: string;
   senderType: string;
   message: string;
   messageType: string;
   isInternal: boolean;
   isSystemGenerated: boolean;
-  attachments: unknown;
-  readAt: string | null;
-  metadata: unknown;
+  attachments?: unknown;
+  readAt?: string | null;
+  metadata?: unknown;
   createdAt: string;
   senderName: string;
-  senderEmail: string;
+  senderEmail?: string;
+  clientStatus?: "sending" | "sent" | "failed";
 }
 
 interface AssignedAdmin {
@@ -100,6 +102,17 @@ export function AdminTicketDetailClient({
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [sending, setSending] = useState(false);
+  const [connectionState, setConnectionState] = useState<
+    "connecting" | "live" | "reconnecting" | "error"
+  >("connecting");
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const lastCursorRef = useRef<string | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const isAtBottomRef = useRef(true);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Form states
   const [newMessage, setNewMessage] = useState("");
@@ -110,6 +123,19 @@ export function AdminTicketDetailClient({
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
 
+  const updateScrollState = useCallback(() => {
+    const container = messageListRef.current;
+    if (!container) return;
+    const threshold = 120;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const atBottom = distanceFromBottom <= threshold;
+    isAtBottomRef.current = atBottom;
+    if (atBottom) {
+      setUnreadCount(0);
+    }
+  }, []);
+
   const fetchTicketDetails = useCallback(async () => {
     setLoading(true);
     try {
@@ -119,10 +145,55 @@ export function AdminTicketDetailClient({
       const data: TicketDetailResponse = await response.json();
       setTicket(data.ticket);
       setMessages(data.messages);
+      if (data.messages.length) {
+        lastCursorRef.current = encodeTicketCursor(
+          cursorFromMessage(data.messages[data.messages.length - 1]),
+        );
+      } else {
+        lastCursorRef.current = encodeTicketCursor({
+          timestamp: Date.now() - 5000,
+          id: "0",
+        });
+      }
     } catch (error) {
       console.error("Error fetching ticket details:", error);
     } finally {
       setLoading(false);
+    }
+  }, [ticketId]);
+
+  const fetchLatestMessages = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/admin/support/tickets/${ticketId}`);
+      if (!response.ok) throw new Error("Failed to fetch messages");
+
+      const data = await response.json();
+      const fetchedMessages = data.messages || [];
+      setMessages((prev) => {
+        const pending = prev.filter(
+          (message) =>
+            message.clientStatus === "sending" ||
+            message.clientStatus === "failed",
+        );
+        const fetchedIds = new Set(
+          fetchedMessages.map((message: { id: string }) => message.id),
+        );
+        const merged = [...fetchedMessages];
+        for (const message of pending) {
+          if (!fetchedIds.has(message.id)) {
+            merged.push(message);
+          }
+        }
+        return merged;
+      });
+
+      if (fetchedMessages.length) {
+        lastCursorRef.current = encodeTicketCursor(
+          cursorFromMessage(fetchedMessages[fetchedMessages.length - 1]),
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching latest messages:", error);
     }
   }, [ticketId]);
 
@@ -136,6 +207,92 @@ export function AdminTicketDetailClient({
       setPriority(ticket.priority);
     }
   }, [ticket]);
+
+  useEffect(() => {
+    if (isAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const startPolling = () => {
+      if (pollIntervalRef.current) return;
+      pollIntervalRef.current = setInterval(fetchLatestMessages, 5000);
+    };
+
+    const stopPolling = () => {
+      if (!pollIntervalRef.current) return;
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    };
+
+    if (typeof EventSource === "undefined") {
+      setConnectionState("error");
+      startPolling();
+      return () => stopPolling();
+    }
+
+    const cursor = lastCursorRef.current;
+    const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+    const eventSource = new EventSource(
+      `/api/support/tickets/${ticketId}/stream${query}`,
+    );
+    eventSourceRef.current = eventSource;
+    setConnectionState("connecting");
+
+    const handleMessages = (event: MessageEvent) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const incoming: TicketMessage[] = payload.messages || [];
+        if (!incoming.length) return;
+
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((message) => message.id));
+          const nextMessages = [...prev];
+          for (const message of incoming) {
+            if (!existingIds.has(message.id)) {
+              nextMessages.push(message);
+            }
+          }
+          return nextMessages;
+        });
+
+        if (!isAtBottomRef.current) {
+          setUnreadCount((count) => count + incoming.length);
+        }
+
+        if (payload.cursor) {
+          lastCursorRef.current = payload.cursor;
+        }
+      } catch (error) {
+        console.error("Error parsing stream message:", error);
+      }
+    };
+
+    const handleReady = () => {
+      setConnectionState("live");
+    };
+
+    eventSource.addEventListener("messages", handleMessages);
+    eventSource.addEventListener("ready", handleReady);
+    eventSource.onopen = () => {
+      stopPolling();
+      setConnectionState("live");
+    };
+    eventSource.onerror = () => {
+      setConnectionState("reconnecting");
+      startPolling();
+    };
+
+    return () => {
+      eventSource.removeEventListener("messages", handleMessages);
+      eventSource.removeEventListener("ready", handleReady);
+      eventSource.close();
+      stopPolling();
+    };
+  }, [ticketId, loading, fetchLatestMessages]);
 
   const handleUpdateTicket = async () => {
     if (!ticket) return;
@@ -164,28 +321,97 @@ export function AdminTicketDetailClient({
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    const messagePayload = newMessage;
+    const optimisticId = `local_${Date.now()}`;
+    const optimisticMessage: TicketMessage = {
+      id: optimisticId,
+      senderId: ticket?.assignedTo || "admin",
+      senderType: "agent",
+      senderName: "Support Agent",
+      message: messagePayload,
+      messageType: "text",
+      isInternal: isInternalMessage,
+      isSystemGenerated: false,
+      createdAt: new Date().toISOString(),
+      clientStatus: "sending",
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setNewMessage("");
     setSending(true);
     try {
       const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: newMessage,
+          message: messagePayload,
           isInternal: isInternalMessage,
         }),
       });
 
       if (!response.ok) throw new Error("Failed to send message");
 
-      setNewMessage("");
+      const data = await response.json();
+      const resolvedId = data.messageId || optimisticId;
+      setMessages((prev) => {
+        const updated = prev.map((message) =>
+          message.id === optimisticId
+            ? {
+                ...message,
+                id: resolvedId,
+                clientStatus: "sent" as const,
+              }
+            : message,
+        );
+        const seen = new Set<string>();
+        return updated.filter((message) => {
+          if (seen.has(message.id)) return false;
+          seen.add(message.id);
+          return true;
+        });
+      });
       setIsInternalMessage(false);
-      await fetchTicketDetails();
     } catch (error) {
       console.error("Error sending message:", error);
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === optimisticId
+            ? { ...message, clientStatus: "failed" }
+            : message,
+        ),
+      );
     } finally {
       setSending(false);
     }
   };
+
+  const scrollToLatest = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setUnreadCount(0);
+  };
+
+  const connectionConfig = {
+    live: {
+      label: "Live",
+      badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      dot: "bg-emerald-500",
+    },
+    connecting: {
+      label: "Connecting",
+      badge: "bg-blue-100 text-blue-700 border-blue-200",
+      dot: "bg-blue-500",
+    },
+    reconnecting: {
+      label: "Reconnecting",
+      badge: "bg-amber-100 text-amber-700 border-amber-200",
+      dot: "bg-amber-500",
+    },
+    error: {
+      label: "Offline",
+      badge: "bg-rose-100 text-rose-700 border-rose-200",
+      dot: "bg-rose-500",
+    },
+  } as const;
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -301,6 +527,15 @@ export function AdminTicketDetailClient({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Badge
+            variant="default"
+            className={`${connectionConfig[connectionState].badge} flex items-center gap-2`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${connectionConfig[connectionState].dot}`}
+            />
+            {connectionConfig[connectionState].label}
+          </Badge>
           {getStatusBadge(ticket.status)}
           {getPriorityBadge(ticket.priority)}
         </div>
@@ -386,7 +621,19 @@ export function AdminTicketDetailClient({
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              {unreadCount > 0 && (
+                <div className="mb-3 flex justify-center">
+                  <Button variant="outline" size="sm" onClick={scrollToLatest}>
+                    {unreadCount} new message{unreadCount > 1 ? "s" : ""} • View
+                    latest
+                  </Button>
+                </div>
+              )}
+              <div
+                ref={messageListRef}
+                onScroll={updateScrollState}
+                className="space-y-4 max-h-96 overflow-y-auto"
+              >
                 {filteredMessages.map((message) => (
                   <div
                     key={message.id}
@@ -423,8 +670,16 @@ export function AdminTicketDetailClient({
                     <p className="text-gray-700 whitespace-pre-wrap">
                       {message.message}
                     </p>
+                    {message.senderType === "agent" && message.clientStatus && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {message.clientStatus === "sending" && "Sending..."}
+                        {message.clientStatus === "failed" && "Failed to send"}
+                        {message.clientStatus === "sent" && "Sent"}
+                      </p>
+                    )}
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Add Message Form */}

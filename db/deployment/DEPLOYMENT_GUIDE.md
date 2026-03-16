@@ -67,7 +67,7 @@ npx tsx scripts/create-super-admin.ts
    SELECT id, email, role FROM users WHERE role = 'super_admin';
    ```
 
-3. Test admin login at: `https://your-domain.com/admin-login`
+3. Test admin login at: `https://your-domain.com/adminlogin-cores`
 
 ## Step 5: Post-Deployment Tasks
 

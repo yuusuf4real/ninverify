@@ -1,6 +1,6 @@
 "use client";
 
-import { History, RefreshCw, Wallet, MessageSquare } from "lucide-react";
+import { History, Wallet, MessageSquare } from "lucide-react";
 
 import { ActiveNavigation } from "@/components/ui/active-navigation";
 import { MobileNavigation } from "@/components/ui/mobile-navigation";
@@ -8,7 +8,6 @@ import { MobileNavigation } from "@/components/ui/mobile-navigation";
 const navigationItems = [
   { name: "Dashboard", href: "/dashboard", icon: Wallet },
   { name: "History", href: "/dashboard/transactions", icon: History },
-  { name: "Recovery", href: "/dashboard/recovery", icon: RefreshCw },
   { name: "Support", href: "/dashboard/support", icon: MessageSquare },
 ];
 

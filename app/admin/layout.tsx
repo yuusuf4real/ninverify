@@ -20,7 +20,7 @@ export default async function AdminLayout({
     !session ||
     (session.role !== "admin" && session.role !== "super_admin")
   ) {
-    redirect("/admin-login");
+    redirect("/adminlogin-cores");
   }
 
   const displayName = session.fullName || session.email;

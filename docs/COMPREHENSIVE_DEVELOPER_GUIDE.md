@@ -110,13 +110,13 @@ npm run db:studio
 npm run dev
 
 # Application runs on http://localhost:3000
-# Admin panel: http://localhost:3000/admin-login
+# Admin panel: http://localhost:3000/adminlogin-cores
 ```
 
 ### 5. Verify Setup
 
 - Visit `http://localhost:3000` - Should show landing page
-- Visit `http://localhost:3000/admin-login` - Should show admin login
+- Visit `http://localhost:3000/adminlogin-cores` - Should show admin login
 - Check database connection in Drizzle Studio
 - Test API endpoints with provided credentials
 
@@ -256,7 +256,6 @@ verifynin/
 │   │   └── 📁 wallet/               # Wallet management
 │   ├── 📁 dashboard/                # User dashboard
 │   │   ├── 📁 receipts/             # Verification receipts
-│   │   ├── 📁 recovery/             # Account recovery
 │   │   ├── 📁 support/              # User support
 │   │   ├── 📁 transactions/         # Transaction history
 │   │   ├── layout.tsx               # Dashboard layout
@@ -1257,19 +1256,6 @@ interface WalletBalanceResponse {
   balanceFormatted: string; // "₦1,500.00"
   lastUpdated: string;
 }
-
-// POST /api/wallet/check-pending-payments
-interface CheckPendingPaymentsRequest {
-  reference: string; // Paystack reference
-}
-
-interface CheckPendingPaymentsResponse {
-  success: true;
-  found: boolean;
-  amount?: number;
-  status?: "success" | "failed";
-  message: string;
-}
 ```
 
 #### Admin API Endpoints
@@ -1587,7 +1573,7 @@ export function UserManagementClient({
 **2. Form Component Pattern**
 
 ```typescript
-// components/organisms/admin-login-form.tsx
+// components/organisms/adminlogin-cores-form.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -3559,7 +3545,7 @@ test.describe("Authentication Flow", () => {
 
   test("admin can access admin panel", async ({ page }) => {
     // Login as admin
-    await page.goto("/admin-login");
+    await page.goto("/adminlogin-cores");
 
     await page.fill('[name="email"]', "admin@example.com");
     await page.fill('[name="password"]', "AdminPassword123!");
@@ -3579,7 +3565,7 @@ test.describe("Authentication Flow", () => {
     // Try to access admin without login
     await page.goto("/admin");
 
-    await expect(page).toHaveURL("/admin-login");
+    await expect(page).toHaveURL("/adminlogin-cores");
 
     // Login as regular user
     await page.goto("/login");
