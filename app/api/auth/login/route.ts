@@ -114,24 +114,25 @@ export async function POST(request: Request) {
     const isAdmin = user.role === "admin" || user.role === "super_admin";
     const portal = data.portal ?? "user";
 
+    // STRICT PORTAL ENFORCEMENT - No cross-portal access allowed
     if (portal === "admin" && !isAdmin) {
       await logAuditEvent({
         timestamp: new Date().toISOString(),
-        eventType: "user.login",
+        eventType: "security.unauthorized_admin_access",
         userId: user.id,
         ipAddress: ip,
         userAgent: request.headers.get("user-agent") || undefined,
-        resource: "user",
-        action: "login",
-        status: "failure",
-        errorMessage: "Admin portal access denied",
-        metadata: { email: data.email, portal },
+        resource: "admin_portal",
+        action: "login_attempt",
+        status: "blocked",
+        errorMessage: "Non-admin user attempted admin portal access",
+        metadata: { email: data.email, portal, userRole: user.role },
       });
 
       return NextResponse.json(
         {
           message:
-            "This account doesn't have admin access. Please use a valid admin account.",
+            "Access denied. This account does not have administrative privileges.",
         },
         { status: 403 },
       );
@@ -140,21 +141,21 @@ export async function POST(request: Request) {
     if (portal === "user" && isAdmin) {
       await logAuditEvent({
         timestamp: new Date().toISOString(),
-        eventType: "user.login",
+        eventType: "security.admin_user_portal_access",
         userId: user.id,
         ipAddress: ip,
         userAgent: request.headers.get("user-agent") || undefined,
-        resource: "user",
-        action: "login",
-        status: "failure",
-        errorMessage: "User portal access denied",
-        metadata: { email: data.email, portal },
+        resource: "user_portal",
+        action: "login_attempt",
+        status: "blocked",
+        errorMessage: "Admin user attempted user portal access",
+        metadata: { email: data.email, portal, userRole: user.role },
       });
 
       return NextResponse.json(
         {
           message:
-            "This is an admin account. Please sign in via the admin portal.",
+            "Administrative accounts must use the dedicated admin portal for security reasons.",
         },
         { status: 403 },
       );

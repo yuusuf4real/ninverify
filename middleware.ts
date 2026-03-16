@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const SESSION_COOKIE = "verifynin_session";
-const ADMIN_LOGIN_PATH = "/adminlogin-cores";
+const ADMIN_LOGIN_PATH = "/sys-4a7404d6f114b5b0";
 const USER_LOGIN_PATH = "/login";
 
 type SessionPayload = {
@@ -17,6 +17,9 @@ const adminRateLimitStore = new Map<
   string,
   { count: number; resetAt: number }
 >();
+
+// Admin IP whitelist (in production, this should come from environment variables)
+const ADMIN_IP_WHITELIST = process.env.ADMIN_IP_WHITELIST?.split(",") || [];
 
 function getSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -42,7 +45,7 @@ function checkAdminRateLimit(userId: string): {
 } {
   const now = Date.now();
   const windowMs = 60 * 1000; // 1 minute
-  const maxRequests = 100;
+  const maxRequests = 50; // Reduced from 100 for better security
 
   // Clean up expired entries periodically
   if (Math.random() < 0.01) {
@@ -75,12 +78,61 @@ function checkAdminRateLimit(userId: string): {
   return { allowed, retryAfter };
 }
 
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  const realIP = request.headers.get("x-real-ip");
+  const remoteAddr = request.headers.get("remote-addr");
+
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+
+  return realIP || remoteAddr || "unknown";
+}
+
+function isAdminIPAllowed(ip: string): boolean {
+  // If no whitelist is configured, allow all IPs (for development)
+  if (ADMIN_IP_WHITELIST.length === 0) {
+    return true;
+  }
+
+  return ADMIN_IP_WHITELIST.includes(ip);
+}
+
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const pathname = request.nextUrl.pathname;
+  const clientIP = getClientIP(request);
 
   // Check if this is an admin route
   const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminLoginRoute = pathname.startsWith("/sys-4a7404d6f114b5b0");
+
+  // Admin IP whitelist check for admin routes and admin login
+  if ((isAdminRoute || isAdminLoginRoute) && !isAdminIPAllowed(clientIP)) {
+    // Log suspicious access attempt
+    console.warn(
+      `Blocked admin access attempt from unauthorized IP: ${clientIP} to ${pathname}`,
+    );
+
+    // Return 404 to hide the existence of admin routes
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
+  // Redirect authenticated admin users away from admin login page
+  if (isAdminLoginRoute && token) {
+    const session = await verifySession(token);
+    if (
+      session &&
+      (session.role === "admin" || session.role === "super_admin")
+    ) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    if (session && session.role === "user") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
   // Require authentication for dashboard and admin routes
   if (pathname.startsWith("/dashboard") || isAdminRoute) {
     if (!token) {
@@ -98,19 +150,23 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Admin route protection
+    // Admin route protection - STRICT ENFORCEMENT
     if (isAdminRoute) {
       // Check if user has admin or super_admin role
       if (session.role !== "admin" && session.role !== "super_admin") {
-        // Redirect non-admin users to dashboard with 401 status
+        // Log unauthorized access attempt
+        console.warn(
+          `Unauthorized admin access attempt by user ${session.userId} (${session.email}) from IP ${clientIP}`,
+        );
+
+        // Redirect non-admin users to dashboard with clear error
         const url = request.nextUrl.clone();
         url.pathname = "/dashboard";
-        const response = NextResponse.redirect(url);
-        response.headers.set("X-Auth-Error", "Unauthorized");
-        return response;
+        url.searchParams.set("error", "unauthorized_admin_access");
+        return NextResponse.redirect(url);
       }
 
-      // Apply rate limiting for admin endpoints (100 req/min)
+      // Apply rate limiting for admin endpoints
       const rateLimit = checkAdminRateLimit(session.userId);
 
       if (!rateLimit.allowed) {
@@ -132,11 +188,25 @@ export async function middleware(request: NextRequest) {
         );
       }
     }
+
+    // User route protection - prevent admin users from accessing user dashboard
+    if (pathname.startsWith("/dashboard") && !isAdminRoute) {
+      if (session.role === "admin" || session.role === "super_admin") {
+        // Redirect admin users to admin dashboard
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard", "/dashboard/:path*", "/admin", "/admin/:path*"],
+  matcher: [
+    "/dashboard",
+    "/dashboard/:path*",
+    "/admin",
+    "/admin/:path*",
+    "/sys-4a7404d6f114b5b0",
+  ],
 };
