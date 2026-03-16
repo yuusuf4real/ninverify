@@ -482,6 +482,6 @@ For internal team members:
 
 ---
 
-**© 2024 [Company Name]. All rights reserved.**
+**© 2026 [Company Name]. All rights reserved.**
 
 _This is proprietary software. Unauthorized copying, modification, or distribution is strictly prohibited._
