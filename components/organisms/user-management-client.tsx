@@ -207,9 +207,9 @@ export function UserManagementClient() {
         {/* Search and Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-1 gap-4">
-                <div className="relative flex-1 max-w-md">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
+                <div className="relative flex-1 min-w-[220px] sm:max-w-md">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     placeholder="Search by name, email, or phone..."
@@ -219,7 +219,7 @@ export function UserManagementClient() {
                   />
                 </div>
                 <Select value={status} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -229,7 +229,7 @@ export function UserManagementClient() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
                   Export
@@ -244,7 +244,7 @@ export function UserManagementClient() {
         </Card>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
@@ -328,25 +328,27 @@ export function UserManagementClient() {
                         Name {getSortIcon("fullName")}
                       </TableHead>
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="hidden lg:table-cell cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("email")}
                       >
                         Email {getSortIcon("email")}
                       </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="hidden md:table-cell cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("balance")}
                       >
                         Balance {getSortIcon("balance")}
                       </TableHead>
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="hidden xl:table-cell cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("created_at")}
                       >
                         Joined {getSortIcon("created_at")}
                       </TableHead>
-                      <TableHead>Last Active</TableHead>
+                      <TableHead className="hidden xl:table-cell">
+                        Last Active
+                      </TableHead>
                       <TableHead className="w-12">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -354,22 +356,38 @@ export function UserManagementClient() {
                     {users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <div>
+                          <div className="space-y-1">
                             <p className="font-medium">{user.fullName}</p>
                             <p className="text-sm text-gray-500">
                               {user.phone}
                             </p>
+                            <div className="space-y-1 text-xs text-gray-500 lg:hidden">
+                              <p className="truncate">{user.email}</p>
+                              <p>
+                                Balance: {formatCurrency(user.balance || 0)}
+                              </p>
+                              <p>
+                                Last active:{" "}
+                                {user.lastLoginAt
+                                  ? formatDate(user.lastLoginAt)
+                                  : "Never"}
+                              </p>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {user.email}
+                        </TableCell>
                         <TableCell>
                           {getStatusBadge(user.isSuspended)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {formatCurrency(user.balance || 0)}
                         </TableCell>
-                        <TableCell>{formatDate(user.createdAt)}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
+                          {formatDate(user.createdAt)}
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {user.lastLoginAt
                             ? formatDate(user.lastLoginAt)
                             : "Never"}
@@ -417,7 +435,7 @@ export function UserManagementClient() {
                 </Table>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-gray-600">
                     Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                     {Math.min(
@@ -426,7 +444,7 @@ export function UserManagementClient() {
                     )}{" "}
                     of {pagination.total} users
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"

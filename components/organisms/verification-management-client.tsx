@@ -230,7 +230,7 @@ export function VerificationManagementClient() {
     <div className="space-y-6">
       {/* Summary Cards */}
       {summary && (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
@@ -287,9 +287,9 @@ export function VerificationManagementClient() {
       {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 gap-4">
-              <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:flex-wrap">
+              <div className="relative flex-1 min-w-[220px] sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Search by NIN, user, or reference..."
@@ -299,7 +299,7 @@ export function VerificationManagementClient() {
                 />
               </div>
               <Select value={status} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,7 +310,7 @@ export function VerificationManagementClient() {
                 </SelectContent>
               </Select>
               <Select value={purpose} onValueChange={handlePurposeChange}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,7 +323,7 @@ export function VerificationManagementClient() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -367,17 +367,21 @@ export function VerificationManagementClient() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>NIN</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Purpose</TableHead>
+                    <TableHead className="hidden lg:table-cell">User</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Purpose
+                    </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="hidden sm:table-cell cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSortChange("status")}
                     >
                       Status {getSortIcon("status")}
                     </TableHead>
-                    <TableHead>Verified Name</TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Verified Name
+                    </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="hidden lg:table-cell cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSortChange("created_at")}
                     >
                       Date {getSortIcon("created_at")}
@@ -389,11 +393,31 @@ export function VerificationManagementClient() {
                   {verifications.map((verification) => (
                     <TableRow key={verification.id}>
                       <TableCell>
-                        <div className="font-mono text-sm">
-                          {verification.ninMasked}
+                        <div className="space-y-1">
+                          <div className="font-mono text-sm">
+                            {verification.ninMasked}
+                          </div>
+                          <div className="space-y-1 text-xs text-gray-500 lg:hidden">
+                            <p className="font-medium text-gray-700">
+                              {verification.userFullName}
+                            </p>
+                            <p className="truncate">{verification.userEmail}</p>
+                            <p className="flex flex-wrap items-center gap-2">
+                              <span>
+                                {getPurposeLabel(verification.purpose)}
+                              </span>
+                              <span className="text-gray-300">•</span>
+                              <span className="capitalize">
+                                {verification.status}
+                              </span>
+                            </p>
+                            <p className="sm:hidden">
+                              {formatDate(verification.createdAt)}
+                            </p>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <div>
                           <p className="font-medium">
                             {verification.userFullName}
@@ -403,15 +427,15 @@ export function VerificationManagementClient() {
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <span className="text-sm">
                           {getPurposeLabel(verification.purpose)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {getStatusBadge(verification.status)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         {verification.fullName ? (
                           <div>
                             <p className="font-medium">
@@ -427,7 +451,7 @@ export function VerificationManagementClient() {
                           <span className="text-gray-400">-</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {formatDate(verification.createdAt)}
                       </TableCell>
                       <TableCell>
@@ -458,7 +482,7 @@ export function VerificationManagementClient() {
               </Table>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-gray-600">
                   Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                   {Math.min(
@@ -467,7 +491,7 @@ export function VerificationManagementClient() {
                   )}{" "}
                   of {pagination.total} verifications
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"

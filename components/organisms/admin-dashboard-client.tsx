@@ -266,7 +266,7 @@ export function AdminDashboardClient() {
     <div className="grid gap-6 lg:grid-cols-3">
       {/* Revenue Chart */}
       <Card className="lg:col-span-2 border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-lg font-semibold">
               Revenue Trend
@@ -334,7 +334,7 @@ export function AdminDashboardClient() {
 
       {/* Recent Activity */}
       <Card className="border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-lg font-semibold">
               Recent Activity

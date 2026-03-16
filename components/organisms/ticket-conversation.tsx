@@ -405,8 +405,8 @@ export function TicketConversation({
     <div className="flex flex-col h-full max-h-[800px]">
       {/* Header */}
       <div className="border-b p-4 bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {onBack && (
               <Button variant="ghost" size="sm" onClick={onBack}>
                 <ArrowLeft className="h-4 w-4" />
@@ -420,7 +420,7 @@ export function TicketConversation({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="default"
               className={`${connectionConfig[connectionState].badge} flex items-center gap-2`}
@@ -451,7 +451,7 @@ export function TicketConversation({
           {ticket.paymentReference && (
             <div>
               <span className="text-gray-500">Payment Ref:</span>
-              <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+              <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded break-all">
                 {ticket.paymentReference}
               </p>
             </div>
@@ -461,7 +461,7 @@ export function TicketConversation({
         {/* SLA Info */}
         {(ticket.firstResponseDue || ticket.resolutionDue) && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center">
               {ticket.firstResponseDue && (
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4 text-blue-500" />
@@ -510,7 +510,7 @@ export function TicketConversation({
               </Button>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
               <Textarea
                 placeholder="Type your message..."
@@ -521,7 +521,7 @@ export function TicketConversation({
                 disabled={sending}
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-row gap-2 sm:flex-col">
               <Button
                 size="sm"
                 onClick={handleSendMessage}
@@ -539,8 +539,8 @@ export function TicketConversation({
 
       {/* Action Buttons */}
       <div className="border-t p-4 bg-white">
-        <div className="flex justify-between">
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
             {ticket.status === "resolved" &&
               !ticket.satisfactionRating &&
               !isAdmin && (
@@ -557,7 +557,7 @@ export function TicketConversation({
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {isAdmin && (
               <>
                 <Button variant="outline" size="sm">

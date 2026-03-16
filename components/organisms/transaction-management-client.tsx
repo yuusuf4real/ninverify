@@ -212,7 +212,7 @@ export function TransactionManagementClient() {
       <div className="space-y-6">
         {/* Summary Cards */}
         {summary && (
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
@@ -269,9 +269,9 @@ export function TransactionManagementClient() {
         {/* Search and Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-1 gap-4">
-                <div className="relative flex-1 max-w-md">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:flex-wrap">
+                <div className="relative flex-1 min-w-[220px] sm:max-w-md">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     placeholder="Search by user, reference, or description..."
@@ -281,7 +281,7 @@ export function TransactionManagementClient() {
                   />
                 </div>
                 <Select value={status} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -293,7 +293,7 @@ export function TransactionManagementClient() {
                   </SelectContent>
                 </Select>
                 <Select value={type} onValueChange={handleTypeChange}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-full sm:w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -303,7 +303,7 @@ export function TransactionManagementClient() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -355,23 +355,29 @@ export function TransactionManagementClient() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Reference</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        User
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Type
+                      </TableHead>
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="hidden sm:table-cell cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("amount")}
                       >
                         Amount {getSortIcon("amount")}
                       </TableHead>
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="hidden md:table-cell cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("status")}
                       >
                         Status {getSortIcon("status")}
                       </TableHead>
-                      <TableHead>Description</TableHead>
+                      <TableHead className="hidden xl:table-cell">
+                        Description
+                      </TableHead>
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="hidden lg:table-cell cursor-pointer hover:bg-gray-50"
                         onClick={() => handleSortChange("created_at")}
                       >
                         Date {getSortIcon("created_at")}
@@ -383,12 +389,45 @@ export function TransactionManagementClient() {
                     {transactions.map((transaction) => (
                       <TableRow key={transaction.id}>
                         <TableCell>
-                          <div className="font-mono text-sm">
-                            {transaction.reference ||
-                              transaction.id.slice(0, 8)}
+                          <div className="space-y-1">
+                            <div className="font-mono text-sm">
+                              {transaction.reference ||
+                                transaction.id.slice(0, 8)}
+                            </div>
+                            <div className="space-y-1 text-xs text-gray-500 lg:hidden">
+                              <p className="font-medium text-gray-700">
+                                {transaction.userFullName}
+                              </p>
+                              <p className="truncate">
+                                {transaction.userEmail}
+                              </p>
+                              <p className="flex flex-wrap items-center gap-2">
+                                <span className="capitalize">
+                                  {transaction.type}
+                                </span>
+                                <span className="text-gray-300">•</span>
+                                <span className="capitalize">
+                                  {transaction.status}
+                                </span>
+                                <span className="text-gray-300">•</span>
+                                <span
+                                  className={`font-semibold ${
+                                    transaction.type === "credit"
+                                      ? "text-emerald-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {transaction.type === "credit" ? "+" : "-"}
+                                  {formatCurrency(transaction.amount)}
+                                </span>
+                              </p>
+                              <p className="sm:hidden">
+                                {formatDate(transaction.createdAt)}
+                              </p>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <div>
                             <p className="font-medium">
                               {transaction.userFullName}
@@ -398,8 +437,10 @@ export function TransactionManagementClient() {
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>{getTypeBadge(transaction.type)}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {getTypeBadge(transaction.type)}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <span
                             className={`font-semibold ${
                               transaction.type === "credit"
@@ -411,10 +452,10 @@ export function TransactionManagementClient() {
                             {formatCurrency(transaction.amount)}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {getStatusBadge(transaction.status)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           <div
                             className="max-w-xs truncate"
                             title={transaction.description}
@@ -422,7 +463,7 @@ export function TransactionManagementClient() {
                             {transaction.description}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {formatDate(transaction.createdAt)}
                         </TableCell>
                         <TableCell>
@@ -452,7 +493,7 @@ export function TransactionManagementClient() {
                 </Table>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-gray-600">
                     Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                     {Math.min(
@@ -461,7 +502,7 @@ export function TransactionManagementClient() {
                     )}{" "}
                     of {pagination.total} transactions
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"

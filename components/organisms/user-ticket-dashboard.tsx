@@ -206,7 +206,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">My Support Tickets</h1>
           <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
         </div>
@@ -231,7 +231,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">My Support Tickets</h1>
           <p className="text-gray-600">
@@ -241,7 +241,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
 
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Create New Ticket
             </Button>
@@ -296,12 +296,12 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
           {tickets.map((ticket) => (
             <Card key={ticket.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex-1 space-y-3">
                     {/* Header */}
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-lg">
                             {ticket.subject}
                           </h3>
@@ -312,7 +312,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                           {ticket.description}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-sm font-medium">
                           #{ticket.id.slice(-8)}
                         </p>
@@ -323,7 +323,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                     </div>
 
                     {/* Details */}
-                    <div className="flex items-center gap-6 text-sm text-gray-600">
+                    <div className="flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:flex-wrap sm:items-center">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>
@@ -354,7 +354,7 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
 
                     {/* Resolution & Rating */}
                     {ticket.status === "resolved" && (
-                      <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                      <div className="flex flex-col gap-2 rounded-lg bg-green-50 p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
                           <span className="text-sm text-green-700">
@@ -364,7 +364,11 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                         {ticket.satisfactionRating ? (
                           renderSatisfactionRating(ticket.satisfactionRating)
                         ) : (
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                          >
                             <Star className="h-4 w-4 mr-1" />
                             Rate Support
                           </Button>
@@ -374,10 +378,11 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
                   </div>
 
                   {/* Actions */}
-                  <div className="ml-4 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 lg:ml-4">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() =>
                         router.push(`/dashboard/support/tickets/${ticket.id}`)
                       }
@@ -388,14 +393,22 @@ export function UserTicketDashboard({ user }: UserTicketDashboardProps) {
 
                     {ticket.status === "resolved" &&
                       !ticket.satisfactionRating && (
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto"
+                        >
                           <Star className="h-4 w-4 mr-2" />
                           Rate Support
                         </Button>
                       )}
 
                     {ticket.status === "closed" && (
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Reopen
                       </Button>
