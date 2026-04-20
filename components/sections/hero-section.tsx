@@ -16,6 +16,8 @@ import {
   Zap,
   Shield,
   Clock,
+  Menu,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedLogo } from "@/components/animations/animated-logo";
@@ -127,6 +129,7 @@ const staggerItem = {
 
 export function HeroSection() {
   const [currentNameIndex, setCurrentNameIndex] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 300], [0, 50]);
 
@@ -148,7 +151,7 @@ export function HeroSection() {
           initial={{ y: 0, opacity: 1 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="flex flex-wrap items-center justify-between gap-6"
+          className="flex items-center justify-between"
         >
           <Link href="/" className="flex items-center gap-3 group">
             <AnimatedLogo />
@@ -162,6 +165,7 @@ export function HeroSection() {
             </div>
           </Link>
 
+          {/* Desktop Navigation */}
           <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
             {[
               { label: "How it works", href: "#how-it-works" },
@@ -182,8 +186,9 @@ export function HeroSection() {
             ))}
           </div>
 
+          {/* Desktop Buttons */}
           <motion.div
-            className="flex items-center gap-3"
+            className="hidden md:flex items-center gap-3"
             initial={{ opacity: 1, x: 0 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
@@ -206,7 +211,112 @@ export function HeroSection() {
               </Link>
             </Button>
           </motion.div>
+
+          {/* Mobile Menu Button */}
+          <motion.button
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg border border-border/60 bg-white/80 hover:bg-white/90 transition-colors"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            initial={{ opacity: 1, x: 0 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <AnimatePresence mode="wait">
+              {isMobileMenuOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X className="h-5 w-5" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="menu"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Menu className="h-5 w-5" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </motion.nav>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="md:hidden overflow-hidden"
+            >
+              <motion.div
+                initial={{ y: -20 }}
+                animate={{ y: 0 }}
+                exit={{ y: -20 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="mt-4 p-6 rounded-2xl border border-border/60 bg-white/90 backdrop-blur-sm shadow-lg space-y-4"
+              >
+                {/* Mobile Navigation Links */}
+                <div className="space-y-3">
+                  {[
+                    { label: "How it works", href: "#how-it-works" },
+                    { label: "Privacy", href: "/privacy" },
+                    { label: "Terms", href: "/terms" },
+                  ].map((item, i) => (
+                    <motion.a
+                      key={item.label}
+                      href={item.href}
+                      className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * i + 0.2 }}
+                    >
+                      {item.label}
+                    </motion.a>
+                  ))}
+                </div>
+
+                {/* Mobile Action Buttons */}
+                <motion.div
+                  className="flex flex-col gap-3 pt-4 border-t border-border/30"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="w-full justify-center"
+                  >
+                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      Sign in
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    asChild
+                    className="w-full justify-center"
+                  >
+                    <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                      Get started <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Hero Content */}
         <div className="mt-20 space-y-12 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:items-center lg:space-y-0">
