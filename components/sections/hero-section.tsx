@@ -444,12 +444,12 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Simple Verification Badge - Mobile/Tablet Only */}
+          {/* Simple Verification Badge - Mobile/Tablet Only - HIDDEN */}
           <motion.div
             initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex justify-center lg:hidden mt-8"
+            className="hidden"
           >
             <motion.div
               className="flex items-center gap-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-emerald-500/5 p-6 shadow-lg max-w-sm"
