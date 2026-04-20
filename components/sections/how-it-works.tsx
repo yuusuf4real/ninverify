@@ -138,27 +138,6 @@ export function HowItWorksSection() {
             </motion.div>
           ))}
         </div>
-
-        {/* Call to action */}
-        <motion.div
-          initial={{ opacity: 1, y: 0 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center"
-        >
-          <p className="text-lg text-muted-foreground mb-6">
-            Ready to get started? Create your account now.
-          </p>
-          <motion.a
-            href="/register"
-            className="inline-flex items-center gap-2 text-primary font-semibold hover:gap-4 transition-all"
-            whileHover={{ scale: 1.05 }}
-          >
-            Start verification process
-            <ArrowRight className="h-5 w-5" />
-          </motion.a>
-        </motion.div>
       </div>
     </section>
   );

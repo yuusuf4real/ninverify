@@ -9,16 +9,7 @@ import {
   useTransform,
   AnimatePresence,
 } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Sparkles,
-  Zap,
-  Shield,
-  Clock,
-  Menu,
-  X,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedLogo } from "@/components/animations/animated-logo";
 import { FloatingShapes } from "@/components/animations/floating-shapes";
@@ -368,36 +359,6 @@ export function HeroSection() {
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                asChild
-                className="hover:bg-primary/5"
-              >
-                <Link href="#how-it-works">See how it works</Link>
-              </Button>
-            </motion.div>
-
-            <motion.div
-              variants={staggerContainer}
-              className="flex flex-wrap gap-6 text-sm"
-            >
-              {[
-                { icon: Shield, text: "Secure verification" },
-                { icon: Zap, text: "Instant processing" },
-                { icon: Clock, text: "Available 24/7" },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  variants={staggerItem}
-                  className="flex items-center gap-2 text-muted-foreground group"
-                >
-                  <item.icon className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
-                  <span className="group-hover:text-foreground transition-colors">
-                    {item.text}
-                  </span>
-                </motion.div>
-              ))}
             </motion.div>
           </motion.div>
 
