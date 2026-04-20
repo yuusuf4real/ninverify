@@ -209,7 +209,7 @@ export function HeroSection() {
         </motion.nav>
 
         {/* Hero Content */}
-        <div className="mt-20 grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <div className="mt-20 space-y-12 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:items-center lg:space-y-0">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -288,12 +288,12 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Animated Card */}
+          {/* Animated Card - Desktop Only */}
           <motion.div
             initial={{ opacity: 1, x: 0, rotateY: 0 }}
             animate={{ opacity: 1, x: 0, rotateY: 0 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="relative perspective-1000"
+            className="relative perspective-1000 hidden lg:block"
           >
             {/* Floating orbs */}
             <motion.div
@@ -440,6 +440,40 @@ export function HeroSection() {
                   <p className="text-sm opacity-90">Ready for Any Purpose</p>
                 </div>
               </motion.div>
+            </motion.div>
+          </motion.div>
+
+          {/* Simple Verification Badge - Mobile/Tablet Only */}
+          <motion.div
+            initial={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex justify-center lg:hidden mt-8"
+          >
+            <motion.div
+              className="flex items-center gap-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-emerald-500/5 p-6 shadow-lg max-w-sm"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <motion.div
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary"
+                animate={{ rotate: [0, 360] }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              >
+                <CheckCircle2 className="h-6 w-6" />
+              </motion.div>
+              <div>
+                <p className="text-sm font-bold">
+                  NIN Verification Ready
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Official NIMC verification service
+                </p>
+              </div>
             </motion.div>
           </motion.div>
         </div>
