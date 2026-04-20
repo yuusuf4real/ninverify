@@ -240,8 +240,9 @@ export function HeroSection() {
               variants={staggerItem}
               className="text-xl text-muted-foreground max-w-2xl leading-relaxed"
             >
-              Official NIN verification service for banking, education, travel, and 
-              government requirements. Get your NIMC-verified document instantly.
+              Official NIN verification service for banking, education, travel,
+              and government requirements. Get your NIMC-verified document
+              instantly.
             </motion.p>
 
             <motion.div variants={staggerItem} className="flex flex-wrap gap-4">
@@ -467,9 +468,7 @@ export function HeroSection() {
                 <CheckCircle2 className="h-6 w-6" />
               </motion.div>
               <div>
-                <p className="text-sm font-bold">
-                  NIN Verification Ready
-                </p>
+                <p className="text-sm font-bold">NIN Verification Ready</p>
                 <p className="text-xs text-muted-foreground">
                   Official NIMC verification service
                 </p>

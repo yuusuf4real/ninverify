@@ -33,7 +33,8 @@ export function SimplifiedCTASection() {
             transition={{ delay: 0.3 }}
             className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"
           >
-            Secure, official NIN verification service. Generate verified documents for official use.
+            Secure, official NIN verification service. Generate verified
+            documents for official use.
           </motion.p>
 
           {/* Simple feature highlights */}
@@ -67,21 +68,13 @@ export function SimplifiedCTASection() {
             transition={{ delay: 0.5 }}
             className="flex flex-wrap justify-center gap-4"
           >
-            <Button
-              size="lg"
-              asChild
-              className="group"
-            >
+            <Button size="lg" asChild className="group">
               <Link href="/register">
                 Get Started
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              asChild
-            >
+            <Button variant="outline" size="lg" asChild>
               <Link href="/dashboard">Access Dashboard</Link>
             </Button>
           </motion.div>

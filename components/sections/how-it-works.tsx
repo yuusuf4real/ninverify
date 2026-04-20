@@ -3,12 +3,7 @@
 import { motion } from "framer-motion";
 import { SectionTitle } from "@/components/atoms/section-title";
 import { Card } from "@/components/ui/card";
-import {
-  ArrowRight,
-  CreditCard,
-  Fingerprint,
-  FileCheck2,
-} from "lucide-react";
+import { ArrowRight, CreditCard, Fingerprint, FileCheck2 } from "lucide-react";
 
 const steps = [
   {
