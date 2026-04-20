@@ -13,23 +13,23 @@ import {
 
 const steps = [
   {
-    title: "Create account + fund wallet",
+    title: "Create account & fund wallet",
     description:
-      "Sign up once, then fund your wallet with Paystack card or transfer.",
+      "Register and fund your wallet using Paystack card or bank transfer.",
     icon: CreditCard,
     color: "from-emerald-500 to-primary",
   },
   {
-    title: "Enter your 11-digit NIN",
+    title: "Enter 11-digit NIN",
     description:
-      "Provide the NIN and consent to verify it against NIMC records.",
+      "Provide the NIN and consent for verification against NIMC records.",
     icon: Fingerprint,
     color: "from-blue-500 to-accent",
   },
   {
-    title: "Verify & download document",
+    title: "Download verification document",
     description:
-      "We confirm the NIN and generate an official verification document instantly for ₦500.",
+      "Receive official verification document instantly for ₦500.",
     icon: FileCheck2,
     color: "from-orange-500 to-secondary",
   },
@@ -62,8 +62,8 @@ export function HowItWorksSection() {
         >
           <SectionTitle
             eyebrow="How it works"
-            title="Three steps to verified identity"
-            description="Verify your NIN securely and receive an official verification document in minutes."
+            title="Simple three-step process"
+            description="Verify your NIN and receive an official verification document."
           />
         </motion.div>
 
@@ -184,14 +184,14 @@ export function HowItWorksSection() {
           className="text-center"
         >
           <p className="text-lg text-muted-foreground mb-6">
-            Ready to get started? Create your account in less than a minute.
+            Ready to get started? Create your account now.
           </p>
           <motion.a
             href="/register"
             className="inline-flex items-center gap-2 text-primary font-semibold hover:gap-4 transition-all"
             whileHover={{ scale: 1.05 }}
           >
-            Start verifying now
+            Start verification process
             <ArrowRight className="h-5 w-5" />
           </motion.a>
         </motion.div>

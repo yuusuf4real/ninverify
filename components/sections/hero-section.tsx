@@ -164,9 +164,9 @@ export function HeroSection() {
 
           <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
             {[
-              { label: "Features", href: "#features" },
               { label: "How it works", href: "#how-it-works" },
-              { label: "Privacy", href: "#security" },
+              { label: "Privacy", href: "/privacy" },
+              { label: "Terms", href: "/terms" },
             ].map((item, i) => (
               <motion.a
                 key={item.label}
@@ -240,9 +240,8 @@ export function HeroSection() {
               variants={staggerItem}
               className="text-xl text-muted-foreground max-w-2xl leading-relaxed"
             >
-              Fast, secure NIN verification for banking, education, travel, and
-              more. Get your official NIMC-verified document instantly. Only
-              ₦500 per verification.
+              Official NIN verification service for banking, education, travel, and 
+              government requirements. Get your NIMC-verified document instantly.
             </motion.p>
 
             <motion.div variants={staggerItem} className="flex flex-wrap gap-4">
@@ -271,9 +270,9 @@ export function HeroSection() {
               className="flex flex-wrap gap-6 text-sm"
             >
               {[
-                { icon: Shield, text: "Bank-grade security" },
-                { icon: Zap, text: "Instant verification" },
-                { icon: Clock, text: "24/7 availability" },
+                { icon: Shield, text: "Secure verification" },
+                { icon: Zap, text: "Instant processing" },
+                { icon: Clock, text: "Available 24/7" },
               ].map((item, i) => (
                 <motion.div
                   key={i}
