@@ -8,7 +8,6 @@ import {
   CreditCard,
   Fingerprint,
   FileCheck2,
-  Info,
 } from "lucide-react";
 
 const steps = [
@@ -28,8 +27,7 @@ const steps = [
   },
   {
     title: "Download verification document",
-    description:
-      "Receive official verification document instantly for ₦500.",
+    description: "Receive official verification document instantly for ₦500.",
     icon: FileCheck2,
     color: "from-orange-500 to-secondary",
   },
@@ -65,35 +63,6 @@ export function HowItWorksSection() {
             title="Simple three-step process"
             description="Verify your NIN and receive an official verification document."
           />
-        </motion.div>
-
-        {/* NIN Privacy Note */}
-        <motion.div
-          initial={{ opacity: 1, y: 0 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mx-auto max-w-3xl"
-        >
-          <Card className="border-emerald-200 bg-emerald-50/80 backdrop-blur">
-            <div className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                  <Info className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-emerald-900">
-                    Your NIN stays protected
-                  </h3>
-                  <p className="text-sm text-emerald-800 leading-relaxed">
-                    We use your 11-digit NIN only for verification and store
-                    masked values in verification documents and history for
-                    privacy.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
         </motion.div>
 
         <div className="grid gap-8 md:grid-cols-3">
