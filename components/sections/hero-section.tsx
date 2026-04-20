@@ -299,16 +299,18 @@ export function HeroSection() {
                     asChild
                     className="w-full justify-center"
                   >
-                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       Sign in
                     </Link>
                   </Button>
-                  <Button
-                    size="sm"
-                    asChild
-                    className="w-full justify-center"
-                  >
-                    <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button size="sm" asChild className="w-full justify-center">
+                    <Link
+                      href="/register"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       Get started <ArrowRight className="h-4 w-4 ml-2" />
                     </Link>
                   </Button>
