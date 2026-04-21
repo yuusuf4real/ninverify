@@ -7,22 +7,22 @@ import { ArrowRight, CreditCard, Fingerprint, FileCheck2 } from "lucide-react";
 
 const steps = [
   {
-    title: "Create account & fund wallet",
+    title: "Verify your phone number",
     description:
-      "Register and fund your wallet using Paystack card or bank transfer.",
+      "Enter your phone number and verify with the OTP code we send you.",
     icon: CreditCard,
     color: "from-emerald-500 to-primary",
   },
   {
-    title: "Enter 11-digit NIN",
+    title: "Enter NIN & select data",
     description:
-      "Provide the NIN and consent for verification against NIMC records.",
+      "Provide the 11-digit NIN and choose what information you need to see.",
     icon: Fingerprint,
     color: "from-blue-500 to-accent",
   },
   {
-    title: "Download verification document",
-    description: "Receive official verification document instantly for ₦500.",
+    title: "Pay & get results instantly",
+    description: "Secure payment via Paystack, then receive your official NIMC verification document.",
     icon: FileCheck2,
     color: "from-orange-500 to-secondary",
   },
@@ -55,8 +55,8 @@ export function HowItWorksSection() {
         >
           <SectionTitle
             eyebrow="How it works"
-            title="Simple three-step process"
-            description="Verify your NIN and receive an official verification document."
+            title="No registration required"
+            description="Simple phone verification, then pay only for what you need to see."
           />
         </motion.div>
 

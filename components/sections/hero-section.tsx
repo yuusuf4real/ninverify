@@ -171,6 +171,7 @@ export function HeroSection() {
               { label: "How it works", href: "#how-it-works" },
               { label: "Privacy", href: "/privacy" },
               { label: "Terms", href: "/terms" },
+              { label: "Support", href: "/support" },
             ].map((item, i) => (
               <motion.a
                 key={item.label}
@@ -194,20 +195,12 @@ export function HeroSection() {
             transition={{ delay: 0.3 }}
           >
             <Button
-              variant="outline"
               size="sm"
               asChild
               className="hover:scale-105 transition-transform"
             >
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button
-              size="sm"
-              asChild
-              className="hover:scale-105 transition-transform"
-            >
-              <Link href="/register">
-                Get started <ArrowRight className="h-4 w-4" />
+              <Link href="/verify">
+                Verify NIN <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </motion.div>
@@ -271,6 +264,7 @@ export function HeroSection() {
                     { label: "How it works", href: "#how-it-works" },
                     { label: "Privacy", href: "/privacy" },
                     { label: "Terms", href: "/terms" },
+                    { label: "Support", href: "/support" },
                   ].map((item, i) => (
                     <motion.a
                       key={item.label}
@@ -293,25 +287,12 @@ export function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="w-full justify-center"
-                  >
-                    <Link
-                      href="/login"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Sign in
-                    </Link>
-                  </Button>
                   <Button size="sm" asChild className="w-full justify-center">
                     <Link
-                      href="/register"
+                      href="/verify"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Get started <ArrowRight className="h-4 w-4 ml-2" />
+                      Verify NIN <ArrowRight className="h-4 w-4 ml-2" />
                     </Link>
                   </Button>
                 </motion.div>
@@ -352,9 +333,8 @@ export function HeroSection() {
               variants={staggerItem}
               className="text-xl text-muted-foreground max-w-2xl leading-relaxed"
             >
-              Official NIN verification service for banking, education, travel,
-              and government requirements. Get your NIMC-verified document
-              instantly.
+              No registration required. Simply verify your phone, enter the NIN, 
+              pay securely, and get your official NIMC document instantly.
             </motion.p>
 
             <motion.div variants={staggerItem} className="flex flex-wrap gap-4">
@@ -363,8 +343,8 @@ export function HeroSection() {
                 asChild
                 className="group hover:shadow-glow transition-all"
               >
-                <Link href="/register">
-                  Start verification
+                <Link href="/verify">
+                  Verify NIN Now
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
