@@ -156,13 +156,13 @@ export function PaymentProcessor({
         email: data.email, // Customer email from backend
         amount: amount, // Amount in kobo
         ref: data.reference, // Payment reference
-        onClose: () => {
+        onClose: function () {
           setLoading(false);
           setError("Payment was cancelled. Please try again.");
         },
-        callback: async (response) => {
+        callback: function (response: { reference: string }) {
           // Payment successful, verify it
-          await verifyPayment(response.reference);
+          verifyPayment(response.reference);
         },
       });
 
