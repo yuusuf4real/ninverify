@@ -103,7 +103,7 @@ export class DataLayerFilter {
           title: "Demographic Data",
           description: "Basic identity information",
           fields: ["Full Name", "Date of Birth", "Phone Number", "Gender"],
-          price: 500, // ₦5.00
+          price: 50000, // ₦500.00 in kobo
         };
 
       case "biometric":
@@ -118,7 +118,7 @@ export class DataLayerFilter {
             "Photo",
             "Signature",
           ],
-          price: 750, // ₦7.50
+          price: 75000, // ₦750.00 in kobo
         };
 
       case "full":
@@ -136,7 +136,7 @@ export class DataLayerFilter {
             "LGA",
             "State",
           ],
-          price: 1000, // ₦10.00
+          price: 100000, // ₦1000.00 in kobo
         };
 
       default:

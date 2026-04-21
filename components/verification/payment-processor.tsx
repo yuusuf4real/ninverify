@@ -37,8 +37,8 @@ export function PaymentProcessor({
   const [paymentReference, setPaymentReference] = useState("");
   const [verifying, setVerifying] = useState(false);
 
-  const formatAmount = (amount: number) => {
-    return (amount / 100).toLocaleString("en-NG", {
+  const formatAmount = (amountInKobo: number) => {
+    return (amountInKobo / 100).toLocaleString("en-NG", {
       style: "currency",
       currency: "NGN",
     });

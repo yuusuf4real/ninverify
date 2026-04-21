@@ -37,7 +37,16 @@ export async function POST(request: NextRequest) {
     const sessionDetails = await SessionManager.getSessionForAdmin(
       session.sessionId,
     );
-    if (!sessionDetails || !sessionDetails.dataLayerSelected) {
+
+    if (!sessionDetails) {
+      logger.error("Session not found in database", {
+        sessionId: session.sessionId,
+      });
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    if (!sessionDetails.dataLayerSelected) {
+      logger.error("Data layer not selected", { sessionId: session.sessionId });
       return NextResponse.json(
         {
           error:
@@ -52,7 +61,7 @@ export async function POST(request: NextRequest) {
     const layerInfo = DataLayerFilter.getLayerDescription(
       sessionDetails.dataLayerSelected,
     );
-    const amountInKobo = layerInfo.price * 100; // Convert to kobo
+    const amountInKobo = layerInfo.price; // Already in kobo
 
     // Generate payment reference
     const paymentReference = `VN_${session.sessionId}_${nanoid(8)}`;
@@ -113,12 +122,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: {
-        authorization_url: paystackData.data.authorization_url,
-        access_code: paystackData.data.access_code,
-        reference: paymentReference,
-      },
-      amount: layerInfo.price,
+      authorizationUrl: paystackData.data.authorization_url,
+      accessCode: paystackData.data.access_code,
+      reference: paymentReference,
+      amount: amountInKobo,
+      amountDisplay: (amountInKobo / 100).toFixed(2),
       currency: "NGN",
     });
   } catch (error) {
@@ -126,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request data" },
+        { error: "Invalid request data", details: error.errors },
         { status: 400 },
       );
     }
