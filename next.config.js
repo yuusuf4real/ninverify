@@ -29,7 +29,7 @@ const nextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src ${scriptSrc}; script-src-elem ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.paystack.co https://checkout.paystack.com https://standard.paystack.com https://js.paystack.co https://sockjs-eu.pusher.com https://eu-assets.i.posthog.com https://eu.i.posthog.com https://www.google-analytics.com https://browser-intake-datadoghq.eu; frame-src https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self';`,
+            value: `default-src 'self'; script-src ${scriptSrc}; script-src-elem ${scriptSrc}; style-src 'self' 'unsafe-inline' https://paystack.com https://checkout.paystack.com https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://paystack.com https://checkout.paystack.com https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.paystack.co https://checkout.paystack.com https://standard.paystack.com https://js.paystack.co https://sockjs-eu.pusher.com https://eu-assets.i.posthog.com https://eu.i.posthog.com https://www.google-analytics.com https://browser-intake-datadoghq.eu; frame-src https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self';`,
           },
           {
             key: "Referrer-Policy",
