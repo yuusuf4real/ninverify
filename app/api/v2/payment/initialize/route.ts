@@ -128,6 +128,8 @@ export async function POST(request: NextRequest) {
       amount: amountInKobo,
       amountDisplay: (amountInKobo / 100).toFixed(2),
       currency: "NGN",
+      publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+      email: email || `${session.phoneNumber.replace("+", "")}@verifynin.ng`,
     });
   } catch (error) {
     logger.error("Payment initialization error:", error);

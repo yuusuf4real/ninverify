@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +11,25 @@ import {
   AlertCircle,
   Loader2,
   ArrowLeft,
-  ExternalLink,
 } from "lucide-react";
+
+// Declare Paystack types
+declare global {
+  interface Window {
+    PaystackPop?: {
+      setup: (config: {
+        key: string;
+        email: string;
+        amount: number;
+        ref: string;
+        onClose: () => void;
+        callback: (response: { reference: string }) => void;
+      }) => {
+        openIframe: () => void;
+      };
+    };
+  }
+}
 
 interface PaymentProcessorProps {
   sessionToken: string;
@@ -33,9 +50,22 @@ export function PaymentProcessor({
 }: PaymentProcessorProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [paymentUrl, setPaymentUrl] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [paystackLoaded, setPaystackLoaded] = useState(false);
+
+  // Load Paystack script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v1/inline.js";
+    script.async = true;
+    script.onload = () => setPaystackLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const formatAmount = (amountInKobo: number) => {
     return (amountInKobo / 100).toLocaleString("en-NG", {
@@ -95,6 +125,11 @@ export function PaymentProcessor({
       setLoading(true);
       setError("");
 
+      // Check if Paystack is loaded
+      if (!paystackLoaded || !window.PaystackPop) {
+        throw new Error("Payment system is loading. Please try again.");
+      }
+
       const response = await fetch("/api/v2/payment/initialize", {
         method: "POST",
         headers: {
@@ -113,28 +148,30 @@ export function PaymentProcessor({
         throw new Error(data.error || "Payment initialization failed");
       }
 
-      setPaymentUrl(data.authorizationUrl);
       setPaymentReference(data.reference);
 
-      // Open payment in new window
-      const paymentWindow = window.open(
-        data.authorizationUrl,
-        "paystack-payment",
-        "width=500,height=600,scrollbars=yes,resizable=yes",
-      );
+      // Initialize Paystack inline popup
+      const handler = window.PaystackPop.setup({
+        key: data.publicKey, // Paystack public key from backend
+        email: data.email, // Customer email from backend
+        amount: amount, // Amount in kobo
+        ref: data.reference, // Payment reference
+        onClose: () => {
+          setLoading(false);
+          setError("Payment was cancelled. Please try again.");
+        },
+        callback: async (response) => {
+          // Payment successful, verify it
+          await verifyPayment(response.reference);
+        },
+      });
 
-      // Poll for payment completion
-      const pollPayment = setInterval(async () => {
-        if (paymentWindow?.closed) {
-          clearInterval(pollPayment);
-          await verifyPayment(data.reference);
-        }
-      }, 1000);
+      // Open the Paystack modal
+      handler.openIframe();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Payment initialization failed",
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -304,40 +341,28 @@ export function PaymentProcessor({
           Back
         </Button>
 
-        {!paymentUrl ? (
-          <Button
-            onClick={initializePayment}
-            disabled={loading || verifying}
-            className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Initializing...
-              </>
-            ) : (
-              <>
-                Pay {formatAmount(amount)}
-                <ExternalLink className="h-4 w-4" />
-              </>
-            )}
-          </Button>
-        ) : (
-          <Button
-            onClick={() =>
-              window.open(
-                paymentUrl,
-                "paystack-payment",
-                "width=500,height=600",
-              )
-            }
-            disabled={verifying}
-            className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
-          >
-            Open Payment Window
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        )}
+        <Button
+          onClick={initializePayment}
+          disabled={loading || verifying || !paystackLoaded}
+          className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : !paystackLoaded ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              Pay {formatAmount(amount)}
+              <CreditCard className="h-4 w-4" />
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Payment Reference */}
