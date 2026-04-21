@@ -154,24 +154,26 @@ export function DataLayerSelector({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto space-y-8"
+      className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
     >
       {/* Header */}
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-2 sm:space-y-3">
         <div className="flex justify-center">
-          <div className="p-3 rounded-2xl bg-primary/10">
-            <Fingerprint className="h-8 w-8 text-primary" />
+          <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-primary/10">
+            <Fingerprint className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold">Enter NIN & Select Data</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-xl sm:text-2xl font-bold">
+          Enter NIN & Select Data
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground px-4">
           Enter the NIN you want to verify and choose what information you need
         </p>
       </div>
 
       {/* NIN Input */}
       <Card className="border-border/50">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-4">
             <div>
               <label
@@ -186,7 +188,7 @@ export function DataLayerSelector({
                 onChange={(e) => handleNinChange(e.target.value)}
                 placeholder="123 4567 8901"
                 maxLength={13}
-                className="h-14 text-lg tracking-wider text-center"
+                className="h-12 sm:h-14 text-base sm:text-lg tracking-wider text-center touch-manipulation"
                 disabled={loading}
               />
               <div className="flex items-center justify-between text-xs mt-2">
@@ -213,11 +215,11 @@ export function DataLayerSelector({
 
       {/* Data Layer Selection */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-center">
+        <h3 className="text-base sm:text-lg font-semibold text-center">
           Choose Information Level
         </h3>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {dataLayers.map((layer) => (
             <motion.div
               key={layer.id}
@@ -228,33 +230,35 @@ export function DataLayerSelector({
                 className={`cursor-pointer transition-all duration-200 ${
                   selectedLayer === layer.id
                     ? `${layer.borderColor} border-2 ${layer.bgColor}`
-                    : "border-border/50 hover:border-border"
+                    : "border-border/50 hover:border-border active:border-border"
                 }`}
                 onClick={() => setSelectedLayer(layer.id)}
               >
-                <CardContent className="p-6">
-                  <div className="space-y-4">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="space-y-3 sm:space-y-4">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div
-                        className={`p-3 rounded-xl bg-gradient-to-br ${layer.color} text-white`}
+                        className={`p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br ${layer.color} text-white`}
                       >
-                        <layer.icon className="h-6 w-6" />
+                        <layer.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                       </div>
                       {selectedLayer === layer.id && (
                         <div className="p-1 rounded-full bg-primary text-white">
-                          <Check className="h-4 w-4" />
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                         </div>
                       )}
                     </div>
 
                     {/* Title & Price */}
                     <div>
-                      <h4 className="font-bold text-lg">{layer.title}</h4>
-                      <p className="text-sm text-muted-foreground">
+                      <h4 className="font-bold text-base sm:text-lg">
+                        {layer.title}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {layer.description}
                       </p>
-                      <p className="text-2xl font-bold text-primary mt-2">
+                      <p className="text-xl sm:text-2xl font-bold text-primary mt-2">
                         ₦{layer.displayPrice}
                       </p>
                     </div>
@@ -268,9 +272,9 @@ export function DataLayerSelector({
                         {layer.fields.map((field, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-2 text-sm"
+                            className="flex items-center gap-2 text-xs sm:text-sm"
                           >
-                            <Check className="h-3 w-3 text-emerald-600" />
+                            <Check className="h-3 w-3 text-emerald-600 flex-shrink-0" />
                             <span>{field}</span>
                           </div>
                         ))}
@@ -286,10 +290,10 @@ export function DataLayerSelector({
 
       {/* Info Notice */}
       <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4">
-          <div className="flex gap-3">
-            <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex gap-2 sm:gap-3">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm text-blue-800">
               <p className="font-semibold mb-1">
                 Payment & Verification Process
               </p>
@@ -308,26 +312,26 @@ export function DataLayerSelector({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm"
+          className="p-3 sm:p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm"
         >
           {error}
         </motion.div>
       )}
 
       {/* Actions */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button
           variant="outline"
           onClick={onBack}
           disabled={loading}
-          className="flex-1"
+          className="w-full sm:flex-1 h-11 sm:h-12 touch-manipulation"
         >
           Back
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="flex-1 gap-2"
+          className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation"
         >
           {loading ? (
             <>

@@ -182,56 +182,64 @@ export function PaymentProcessor({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto space-y-6"
+      className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0"
     >
       {/* Header */}
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-2 sm:space-y-3">
         <div className="flex justify-center">
-          <div className="p-3 rounded-2xl bg-primary/10">
-            <CreditCard className="h-8 w-8 text-primary" />
+          <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-primary/10">
+            <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold">Secure Payment</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-xl sm:text-2xl font-bold">Secure Payment</h2>
+        <p className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
           Complete your payment to proceed with NIN verification
         </p>
       </div>
 
       {/* Order Summary */}
       <Card className="border-border/50">
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Order Summary</h3>
+        <CardContent className="p-4 sm:p-6">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="font-semibold text-base sm:text-lg">
+              Order Summary
+            </h3>
 
             <div className="space-y-3">
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                 <div>
-                  <p className="font-medium">{layerInfo.title}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-medium text-sm sm:text-base">
+                    {layerInfo.title}
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {layerInfo.description}
                   </p>
                 </div>
-                <p className="font-bold text-lg">{formatAmount(amount)}</p>
+                <p className="font-bold text-lg sm:text-xl">
+                  {formatAmount(amount)}
+                </p>
               </div>
 
               <div className="pt-3 border-t border-border/50">
-                <p className="text-sm font-medium text-muted-foreground mb-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">
                   NIN to verify:
                 </p>
-                <p className="font-mono text-lg">{nin}</p>
+                <p className="font-mono text-base sm:text-lg break-all">
+                  {nin}
+                </p>
               </div>
 
               <div className="pt-3 border-t border-border/50">
-                <p className="text-sm font-medium text-muted-foreground mb-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">
                   Information included:
                 </p>
-                <div className="grid grid-cols-2 gap-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-1">
                   {layerInfo.fields.map((field, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 text-sm"
+                      className="flex items-center gap-2 text-xs sm:text-sm"
                     >
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600 flex-shrink-0" />
                       <span>{field}</span>
                     </div>
                   ))}
@@ -244,10 +252,10 @@ export function PaymentProcessor({
 
       {/* Security Notice */}
       <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4">
-          <div className="flex gap-3">
-            <Shield className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex gap-2 sm:gap-3">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm text-blue-800">
               <p className="font-semibold mb-1">Secure Payment</p>
               <p>
                 Your payment is processed securely through Paystack. We never
@@ -263,10 +271,10 @@ export function PaymentProcessor({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200"
+          className="flex items-center gap-2 p-3 sm:p-4 rounded-lg bg-red-50 border border-red-200"
         >
-          <AlertCircle className="h-4 w-4 text-red-600" />
-          <p className="text-sm text-red-800">{error}</p>
+          <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+          <p className="text-xs sm:text-sm text-red-800">{error}</p>
         </motion.div>
       )}
 
@@ -275,22 +283,22 @@ export function PaymentProcessor({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-2 p-4 rounded-lg bg-blue-50 border border-blue-200"
+          className="flex items-center gap-2 p-3 sm:p-4 rounded-lg bg-blue-50 border border-blue-200"
         >
-          <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-          <p className="text-sm text-blue-800 font-medium">
+          <Loader2 className="h-4 w-4 text-blue-600 animate-spin flex-shrink-0" />
+          <p className="text-xs sm:text-sm text-blue-800 font-medium">
             Verifying payment and processing your request...
           </p>
         </motion.div>
       )}
 
       {/* Actions */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button
           variant="outline"
           onClick={onBack}
           disabled={loading || verifying}
-          className="flex-1 gap-2"
+          className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -300,7 +308,7 @@ export function PaymentProcessor({
           <Button
             onClick={initializePayment}
             disabled={loading || verifying}
-            className="flex-1 gap-2"
+            className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
           >
             {loading ? (
               <>
@@ -324,7 +332,7 @@ export function PaymentProcessor({
               )
             }
             disabled={verifying}
-            className="flex-1 gap-2"
+            className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
           >
             Open Payment Window
             <ExternalLink className="h-4 w-4" />
@@ -334,7 +342,7 @@ export function PaymentProcessor({
 
       {/* Payment Reference */}
       {paymentReference && (
-        <div className="text-center text-xs text-muted-foreground">
+        <div className="text-center text-xs text-muted-foreground break-all px-4 sm:px-0">
           <p>Payment Reference: {paymentReference}</p>
         </div>
       )}

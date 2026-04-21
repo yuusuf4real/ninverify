@@ -107,17 +107,19 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-md mx-auto space-y-6"
+      className="max-w-md mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0"
     >
       {/* Header */}
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-2 sm:space-y-3">
         <div className="flex justify-center">
-          <div className="p-3 rounded-2xl bg-primary/10">
-            <Smartphone className="h-8 w-8 text-primary" />
+          <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-primary/10">
+            <Smartphone className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold">Enter Your Phone Number</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-xl sm:text-2xl font-bold">
+          Enter Your Phone Number
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
           We&apos;ll send you a verification code to confirm your identity
         </p>
       </div>
@@ -134,7 +136,7 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
             value={phone}
             onChange={(e) => handlePhoneChange(e.target.value)}
             placeholder="0803 123 4567"
-            className="h-14 text-lg"
+            className="h-12 sm:h-14 text-base sm:text-lg touch-manipulation"
             disabled={loading}
             maxLength={18}
           />
@@ -156,7 +158,7 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
             animate={{ opacity: 1, scale: 1 }}
             className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200"
           >
-            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
             <p className="text-sm text-red-800">{error}</p>
           </motion.div>
         )}
@@ -165,7 +167,7 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
         <Button
           type="submit"
           disabled={!isValid || loading}
-          className="w-full h-12 gap-2"
+          className="w-full h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
         >
           {loading ? (
             <>
@@ -182,8 +184,8 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
       </form>
 
       {/* Info */}
-      <div className="text-center text-xs text-muted-foreground">
-        <p className="text-sm text-muted-foreground">
+      <div className="text-center text-xs sm:text-sm text-muted-foreground px-4 sm:px-0">
+        <p>
           By continuing, you agree to our{" "}
           <a href="/terms" className="text-primary hover:underline">
             Terms of Service

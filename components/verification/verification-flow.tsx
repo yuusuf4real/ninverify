@@ -69,11 +69,12 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-4 sm:py-8 px-3 sm:px-4">
       <div className="container mx-auto max-w-6xl">
         {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4 mb-4">
+        <div className="mb-6 sm:mb-8">
+          {/* Desktop Progress */}
+          <div className="hidden md:flex items-center justify-center space-x-4 mb-4">
             {[
               { step: "phone", label: "Phone", icon: "📱" },
               { step: "otp", label: "Verify", icon: "🔐" },
@@ -119,7 +120,56 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
               </div>
             ))}
           </div>
-          <p className="text-center text-sm text-muted-foreground">
+
+          {/* Mobile Progress */}
+          <div className="md:hidden flex items-center justify-center gap-2 mb-4">
+            {[
+              { step: "phone", icon: "📱" },
+              { step: "otp", icon: "🔐" },
+              { step: "data-selection", icon: "📋" },
+              { step: "payment", icon: "💳" },
+              { step: "result", icon: "✅" },
+            ].map((item, index) => (
+              <div key={item.step} className="flex items-center">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-xs transition-colors ${
+                    currentStep === item.step
+                      ? "bg-primary text-white"
+                      : index <
+                          [
+                            "phone",
+                            "otp",
+                            "data-selection",
+                            "payment",
+                            "result",
+                          ].indexOf(currentStep)
+                        ? "bg-emerald-500 text-white"
+                        : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {item.icon}
+                </div>
+                {index < 4 && (
+                  <div
+                    className={`w-4 h-0.5 transition-colors ${
+                      index <
+                      [
+                        "phone",
+                        "otp",
+                        "data-selection",
+                        "payment",
+                        "result",
+                      ].indexOf(currentStep)
+                        ? "bg-emerald-500"
+                        : "bg-gray-200"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs sm:text-sm text-muted-foreground px-4">
             {currentStep === "phone" &&
               "Enter your phone number to get started"}
             {currentStep === "otp" &&
@@ -133,7 +183,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
         </div>
 
         {/* Step Content */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 md:p-8">
           <AnimatePresence mode="wait">
             {currentStep === "phone" && (
               <motion.div
@@ -217,18 +267,18 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
         </div>
 
         {/* Help Section */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground mb-2">
+        <div className="mt-6 sm:mt-8 text-center px-4">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-2">
             Need help? Contact our support team
           </p>
-          <div className="flex justify-center space-x-4 text-sm">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-xs sm:text-sm">
             <a
               href="mailto:support@verifynin.com"
               className="text-primary hover:underline"
             >
               support@verifynin.com
             </a>
-            <span className="text-muted-foreground">•</span>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
             <a
               href="tel:+2348000000000"
               className="text-primary hover:underline"

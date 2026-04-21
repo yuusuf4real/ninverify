@@ -147,7 +147,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
 
       {/* OTP Input */}
       <div className="space-y-4">
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-2 sm:gap-3 justify-center">
           {otp.map((digit, index) => (
             <Input
               key={index}
@@ -160,7 +160,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
               value={digit}
               onChange={(e) => handleOTPChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-12 h-12 text-center text-lg font-bold"
+              className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold touch-manipulation"
               disabled={loading}
             />
           ))}
@@ -168,7 +168,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
 
         {/* Timer */}
         <div className="text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Code expires in{" "}
             <span className="font-semibold text-foreground">
               {formatTime(timeLeft)}

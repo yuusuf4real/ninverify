@@ -270,21 +270,25 @@ export function VerificationResult({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto space-y-6"
+        className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0"
       >
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-3 sm:space-y-4">
           <div className="flex justify-center">
-            <div className="p-3 rounded-2xl bg-blue-50">
-              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+            <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-blue-50">
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 animate-spin" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold">Processing Verification</h2>
-          <p className="text-muted-foreground">{getStatusMessage(status)}</p>
+          <h2 className="text-xl sm:text-2xl font-bold">
+            Processing Verification
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
+            {getStatusMessage(status)}
+          </p>
         </div>
 
         <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-6 text-center">
-            <p className="text-blue-800">
+          <CardContent className="p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm text-blue-800">
               Please wait while we verify your NIN with NIMC. This usually takes
               10-30 seconds.
             </p>
@@ -299,31 +303,34 @@ export function VerificationResult({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto space-y-6"
+        className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0"
       >
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-3 sm:space-y-4">
           <div className="flex justify-center">
-            <div className="p-3 rounded-2xl bg-red-50">
-              <AlertCircle className="h-8 w-8 text-red-600" />
+            <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-red-50">
+              <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-600" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold">Verification Failed</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold">Verification Failed</h2>
+          <p className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
             {error ||
               "We couldn't complete your verification. Please try again."}
           </p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <Button
             variant="outline"
             onClick={fetchResults}
-            className="flex-1 gap-2"
+            className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation"
           >
             <RefreshCw className="h-4 w-4" />
             Retry
           </Button>
-          <Button onClick={onStartOver} className="flex-1 gap-2">
+          <Button
+            onClick={onStartOver}
+            className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation"
+          >
             <RotateCcw className="h-4 w-4" />
             Start Over
           </Button>
@@ -340,50 +347,68 @@ export function VerificationResult({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto space-y-6"
+      className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0"
     >
       {/* Success Header */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-3 sm:space-y-4">
         <div className="flex justify-center">
-          <div className="p-3 rounded-2xl bg-emerald-50">
-            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+          <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-emerald-50">
+            <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold">Verification Successful</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-xl sm:text-2xl font-bold">
+          Verification Successful
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
           Your NIN has been successfully verified with NIMC
         </p>
       </div>
 
       {/* Results */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
         {/* Personal Information */}
         <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">Personal Information</h3>
+          <CardContent className="p-4 sm:p-6">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <h3 className="font-semibold text-base sm:text-lg">
+                  Personal Information
+                </h3>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Full Name:</span>
-                  <span className="font-medium">{data.fullName}</span>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    Full Name:
+                  </span>
+                  <span className="text-sm sm:text-base font-medium break-words">
+                    {data.fullName}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Date of Birth:</span>
-                  <span className="font-medium">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    Date of Birth:
+                  </span>
+                  <span className="text-sm sm:text-base font-medium">
                     {new Date(data.dateOfBirth).toLocaleDateString("en-NG")}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Gender:</span>
-                  <span className="font-medium">{data.gender}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    Gender:
+                  </span>
+                  <span className="text-sm sm:text-base font-medium">
+                    {data.gender}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Phone:</span>
-                  <span className="font-medium">{data.phoneFromNimc}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    Phone:
+                  </span>
+                  <span className="text-sm sm:text-base font-medium">
+                    {data.phoneFromNimc}
+                  </span>
                 </div>
               </div>
             </div>
@@ -393,11 +418,13 @@ export function VerificationResult({
         {/* Biometric Data */}
         {(data.photoUrl || data.signatureUrl) && (
           <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Camera className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold text-lg">Biometric Data</h3>
+            <CardContent className="p-4 sm:p-6">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h3 className="font-semibold text-base sm:text-lg">
+                    Biometric Data
+                  </h3>
                 </div>
 
                 {data.photoUrl && (
@@ -407,9 +434,9 @@ export function VerificationResult({
                       alt="NIN Photo"
                       width={128}
                       height={160}
-                      className="mx-auto max-w-32 max-h-40 rounded-lg border border-border"
+                      className="mx-auto max-w-24 max-h-32 sm:max-w-32 sm:max-h-40 rounded-lg border border-border"
                     />
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                       Official Photo
                     </p>
                   </div>
@@ -422,9 +449,9 @@ export function VerificationResult({
                       alt="Signature"
                       width={160}
                       height={80}
-                      className="mx-auto max-w-40 max-h-20 rounded border border-border"
+                      className="mx-auto max-w-32 max-h-16 sm:max-w-40 sm:max-h-20 rounded border border-border"
                     />
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                       Signature
                     </p>
                   </div>
@@ -437,31 +464,47 @@ export function VerificationResult({
         {/* Address Information */}
         {data.address && (
           <Card className="md:col-span-2">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold text-lg">Address Information</h3>
+            <CardContent className="p-4 sm:p-6">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h3 className="font-semibold text-base sm:text-lg">
+                    Address Information
+                  </h3>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Address:</span>
-                    <span className="font-medium text-right">
+                <div className="grid gap-2 sm:gap-3 md:grid-cols-2">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      Address:
+                    </span>
+                    <span className="text-sm sm:text-base font-medium break-words sm:text-right">
                       {data.address.addressLine}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Town:</span>
-                    <span className="font-medium">{data.address.town}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      Town:
+                    </span>
+                    <span className="text-sm sm:text-base font-medium">
+                      {data.address.town}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">LGA:</span>
-                    <span className="font-medium">{data.address.lga}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      LGA:
+                    </span>
+                    <span className="text-sm sm:text-base font-medium">
+                      {data.address.lga}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">State:</span>
-                    <span className="font-medium">{data.address.state}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      State:
+                    </span>
+                    <span className="text-sm sm:text-base font-medium">
+                      {data.address.state}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -472,12 +515,12 @@ export function VerificationResult({
 
       {/* Verification Info */}
       <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm text-blue-800">
               <p className="font-semibold mb-1">Verification Details</p>
-              <div className="space-y-1">
+              <div className="space-y-1 break-words">
                 <p>Verification ID: {sessionInfo?.sessionId}</p>
                 <p>
                   Date:{" "}
@@ -498,11 +541,11 @@ export function VerificationResult({
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button
           variant="outline"
           onClick={onStartOver}
-          className="flex-1 gap-2"
+          className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
         >
           <RotateCcw className="h-4 w-4" />
           Verify Another NIN
@@ -511,7 +554,7 @@ export function VerificationResult({
         <Button
           onClick={downloadResults}
           disabled={downloading}
-          className="flex-1 gap-2"
+          className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
         >
           {downloading ? (
             <>
