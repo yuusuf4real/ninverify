@@ -30,7 +30,8 @@ const dataLayers = [
     description: "Basic identity information",
     icon: User,
     fields: ["Full Name", "Date of Birth", "Phone Number", "Gender"],
-    price: 500,
+    price: 50000, // ₦500.00 in kobo
+    displayPrice: "500.00",
     color: "from-blue-500 to-blue-600",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
@@ -48,7 +49,8 @@ const dataLayers = [
       "Photo",
       "Signature",
     ],
-    price: 750,
+    price: 75000, // ₦750.00 in kobo
+    displayPrice: "750.00",
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
@@ -69,7 +71,8 @@ const dataLayers = [
       "LGA",
       "State",
     ],
-    price: 1000,
+    price: 100000, // ₦1,000.00 in kobo
+    displayPrice: "1,000.00",
     color: "from-emerald-500 to-emerald-600",
     bgColor: "bg-emerald-50",
     borderColor: "border-emerald-200",
@@ -131,7 +134,11 @@ export function DataLayerSelector({
       const selectedLayerInfo = dataLayers.find(
         (layer) => layer.id === selectedLayer,
       );
-      onSubmit(data.maskedNin, selectedLayer, selectedLayerInfo?.price || 500);
+      onSubmit(
+        data.maskedNin,
+        selectedLayer,
+        selectedLayerInfo?.price || 50000,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
@@ -248,7 +255,7 @@ export function DataLayerSelector({
                         {layer.description}
                       </p>
                       <p className="text-2xl font-bold text-primary mt-2">
-                        ₦{layer.price}
+                        ₦{layer.displayPrice}
                       </p>
                     </div>
 

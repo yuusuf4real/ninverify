@@ -8,6 +8,7 @@ import {
   pgEnum,
   index,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 // Session-based verification system schema
 
@@ -216,3 +217,40 @@ export const systemConfig = pgTable("system_config", {
     .defaultNow()
     .notNull(),
 });
+
+// Relations
+export const verificationSessionsRelations = relations(
+  verificationSessions,
+  ({ one, many }) => ({
+    otpSession: one(otpSessions, {
+      fields: [verificationSessions.otpSessionId],
+      references: [otpSessions.id],
+    }),
+    verificationResults: many(verificationResults),
+  }),
+);
+
+export const verificationResultsRelations = relations(
+  verificationResults,
+  ({ one }) => ({
+    session: one(verificationSessions, {
+      fields: [verificationResults.sessionId],
+      references: [verificationSessions.id],
+    }),
+  }),
+);
+
+export const otpSessionsRelations = relations(otpSessions, ({ many }) => ({
+  verificationSessions: many(verificationSessions),
+}));
+
+export const adminUsersRelations = relations(adminUsers, ({ many }) => ({
+  auditLogs: many(adminAuditLogs),
+}));
+
+export const adminAuditLogsRelations = relations(adminAuditLogs, ({ one }) => ({
+  admin: one(adminUsers, {
+    fields: [adminAuditLogs.adminId],
+    references: [adminUsers.id],
+  }),
+}));
