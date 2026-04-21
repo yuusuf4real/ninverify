@@ -12,7 +12,9 @@ import {
 import { ArrowRight, CheckCircle2, Sparkles, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedLogo } from "@/components/animations/animated-logo";
+import { EnhancedLogo } from "@/components/animations/enhanced-logo";
 import { FloatingShapes } from "@/components/animations/floating-shapes";
+import { useOptimizedAnimations } from "@/hooks/use-optimized-animations";
 
 // Diverse Nigerian names representing different ethnic groups and dual citizenship
 const nigerianNames = [
@@ -124,6 +126,9 @@ export function HeroSection() {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 300], [0, 50]);
 
+  // Performance optimization
+  const { shouldUseGSAP } = useOptimizedAnimations();
+
   // Rotate through names every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -145,7 +150,11 @@ export function HeroSection() {
           className="flex items-center justify-between"
         >
           <Link href="/" className="flex items-center gap-3 group">
-            <AnimatedLogo />
+            {shouldUseGSAP() ? (
+              <EnhancedLogo variant="glow" />
+            ) : (
+              <AnimatedLogo />
+            )}
             <div>
               <p className="text-lg font-semibold group-hover:text-primary transition-colors">
                 VerifyNIN
