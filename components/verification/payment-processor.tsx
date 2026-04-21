@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  CreditCard, 
-  Shield, 
-  CheckCircle2, 
-  AlertCircle, 
+import {
+  CreditCard,
+  Shield,
+  CheckCircle2,
+  AlertCircle,
   Loader2,
   ArrowLeft,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 
 interface PaymentProcessorProps {
@@ -23,13 +23,13 @@ interface PaymentProcessorProps {
   onBack: () => void;
 }
 
-export function PaymentProcessor({ 
-  sessionToken, 
-  nin, 
-  dataLayer, 
-  amount, 
-  onComplete, 
-  onBack 
+export function PaymentProcessor({
+  sessionToken,
+  nin,
+  dataLayer,
+  amount,
+  onComplete,
+  onBack,
 }: PaymentProcessorProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,15 +56,29 @@ export function PaymentProcessor({
         return {
           title: "Biometric Data",
           description: "Identity with photo verification",
-          fields: ["Full Name", "Date of Birth", "Phone Number", "Gender", "Photo", "Signature"],
+          fields: [
+            "Full Name",
+            "Date of Birth",
+            "Phone Number",
+            "Gender",
+            "Photo",
+            "Signature",
+          ],
         };
       case "full":
         return {
           title: "Complete Profile",
           description: "All available information",
           fields: [
-            "Full Name", "Date of Birth", "Phone Number", "Gender", 
-            "Photo", "Signature", "Full Address", "LGA", "State"
+            "Full Name",
+            "Date of Birth",
+            "Phone Number",
+            "Gender",
+            "Photo",
+            "Signature",
+            "Full Address",
+            "LGA",
+            "State",
           ],
         };
       default:
@@ -85,7 +99,7 @@ export function PaymentProcessor({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           amount,
@@ -106,7 +120,7 @@ export function PaymentProcessor({
       const paymentWindow = window.open(
         data.authorizationUrl,
         "paystack-payment",
-        "width=500,height=600,scrollbars=yes,resizable=yes"
+        "width=500,height=600,scrollbars=yes,resizable=yes",
       );
 
       // Poll for payment completion
@@ -116,9 +130,10 @@ export function PaymentProcessor({
           await verifyPayment(data.reference);
         }
       }, 1000);
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment initialization failed");
+      setError(
+        err instanceof Error ? err.message : "Payment initialization failed",
+      );
     } finally {
       setLoading(false);
     }
@@ -133,7 +148,7 @@ export function PaymentProcessor({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           paymentReference: reference,
@@ -152,9 +167,10 @@ export function PaymentProcessor({
       } else {
         setError("Payment was not successful. Please try again.");
       }
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment verification failed");
+      setError(
+        err instanceof Error ? err.message : "Payment verification failed",
+      );
     } finally {
       setVerifying(false);
     }
@@ -186,12 +202,14 @@ export function PaymentProcessor({
         <CardContent className="p-6">
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Order Summary</h3>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-medium">{layerInfo.title}</p>
-                  <p className="text-sm text-muted-foreground">{layerInfo.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {layerInfo.description}
+                  </p>
                 </div>
                 <p className="font-bold text-lg">{formatAmount(amount)}</p>
               </div>
@@ -209,7 +227,10 @@ export function PaymentProcessor({
                 </p>
                 <div className="grid grid-cols-2 gap-1">
                   {layerInfo.fields.map((field, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-sm"
+                    >
                       <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                       <span>{field}</span>
                     </div>
@@ -229,8 +250,8 @@ export function PaymentProcessor({
             <div className="text-sm text-blue-800">
               <p className="font-semibold mb-1">Secure Payment</p>
               <p>
-                Your payment is processed securely through Paystack. 
-                We never store your card details and all transactions are encrypted.
+                Your payment is processed securely through Paystack. We never
+                store your card details and all transactions are encrypted.
               </p>
             </div>
           </div>
@@ -274,7 +295,7 @@ export function PaymentProcessor({
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
-        
+
         {!paymentUrl ? (
           <Button
             onClick={initializePayment}
@@ -295,7 +316,13 @@ export function PaymentProcessor({
           </Button>
         ) : (
           <Button
-            onClick={() => window.open(paymentUrl, "paystack-payment", "width=500,height=600")}
+            onClick={() =>
+              window.open(
+                paymentUrl,
+                "paystack-payment",
+                "width=500,height=600",
+              )
+            }
             disabled={verifying}
             className="flex-1 gap-2"
           >

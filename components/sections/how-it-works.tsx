@@ -22,7 +22,8 @@ const steps = [
   },
   {
     title: "Pay & get results instantly",
-    description: "Secure payment via Paystack, then receive your official NIMC verification document.",
+    description:
+      "Secure payment via Paystack, then receive your official NIMC verification document.",
     icon: FileCheck2,
     color: "from-orange-500 to-secondary",
   },

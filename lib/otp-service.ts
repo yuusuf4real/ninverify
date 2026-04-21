@@ -3,6 +3,7 @@ import { db } from "@/db/client";
 import { otpSessions } from "@/db/new-schema";
 import { eq, and, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { logger } from "@/lib/security/secure-logger";
 
 export interface OTPProvider {
   sendOTP(phoneNumber: string, code: string): Promise<boolean>;
@@ -15,7 +16,8 @@ class TermiiProvider implements OTPProvider {
 
   constructor() {
     this.apiKey = process.env.TERMII_API_KEY || "";
-    this.senderId = process.env.TERMII_SENDER_ID || "VerifyNIN";
+    // Use "N-Alert" as default - it's a pre-approved generic sender ID in Termii
+    this.senderId = process.env.TERMII_SENDER_ID || "N-Alert";
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<boolean> {
@@ -31,14 +33,22 @@ class TermiiProvider implements OTPProvider {
           sms: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
           type: "plain",
           api_key: this.apiKey,
-          channel: "generic",
+          channel: "dnd",
         }),
       });
 
       const result = await response.json();
+
+      if (!response.ok) {
+        logger.error("Termii API error", {
+          status: response.status,
+          body: result,
+        });
+      }
+
       return response.ok && result.message_id;
     } catch (error) {
-      console.error("Termii SMS error:", error);
+      logger.error("Termii SMS error:", error);
       return false;
     }
   }
@@ -71,12 +81,12 @@ class TwilioProvider implements OTPProvider {
             To: phoneNumber,
             Body: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
           }),
-        }
+        },
       );
 
       return response.ok;
     } catch (error) {
-      console.error("Twilio SMS error:", error);
+      logger.error("Twilio SMS error:", error);
       return false;
     }
   }
@@ -86,12 +96,14 @@ export class OTPService {
   private provider: OTPProvider;
   private static OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
   private static MAX_ATTEMPTS = 3;
+  private isDevelopment = process.env.NODE_ENV === "development";
 
   constructor() {
     // Use Termii for Nigerian numbers, Twilio as backup
-    this.provider = process.env.OTP_PROVIDER === "twilio" 
-      ? new TwilioProvider() 
-      : new TermiiProvider();
+    this.provider =
+      process.env.OTP_PROVIDER === "twilio"
+        ? new TwilioProvider()
+        : new TermiiProvider();
   }
 
   /**
@@ -100,7 +112,7 @@ export class OTPService {
   async sendOTP(
     phoneNumber: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<{ success: boolean; sessionId?: string; error?: string }> {
     try {
       // Normalize phone number (ensure it starts with +234)
@@ -113,14 +125,14 @@ export class OTPService {
       const recentOTP = await db.query.otpSessions.findFirst({
         where: and(
           eq(otpSessions.phoneNumber, normalizedPhone),
-          gt(otpSessions.createdAt, new Date(Date.now() - 60000)) // 1 minute
+          gt(otpSessions.createdAt, new Date(Date.now() - 60000)), // 1 minute
         ),
       });
 
       if (recentOTP) {
-        return { 
-          success: false, 
-          error: "Please wait 1 minute before requesting another OTP" 
+        return {
+          success: false,
+          error: "Please wait 1 minute before requesting another OTP",
         };
       }
 
@@ -142,7 +154,24 @@ export class OTPService {
         userAgent,
       });
 
-      // Send OTP via provider
+      // In development mode, display OTP in terminal for testing
+      if (this.isDevelopment) {
+        // eslint-disable-next-line no-console
+        process.stdout.write(
+          `\n${"=".repeat(60)}\n` +
+            `🔐 DEVELOPMENT MODE - OTP CODE\n` +
+            `${"=".repeat(60)}\n` +
+            `Phone: ${normalizedPhone}\n` +
+            `OTP Code: ${otpCode}\n` +
+            `Session ID: ${sessionId}\n` +
+            `Expires: ${expiresAt.toISOString()}\n` +
+            `${"=".repeat(60)}\n\n`,
+        );
+
+        return { success: true, sessionId };
+      }
+
+      // Send OTP via provider in production
       const sent = await this.provider.sendOTP(normalizedPhone, otpCode);
 
       if (!sent) {
@@ -152,12 +181,15 @@ export class OTPService {
           .set({ status: "failed" })
           .where(eq(otpSessions.id, sessionId));
 
-        return { success: false, error: "Failed to send OTP. Please try again." };
+        return {
+          success: false,
+          error: "Failed to send OTP. Please try again.",
+        };
       }
 
       return { success: true, sessionId };
     } catch (error) {
-      console.error("OTP send error:", error);
+      logger.error("OTP send error:", error);
       return { success: false, error: "Internal server error" };
     }
   }
@@ -167,7 +199,7 @@ export class OTPService {
    */
   async verifyOTP(
     sessionId: string,
-    otpCode: string
+    otpCode: string,
   ): Promise<{ success: boolean; phoneNumber?: string; error?: string }> {
     try {
       // Get OTP session
@@ -200,33 +232,37 @@ export class OTPService {
         // Increment attempts
         await db
           .update(otpSessions)
-          .set({ 
+          .set({
             attempts: session.attempts + 1,
-            status: session.attempts + 1 >= session.maxAttempts ? "failed" : "pending"
+            status:
+              session.attempts + 1 >= session.maxAttempts
+                ? "failed"
+                : "pending",
           })
           .where(eq(otpSessions.id, sessionId));
 
         const remainingAttempts = session.maxAttempts - (session.attempts + 1);
-        return { 
-          success: false, 
-          error: remainingAttempts > 0 
-            ? `Invalid OTP. ${remainingAttempts} attempts remaining.`
-            : "Too many failed attempts. Please request a new OTP."
+        return {
+          success: false,
+          error:
+            remainingAttempts > 0
+              ? `Invalid OTP. ${remainingAttempts} attempts remaining.`
+              : "Too many failed attempts. Please request a new OTP.",
         };
       }
 
       // Mark as verified
       await db
         .update(otpSessions)
-        .set({ 
+        .set({
           status: "verified",
-          verifiedAt: new Date()
+          verifiedAt: new Date(),
         })
         .where(eq(otpSessions.id, sessionId));
 
       return { success: true, phoneNumber: session.phoneNumber };
     } catch (error) {
-      console.error("OTP verify error:", error);
+      logger.error("OTP verify error:", error);
       return { success: false, error: "Internal server error" };
     }
   }
@@ -253,7 +289,9 @@ export class OTPService {
   /**
    * Resend OTP (with rate limiting)
    */
-  async resendOTP(sessionId: string): Promise<{ success: boolean; error?: string }> {
+  async resendOTP(
+    sessionId: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const session = await db.query.otpSessions.findFirst({
         where: eq(otpSessions.id, sessionId),
@@ -265,10 +303,11 @@ export class OTPService {
 
       // Check if too recent
       const timeSinceCreated = Date.now() - session.createdAt.getTime();
-      if (timeSinceCreated < 60000) { // 1 minute
-        return { 
-          success: false, 
-          error: "Please wait before requesting another OTP" 
+      if (timeSinceCreated < 60000) {
+        // 1 minute
+        return {
+          success: false,
+          error: "Please wait before requesting another OTP",
         };
       }
 
@@ -297,7 +336,7 @@ export class OTPService {
 
       return { success: true };
     } catch (error) {
-      console.error("OTP resend error:", error);
+      logger.error("OTP resend error:", error);
       return { success: false, error: "Internal server error" };
     }
   }

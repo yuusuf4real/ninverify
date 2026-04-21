@@ -37,7 +37,7 @@ export function SessionsTable() {
       // This would be an actual API call in production
       // const response = await fetch('/api/admin/sessions');
       // const data = await response.json();
-      
+
       // Mock data for now
       const mockSessions: Session[] = [
         {
@@ -67,7 +67,7 @@ export function SessionsTable() {
           completedAt: new Date(Date.now() - 300000).toISOString(),
         },
       ];
-      
+
       setSessions(mockSessions);
     } catch (error) {
       console.error("Failed to fetch sessions:", error);
@@ -81,9 +81,15 @@ export function SessionsTable() {
       otp_pending: { label: "OTP Pending", variant: "secondary" as const },
       otp_verified: { label: "OTP Verified", variant: "default" as const },
       nin_entered: { label: "NIN Entered", variant: "default" as const },
-      payment_pending: { label: "Payment Pending", variant: "destructive" as const },
+      payment_pending: {
+        label: "Payment Pending",
+        variant: "destructive" as const,
+      },
       payment_completed: { label: "Payment Done", variant: "default" as const },
-      verification_completed: { label: "Completed", variant: "default" as const },
+      verification_completed: {
+        label: "Completed",
+        variant: "default" as const,
+      },
       failed: { label: "Failed", variant: "destructive" as const },
       expired: { label: "Expired", variant: "secondary" as const },
     };
@@ -154,14 +160,17 @@ export function SessionsTable() {
                 <TableCell>
                   {session.dataLayer ? (
                     <Badge variant="outline">
-                      {session.dataLayer.charAt(0).toUpperCase() + session.dataLayer.slice(1)}
+                      {session.dataLayer.charAt(0).toUpperCase() +
+                        session.dataLayer.slice(1)}
                     </Badge>
                   ) : (
                     "-"
                   )}
                 </TableCell>
                 <TableCell>
-                  {session.paymentAmount ? formatAmount(session.paymentAmount) : "-"}
+                  {session.paymentAmount
+                    ? formatAmount(session.paymentAmount)
+                    : "-"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDate(session.createdAt)}

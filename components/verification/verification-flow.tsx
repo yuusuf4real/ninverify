@@ -86,9 +86,16 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                   className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-colors ${
                     currentStep === item.step
                       ? "bg-primary text-white"
-                      : index < ["phone", "otp", "data-selection", "payment", "result"].indexOf(currentStep)
-                      ? "bg-emerald-500 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      : index <
+                          [
+                            "phone",
+                            "otp",
+                            "data-selection",
+                            "payment",
+                            "result",
+                          ].indexOf(currentStep)
+                        ? "bg-emerald-500 text-white"
+                        : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {item.icon}
@@ -96,7 +103,14 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                 {index < 4 && (
                   <div
                     className={`w-8 h-0.5 mx-2 transition-colors ${
-                      index < ["phone", "otp", "data-selection", "payment", "result"].indexOf(currentStep)
+                      index <
+                      [
+                        "phone",
+                        "otp",
+                        "data-selection",
+                        "payment",
+                        "result",
+                      ].indexOf(currentStep)
                         ? "bg-emerald-500"
                         : "bg-gray-200"
                     }`}
@@ -106,10 +120,14 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
             ))}
           </div>
           <p className="text-center text-sm text-muted-foreground">
-            {currentStep === "phone" && "Enter your phone number to get started"}
-            {currentStep === "otp" && "Verify your identity with the code we sent"}
-            {currentStep === "data-selection" && "Enter NIN and choose what information you need"}
-            {currentStep === "payment" && "Secure payment for your verification"}
+            {currentStep === "phone" &&
+              "Enter your phone number to get started"}
+            {currentStep === "otp" &&
+              "Verify your identity with the code we sent"}
+            {currentStep === "data-selection" &&
+              "Enter NIN and choose what information you need"}
+            {currentStep === "payment" &&
+              "Secure payment for your verification"}
             {currentStep === "result" && "Your verification results are ready"}
           </p>
         </div>

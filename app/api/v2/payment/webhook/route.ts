@@ -5,7 +5,7 @@ import { verifyNinWithYouVerify } from "@/lib/youverify";
 import { DataLayerFilter } from "@/lib/data-layer-filter";
 import { db } from "@/db/client";
 import { verificationResults } from "@/db/new-schema";
-import { normalizeNin } from "@/lib/nin";
+import { logger } from "@/lib/security/secure-logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       .digest("hex");
 
     if (hash !== signature) {
-      console.error("Invalid webhook signature");
+      logger.error("Invalid webhook signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
@@ -32,13 +32,13 @@ export async function POST(request: NextRequest) {
     const { reference, metadata, amount, status } = event.data;
 
     if (status !== "success") {
-      console.log("Payment not successful:", status);
+      logger.info("Payment not successful:", status);
       return NextResponse.json({ message: "Payment not successful" });
     }
 
     const sessionId = metadata?.sessionId;
     if (!sessionId) {
-      console.error("No session ID in payment metadata");
+      logger.error("No session ID in payment metadata");
       return NextResponse.json({ error: "Invalid metadata" }, { status: 400 });
     }
 
@@ -47,31 +47,30 @@ export async function POST(request: NextRequest) {
       sessionId,
       reference,
       amount,
-      "completed"
+      "completed",
     );
 
     // Get session details for NIMC API call
     const session = await SessionManager.getSessionForAdmin(sessionId);
     if (!session) {
-      console.error("Session not found:", sessionId);
+      logger.error("Session not found:", sessionId);
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     // Extract NIN from masked format for API call
     // Note: In production, you'd need to store the actual NIN temporarily or use a different approach
     // For now, we'll assume the NIN is reconstructable or stored securely
-    const ninMasked = session.ninMasked!;
-    
+
     try {
       // Call NIMC API via YouVerify
-      console.log("Calling NIMC API for session:", sessionId);
-      
+      logger.info("Calling NIMC API for session:", sessionId);
+
       // Note: This is a placeholder - you'll need to implement secure NIN storage/retrieval
       // For demo purposes, we'll simulate the API call
       const mockNin = "12345678901"; // This should come from secure temporary storage
-      
+
       const nimcResponse = await verifyNinWithYouVerify(mockNin);
-      
+
       // Update session with API call timestamp
       await SessionManager.updateSessionStatus(
         sessionId,
@@ -80,14 +79,14 @@ export async function POST(request: NextRequest) {
           apiCallMadeAt: new Date(),
           apiResponseStatus: "success",
           providerReference: nimcResponse.data?.id,
-        }
+        },
       );
 
       // Filter response based on selected data layer
       const filteredData = DataLayerFilter.filterResponse(
-        nimcResponse,
+        nimcResponse as unknown as import("@/lib/data-layer-filter").NIMCApiResponse, // Type assertion for compatibility
         session.dataLayerSelected!,
-        sessionId
+        sessionId,
       );
 
       // Store filtered results
@@ -104,36 +103,34 @@ export async function POST(request: NextRequest) {
         town: filteredData.town,
         lga: filteredData.lga,
         state: filteredData.state,
-        rawApiResponse: nimcResponse as any,
+        rawApiResponse: nimcResponse as unknown as Record<string, unknown>,
       });
 
-      console.log("Verification completed successfully for session:", sessionId);
-
-    } catch (apiError) {
-      console.error("NIMC API error:", apiError);
-      
-      // Update session with error status
-      await SessionManager.updateSessionStatus(
+      logger.info(
+        "Verification completed successfully for session:",
         sessionId,
-        "failed",
-        {
-          apiCallMadeAt: new Date(),
-          apiResponseStatus: "failed",
-          errorMessage: apiError instanceof Error ? apiError.message : "API call failed",
-        }
       );
+    } catch (apiError) {
+      logger.error("NIMC API error:", apiError);
+
+      // Update session with error status
+      await SessionManager.updateSessionStatus(sessionId, "failed", {
+        apiCallMadeAt: new Date(),
+        apiResponseStatus: "failed",
+        errorMessage:
+          apiError instanceof Error ? apiError.message : "API call failed",
+      });
 
       // Note: In production, you might want to initiate a refund here
       // or provide alternative resolution paths
     }
 
     return NextResponse.json({ message: "Webhook processed successfully" });
-
   } catch (error) {
-    console.error("Webhook processing error:", error);
+    logger.error("Webhook processing error:", error);
     return NextResponse.json(
       { error: "Webhook processing failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

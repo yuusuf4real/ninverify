@@ -5,14 +5,14 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  User, 
-  Camera, 
-  FileText, 
-  Check, 
+import {
+  User,
+  Camera,
+  FileText,
+  Check,
   Fingerprint,
   ArrowRight,
-  Info
+  Info,
 } from "lucide-react";
 
 interface DataLayerSelectorProps {
@@ -40,7 +40,14 @@ const dataLayers = [
     title: "Biometric Data",
     description: "Identity with photo verification",
     icon: Camera,
-    fields: ["Full Name", "Date of Birth", "Phone Number", "Gender", "Photo", "Signature"],
+    fields: [
+      "Full Name",
+      "Date of Birth",
+      "Phone Number",
+      "Gender",
+      "Photo",
+      "Signature",
+    ],
     price: 750,
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-50",
@@ -52,8 +59,15 @@ const dataLayers = [
     description: "All available information",
     icon: FileText,
     fields: [
-      "Full Name", "Date of Birth", "Phone Number", "Gender", 
-      "Photo", "Signature", "Full Address", "LGA", "State"
+      "Full Name",
+      "Date of Birth",
+      "Phone Number",
+      "Gender",
+      "Photo",
+      "Signature",
+      "Full Address",
+      "LGA",
+      "State",
     ],
     price: 1000,
     color: "from-emerald-500 to-emerald-600",
@@ -62,7 +76,11 @@ const dataLayers = [
   },
 ];
 
-export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerSelectorProps) {
+export function DataLayerSelector({
+  sessionToken,
+  onSubmit,
+  onBack,
+}: DataLayerSelectorProps) {
   const [nin, setNin] = useState("");
   const [selectedLayer, setSelectedLayer] = useState<DataLayer | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,11 +89,14 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
   // Format NIN input
   const handleNinChange = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
-    const formatted = digits.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, p1, p2, p3) => {
-      if (p3) return `${p1} ${p2} ${p3}`;
-      if (p2) return `${p1} ${p2}`;
-      return p1;
-    });
+    const formatted = digits.replace(
+      /(\d{3})(\d{4})(\d{0,4})/,
+      (_, p1, p2, p3) => {
+        if (p3) return `${p1} ${p2} ${p3}`;
+        if (p2) return `${p1} ${p2}`;
+        return p1;
+      },
+    );
     setNin(formatted);
   };
 
@@ -93,7 +114,7 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           nin: nin.replace(/\s/g, ""),
@@ -107,9 +128,10 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
         throw new Error(data.error || "Submission failed");
       }
 
-      const selectedLayerInfo = dataLayers.find(layer => layer.id === selectedLayer);
+      const selectedLayerInfo = dataLayers.find(
+        (layer) => layer.id === selectedLayer,
+      );
       onSubmit(data.maskedNin, selectedLayer, selectedLayerInfo?.price || 500);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
@@ -145,7 +167,10 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
         <CardContent className="p-6">
           <div className="space-y-4">
             <div>
-              <label htmlFor="nin-input" className="text-sm font-semibold mb-2 block">
+              <label
+                htmlFor="nin-input"
+                className="text-sm font-semibold mb-2 block"
+              >
                 National Identity Number (NIN)
               </label>
               <Input
@@ -158,7 +183,13 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
                 disabled={loading}
               />
               <div className="flex items-center justify-between text-xs mt-2">
-                <span className={isNinValid ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
+                <span
+                  className={
+                    isNinValid
+                      ? "text-emerald-600 font-medium"
+                      : "text-muted-foreground"
+                  }
+                >
                   {normalizedNin.length}/11 digits
                 </span>
                 {isNinValid && (
@@ -175,8 +206,10 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
 
       {/* Data Layer Selection */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-center">Choose Information Level</h3>
-        
+        <h3 className="text-lg font-semibold text-center">
+          Choose Information Level
+        </h3>
+
         <div className="grid gap-4 md:grid-cols-3">
           {dataLayers.map((layer) => (
             <motion.div
@@ -196,7 +229,9 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
                   <div className="space-y-4">
                     {/* Header */}
                     <div className="flex items-start justify-between">
-                      <div className={`p-3 rounded-xl bg-gradient-to-br ${layer.color} text-white`}>
+                      <div
+                        className={`p-3 rounded-xl bg-gradient-to-br ${layer.color} text-white`}
+                      >
                         <layer.icon className="h-6 w-6" />
                       </div>
                       {selectedLayer === layer.id && (
@@ -209,8 +244,12 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
                     {/* Title & Price */}
                     <div>
                       <h4 className="font-bold text-lg">{layer.title}</h4>
-                      <p className="text-sm text-muted-foreground">{layer.description}</p>
-                      <p className="text-2xl font-bold text-primary mt-2">₦{layer.price}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {layer.description}
+                      </p>
+                      <p className="text-2xl font-bold text-primary mt-2">
+                        ₦{layer.price}
+                      </p>
                     </div>
 
                     {/* Fields */}
@@ -220,7 +259,10 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
                       </p>
                       <div className="space-y-1">
                         {layer.fields.map((field, index) => (
-                          <div key={index} className="flex items-center gap-2 text-sm">
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 text-sm"
+                          >
                             <Check className="h-3 w-3 text-emerald-600" />
                             <span>{field}</span>
                           </div>
@@ -241,11 +283,13 @@ export function DataLayerSelector({ sessionToken, onSubmit, onBack }: DataLayerS
           <div className="flex gap-3">
             <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
             <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-1">Payment & Verification Process</p>
+              <p className="font-semibold mb-1">
+                Payment & Verification Process
+              </p>
               <p>
-                After selecting your data layer, you'll be redirected to secure payment. 
-                Once payment is confirmed, we'll verify the NIN with NIMC and display 
-                only the information you selected.
+                After selecting your data layer, you&apos;ll be redirected to
+                secure payment. Once payment is confirmed, we&apos;ll verify the
+                NIN with NIMC and display only the information you selected.
               </p>
             </div>
           </div>

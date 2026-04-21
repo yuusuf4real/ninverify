@@ -15,31 +15,31 @@ export const otpStatus = pgEnum("otp_status", [
   "pending",
   "verified",
   "expired",
-  "failed"
+  "failed",
 ]);
 
 export const dataLayer = pgEnum("data_layer", [
   "demographic", // name, DOB, NIN, phone
-  "biometric",   // photo, signature
-  "full"         // everything
+  "biometric", // photo, signature
+  "full", // everything
 ]);
 
 export const sessionStatus = pgEnum("session_status", [
   "otp_pending",
-  "otp_verified", 
+  "otp_verified",
   "nin_entered",
   "payment_pending",
   "payment_completed",
   "verification_completed",
   "expired",
-  "failed"
+  "failed",
 ]);
 
 export const paymentStatus = pgEnum("payment_status", [
   "pending",
   "completed",
   "failed",
-  "cancelled"
+  "cancelled",
 ]);
 
 // OTP Verification Sessions
@@ -64,7 +64,7 @@ export const otpSessions = pgTable(
     phoneIdx: index("idx_otp_phone").on(table.phoneNumber),
     statusIdx: index("idx_otp_status").on(table.status),
     expiresIdx: index("idx_otp_expires").on(table.expiresAt),
-  })
+  }),
 );
 
 // Verification Sessions (main workflow tracking)
@@ -73,39 +73,41 @@ export const verificationSessions = pgTable(
   {
     id: text("id").primaryKey(), // nanoid
     sessionToken: text("session_token").notNull().unique(), // JWT or secure token
-    
+
     // Identity (from OTP)
     phoneNumber: text("phone_number").notNull(),
     otpSessionId: text("otp_session_id")
       .notNull()
       .references(() => otpSessions.id),
-    
+
     // NIN & Data Selection
     ninMasked: text("nin_masked"), // masked NIN for audit
     dataLayerSelected: dataLayer("data_layer_selected"),
-    
+
     // Payment
     paymentReference: text("payment_reference"),
     paymentStatus: paymentStatus("payment_status").default("pending"),
     paymentAmount: integer("payment_amount"), // in kobo
     paymentProvider: text("payment_provider").default("paystack"),
-    paymentCompletedAt: timestamp("payment_completed_at", { withTimezone: true }),
-    
+    paymentCompletedAt: timestamp("payment_completed_at", {
+      withTimezone: true,
+    }),
+
     // NIMC API
     providerReference: text("provider_reference"),
     apiCallMadeAt: timestamp("api_call_made_at", { withTimezone: true }),
     apiResponseStatus: text("api_response_status"), // success, failed, not_found
-    
+
     // Session Management
     status: sessionStatus("status").default("otp_pending").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
-    
+
     // Audit Trail
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     metadata: jsonb("metadata"),
-    
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -120,7 +122,7 @@ export const verificationSessions = pgTable(
     paymentIdx: index("idx_session_payment").on(table.paymentReference),
     createdIdx: index("idx_session_created").on(table.createdAt),
     expiresIdx: index("idx_session_expires").on(table.expiresAt),
-  })
+  }),
 );
 
 // Verification Results (filtered data based on selected layer)
@@ -131,33 +133,33 @@ export const verificationResults = pgTable(
     sessionId: text("session_id")
       .notNull()
       .references(() => verificationSessions.id, { onDelete: "cascade" }),
-    
+
     // Demographic Data (always included if found)
     fullName: text("full_name"),
     dateOfBirth: text("date_of_birth"),
     phoneFromNimc: text("phone_from_nimc"),
     gender: text("gender"),
-    
+
     // Biometric Data (only if biometric or full layer selected)
     photoUrl: text("photo_url"),
     signatureUrl: text("signature_url"),
-    
+
     // Address Data (only if full layer selected)
     addressLine: text("address_line"),
     town: text("town"),
     lga: text("lga"),
     state: text("state"),
-    
+
     // Raw API Response (for admin debugging)
     rawApiResponse: jsonb("raw_api_response"),
-    
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => ({
     sessionIdx: index("idx_results_session").on(table.sessionId),
-  })
+  }),
 );
 
 // Admin Users (simplified - only for admin access)
@@ -178,7 +180,7 @@ export const adminUsers = pgTable(
   (table) => ({
     usernameIdx: index("idx_admin_username").on(table.username),
     roleIdx: index("idx_admin_role").on(table.role),
-  })
+  }),
 );
 
 // Admin Audit Logs
@@ -202,7 +204,7 @@ export const adminAuditLogs = pgTable(
     adminIdx: index("idx_audit_admin").on(table.adminId),
     actionIdx: index("idx_audit_action").on(table.action),
     createdIdx: index("idx_audit_created").on(table.createdAt),
-  })
+  }),
 );
 
 // System Configuration

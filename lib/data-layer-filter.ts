@@ -27,7 +27,7 @@ export interface FilteredVerificationData {
   dateOfBirth: string;
   phoneFromNimc: string;
   gender: string;
-  
+
   // Conditional fields based on data layer
   photoUrl?: string;
   signatureUrl?: string;
@@ -35,7 +35,7 @@ export interface FilteredVerificationData {
   town?: string;
   lga?: string;
   state?: string;
-  
+
   // Metadata
   dataLayer: DataLayer;
   verificationId: string;
@@ -49,10 +49,10 @@ export class DataLayerFilter {
   static filterResponse(
     apiResponse: NIMCApiResponse,
     selectedLayer: DataLayer,
-    verificationId: string
+    verificationId: string,
   ): FilteredVerificationData {
     const data = apiResponse.data;
-    
+
     // Base demographic data (always included)
     const result: FilteredVerificationData = {
       fullName: [data.firstName, data.middleName, data.lastName]
@@ -105,26 +105,40 @@ export class DataLayerFilter {
           fields: ["Full Name", "Date of Birth", "Phone Number", "Gender"],
           price: 500, // ₦5.00
         };
-      
+
       case "biometric":
         return {
-          title: "Biometric Data", 
+          title: "Biometric Data",
           description: "Identity verification with photo",
-          fields: ["Full Name", "Date of Birth", "Phone Number", "Gender", "Photo", "Signature"],
+          fields: [
+            "Full Name",
+            "Date of Birth",
+            "Phone Number",
+            "Gender",
+            "Photo",
+            "Signature",
+          ],
           price: 750, // ₦7.50
         };
-      
+
       case "full":
         return {
           title: "Complete Profile",
           description: "All available information",
           fields: [
-            "Full Name", "Date of Birth", "Phone Number", "Gender", 
-            "Photo", "Signature", "Full Address", "LGA", "State"
+            "Full Name",
+            "Date of Birth",
+            "Phone Number",
+            "Gender",
+            "Photo",
+            "Signature",
+            "Full Address",
+            "LGA",
+            "State",
           ],
           price: 1000, // ₦10.00
         };
-      
+
       default:
         return {
           title: "Unknown",
@@ -148,20 +162,20 @@ export class DataLayerFilter {
   static getPrintableData(
     filteredData: FilteredVerificationData,
     ninMasked: string,
-    sessionId: string
+    sessionId: string,
   ) {
     const baseData = {
       documentId: sessionId,
       verificationDate: filteredData.timestamp.toLocaleDateString("en-NG", {
         year: "numeric",
-        month: "long", 
+        month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
       }),
       ninMasked,
       dataLayer: filteredData.dataLayer,
-      
+
       // Always included
       fullName: filteredData.fullName,
       dateOfBirth: filteredData.dateOfBirth,
@@ -170,9 +184,12 @@ export class DataLayerFilter {
     };
 
     // Add conditional fields based on data layer
-    const conditionalData: any = {};
+    const conditionalData: Record<string, unknown> = {};
 
-    if (filteredData.dataLayer === "biometric" || filteredData.dataLayer === "full") {
+    if (
+      filteredData.dataLayer === "biometric" ||
+      filteredData.dataLayer === "full"
+    ) {
       if (filteredData.photoUrl) {
         conditionalData.photoUrl = filteredData.photoUrl;
       }
@@ -205,7 +222,7 @@ export class DataLayerFilter {
     ninMasked: string,
     dataLayer: DataLayer,
     sessionId: string,
-    ipAddress?: string
+    ipAddress?: string,
   ) {
     return {
       sessionId,

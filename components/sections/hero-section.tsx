@@ -333,7 +333,7 @@ export function HeroSection() {
               variants={staggerItem}
               className="text-xl text-muted-foreground max-w-2xl leading-relaxed"
             >
-              No registration required. Simply verify your phone, enter the NIN, 
+              No registration required. Simply verify your phone, enter the NIN,
               pay securely, and get your official NIMC document instantly.
             </motion.p>
 

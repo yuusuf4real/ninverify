@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SessionManager } from "@/lib/session-manager";
+import { logger } from "@/lib/security/secure-logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Missing or invalid session token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json(
         { error: "Invalid or expired session" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (!paymentReference) {
       return NextResponse.json(
         { error: "Payment reference is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         },
-      }
+      },
     );
 
     const paymentData = await paystackResponse.json();
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (!paystackResponse.ok || !paymentData.status) {
       return NextResponse.json(
         { error: "Payment verification failed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     if (sessionId !== session.sessionId) {
       return NextResponse.json(
         { error: "Payment does not belong to this session" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       session.sessionId,
       paymentReference,
       data.amount,
-      "completed"
+      "completed",
     );
 
     return NextResponse.json({
@@ -85,12 +86,11 @@ export async function POST(request: NextRequest) {
       reference: paymentReference,
       message: "Payment verified successfully. Processing verification...",
     });
-
   } catch (error) {
-    console.error("Payment verification error:", error);
+    logger.error("Payment verification error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

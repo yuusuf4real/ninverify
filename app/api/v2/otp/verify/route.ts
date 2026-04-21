@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { OTPService } from "@/lib/otp-service";
 import { SessionManager } from "@/lib/session-manager";
+import { logger } from "@/lib/security/secure-logger";
 
 const schema = z.object({
   sessionId: z.string(),
@@ -17,21 +18,21 @@ export async function POST(request: NextRequest) {
     const result = await otpService.verifyOTP(sessionId, otpCode);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     // Create verification session
-    const clientIP = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
     const userAgent = request.headers.get("user-agent") || undefined;
 
     const session = await SessionManager.createSession(
       result.phoneNumber!,
       sessionId,
       clientIP,
-      userAgent
+      userAgent,
     );
 
     return NextResponse.json({
@@ -39,20 +40,19 @@ export async function POST(request: NextRequest) {
       sessionToken: session.sessionToken,
       message: "OTP verified successfully",
     });
-
   } catch (error) {
-    console.error("OTP verify error:", error);
-    
+    logger.error("OTP verify error:", error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

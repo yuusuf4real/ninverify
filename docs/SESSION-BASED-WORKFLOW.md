@@ -9,6 +9,7 @@ The session-based system eliminates the need for user registration and login. In
 ## Workflow Stages
 
 ### 1. Identity Verification (OTP)
+
 - **Route**: `POST /api/v2/otp/send`
 - **Purpose**: Verify user's phone number as identity anchor
 - **Process**:
@@ -18,6 +19,7 @@ The session-based system eliminates the need for user registration and login. In
   - Returns `sessionId` for verification
 
 **API Example**:
+
 ```json
 POST /api/v2/otp/send
 {
@@ -33,6 +35,7 @@ Response:
 ```
 
 ### 2. OTP Verification
+
 - **Route**: `POST /api/v2/otp/verify`
 - **Purpose**: Confirm phone ownership and create verification session
 - **Process**:
@@ -42,6 +45,7 @@ Response:
   - Returns JWT session token
 
 **API Example**:
+
 ```json
 POST /api/v2/otp/verify
 {
@@ -58,6 +62,7 @@ Response:
 ```
 
 ### 3. NIN Entry & Data Layer Selection
+
 - **Route**: `POST /api/v2/verification/submit`
 - **Purpose**: Capture NIN and user's data requirements
 - **Process**:
@@ -67,11 +72,13 @@ Response:
   - Updates session with selections
 
 **Data Layers**:
+
 - **Demographic** (₦500): Name, DOB, Phone, Gender
-- **Biometric** (₦750): Demographic + Photo + Signature  
+- **Biometric** (₦750): Demographic + Photo + Signature
 - **Full** (₦1000): Biometric + Full Address + LGA + State
 
 **API Example**:
+
 ```json
 POST /api/v2/verification/submit
 Authorization: Bearer <sessionToken>
@@ -90,6 +97,7 @@ Response:
 ```
 
 ### 4. Payment Processing
+
 - **Route**: `POST /api/v2/payment/initialize`
 - **Purpose**: Secure payment via Paystack
 - **Process**:
@@ -99,6 +107,7 @@ Response:
   - User completes payment in popup/redirect
 
 **API Example**:
+
 ```json
 POST /api/v2/payment/initialize
 Authorization: Bearer <sessionToken>
@@ -116,6 +125,7 @@ Response:
 ```
 
 ### 5. Payment Webhook & NIMC API Call
+
 - **Route**: `POST /api/v2/payment/webhook` (Paystack webhook)
 - **Purpose**: Confirm payment and trigger NIMC verification
 - **Process**:
@@ -126,6 +136,7 @@ Response:
   - Stores results in `verification_results`
 
 ### 6. Results Retrieval
+
 - **Route**: `GET /api/v2/verification/result`
 - **Purpose**: Deliver filtered verification results
 - **Process**:
@@ -135,6 +146,7 @@ Response:
   - Maintains audit trail
 
 **API Example**:
+
 ```json
 GET /api/v2/verification/result
 Authorization: Bearer <sessionToken>
@@ -182,17 +194,20 @@ Response:
 ## Security Considerations
 
 ### Data Protection
+
 - NIN is masked in audit logs (`123456***01`)
 - OTP codes are bcrypt hashed
 - Session tokens are JWT with expiry
 - Payment webhooks are signature-verified
 
 ### Rate Limiting
+
 - Max 5 verifications per phone per day
 - Max 10 OTP requests per phone per hour
 - Max 3 OTP attempts per session
 
 ### Compliance (NDPR)
+
 - Data retention: 365 days configurable
 - Audit trail for all access
 - Phone number as identity anchor
@@ -201,12 +216,14 @@ Response:
 ## Admin Dashboard
 
 ### Session Monitoring
+
 - Real-time session status
 - Payment tracking
 - Success/failure rates
 - Revenue analytics
 
 ### Audit Features
+
 - Phone number verification history
 - Data layer access logs
 - Payment transaction records

@@ -102,7 +102,7 @@ export class SecureLogger {
     if (this.logLevel <= LogLevel.DEBUG) {
       // Debug logging disabled in production
       if (process.env.NODE_ENV === "development") {
-        console.log(this.formatMessage("DEBUG", message, context));
+        logger.info(this.formatMessage("DEBUG", message, context));
       }
     }
   }
@@ -114,7 +114,7 @@ export class SecureLogger {
     if (this.logLevel <= LogLevel.INFO) {
       // Info logging disabled in production
       if (process.env.NODE_ENV === "development") {
-        console.log(this.formatMessage("INFO", message, context));
+        logger.info(this.formatMessage("INFO", message, context));
       }
     }
   }
@@ -160,7 +160,7 @@ export class SecureLogger {
    */
   static security(message: string, context?: Record<string, unknown>): void {
     const securityLog = this.formatMessage("SECURITY", message, context);
-    console.error(securityLog); // Use console.error to ensure it's always visible
+    logger.error(securityLog); // Use console.error to ensure it's always visible
 
     // In production, also send to security monitoring system
     if (process.env.NODE_ENV === "production") {
@@ -174,7 +174,7 @@ export class SecureLogger {
    */
   static audit(message: string, context?: Record<string, unknown>): void {
     const auditLog = this.formatMessage("AUDIT", message, context);
-    console.log(auditLog);
+    logger.info(auditLog);
 
     // In production, send to audit logging service
     if (process.env.NODE_ENV === "production") {

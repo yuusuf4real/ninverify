@@ -4,19 +4,18 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  CheckCircle2, 
-  Download, 
-  RefreshCw, 
-  AlertCircle, 
+import Image from "next/image";
+import {
+  CheckCircle2,
+  Download,
+  RefreshCw,
+  AlertCircle,
   User,
-  Calendar,
-  Phone,
   MapPin,
   Camera,
   FileText,
   Loader2,
-  RotateCcw
+  RotateCcw,
 } from "lucide-react";
 
 interface VerificationResultProps {
@@ -50,7 +49,11 @@ interface SessionInfo {
   verificationDate: string;
 }
 
-export function VerificationResult({ sessionToken, onStartOver, onComplete }: VerificationResultProps) {
+export function VerificationResult({
+  sessionToken,
+  onStartOver,
+  onComplete,
+}: VerificationResultProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<VerificationData | null>(null);
@@ -59,17 +62,20 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    fetchResults();
-    
+    const initializeFetch = async () => {
+      await fetchResults();
+    };
+    initializeFetch();
+
     // Poll for results if still processing
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       if (status && status !== "completed") {
-        fetchResults();
+        await fetchResults();
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [sessionToken, status]);
+  }, [sessionToken, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchResults = async () => {
     try {
@@ -77,7 +83,7 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
 
       const response = await fetch("/api/v2/verification/result", {
         headers: {
-          "Authorization": `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${sessionToken}`,
         },
       });
 
@@ -98,7 +104,6 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
         setLoading(false);
       }
       // Continue loading for other statuses
-
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch results");
       setLoading(false);
@@ -108,7 +113,7 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
   const downloadResults = async () => {
     try {
       setDownloading(true);
-      
+
       // Create printable document
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
@@ -119,7 +124,6 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.print();
-
     } catch (err) {
       setError(err instanceof Error ? err.message : "Download failed");
     } finally {
@@ -199,7 +203,9 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
             </div>
           </div>
 
-          ${data.photoUrl ? `
+          ${
+            data.photoUrl
+              ? `
             <div class="section">
               <div class="section-title">Biometric Data</div>
               <div class="field">
@@ -207,9 +213,13 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
                 <div class="value"><img src="${data.photoUrl}" alt="NIN Photo" class="photo" /></div>
               </div>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
 
-          ${data.address ? `
+          ${
+            data.address
+              ? `
             <div class="section">
               <div class="section-title">Address Information</div>
               <div class="field">
@@ -229,7 +239,9 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
                 <div class="value">${data.address.state}</div>
               </div>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
 
           <div class="footer">
             <p>This document was generated on ${new Date().toLocaleString("en-NG")} from official NIMC records.</p>
@@ -267,16 +279,14 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
             </div>
           </div>
           <h2 className="text-2xl font-bold">Processing Verification</h2>
-          <p className="text-muted-foreground">
-            {getStatusMessage(status)}
-          </p>
+          <p className="text-muted-foreground">{getStatusMessage(status)}</p>
         </div>
 
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-6 text-center">
             <p className="text-blue-800">
-              Please wait while we verify your NIN with NIMC. 
-              This usually takes 10-30 seconds.
+              Please wait while we verify your NIN with NIMC. This usually takes
+              10-30 seconds.
             </p>
           </CardContent>
         </Card>
@@ -299,7 +309,8 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
           </div>
           <h2 className="text-2xl font-bold">Verification Failed</h2>
           <p className="text-muted-foreground">
-            {error || "We couldn't complete your verification. Please try again."}
+            {error ||
+              "We couldn't complete your verification. Please try again."}
           </p>
         </div>
 
@@ -312,10 +323,7 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
             <RefreshCw className="h-4 w-4" />
             Retry
           </Button>
-          <Button
-            onClick={onStartOver}
-            className="flex-1 gap-2"
-          >
+          <Button onClick={onStartOver} className="flex-1 gap-2">
             <RotateCcw className="h-4 w-4" />
             Start Over
           </Button>
@@ -357,7 +365,7 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
                 <User className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-lg">Personal Information</h3>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Full Name:</span>
@@ -391,26 +399,34 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
                   <Camera className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-lg">Biometric Data</h3>
                 </div>
-                
+
                 {data.photoUrl && (
                   <div className="text-center">
-                    <img
+                    <Image
                       src={data.photoUrl}
                       alt="NIN Photo"
+                      width={128}
+                      height={160}
                       className="mx-auto max-w-32 max-h-40 rounded-lg border border-border"
                     />
-                    <p className="text-sm text-muted-foreground mt-2">Official Photo</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Official Photo
+                    </p>
                   </div>
                 )}
-                
+
                 {data.signatureUrl && (
                   <div className="text-center">
-                    <img
+                    <Image
                       src={data.signatureUrl}
                       alt="Signature"
+                      width={160}
+                      height={80}
                       className="mx-auto max-w-40 max-h-20 rounded border border-border"
                     />
-                    <p className="text-sm text-muted-foreground mt-2">Signature</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Signature
+                    </p>
                   </div>
                 )}
               </div>
@@ -427,11 +443,13 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
                   <MapPin className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-lg">Address Information</h3>
                 </div>
-                
+
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Address:</span>
-                    <span className="font-medium text-right">{data.address.addressLine}</span>
+                    <span className="font-medium text-right">
+                      {data.address.addressLine}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Town:</span>
@@ -461,8 +479,18 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
               <p className="font-semibold mb-1">Verification Details</p>
               <div className="space-y-1">
                 <p>Verification ID: {sessionInfo?.sessionId}</p>
-                <p>Date: {sessionInfo?.verificationDate && new Date(sessionInfo.verificationDate).toLocaleString("en-NG")}</p>
-                <p>Data Layer: {data.dataLayer.charAt(0).toUpperCase() + data.dataLayer.slice(1)}</p>
+                <p>
+                  Date:{" "}
+                  {sessionInfo?.verificationDate &&
+                    new Date(sessionInfo.verificationDate).toLocaleString(
+                      "en-NG",
+                    )}
+                </p>
+                <p>
+                  Data Layer:{" "}
+                  {data.dataLayer.charAt(0).toUpperCase() +
+                    data.dataLayer.slice(1)}
+                </p>
               </div>
             </div>
           </div>
@@ -479,7 +507,7 @@ export function VerificationResult({ sessionToken, onStartOver, onComplete }: Ve
           <RotateCcw className="h-4 w-4" />
           Verify Another NIN
         </Button>
-        
+
         <Button
           onClick={downloadResults}
           disabled={downloading}

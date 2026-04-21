@@ -4,6 +4,7 @@ import { DataLayerFilter } from "@/lib/data-layer-filter";
 import { db } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { verificationResults } from "@/db/new-schema";
+import { logger } from "@/lib/security/secure-logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Missing or invalid session token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -22,17 +23,16 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json(
         { error: "Invalid or expired session" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // Get session details
-    const sessionDetails = await SessionManager.getSessionForAdmin(session.sessionId);
+    const sessionDetails = await SessionManager.getSessionForAdmin(
+      session.sessionId,
+    );
     if (!sessionDetails) {
-      return NextResponse.json(
-        { error: "Session not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     // Check if verification is completed
@@ -52,12 +52,12 @@ export async function GET(request: NextRequest) {
     if (!results) {
       return NextResponse.json(
         { error: "Verification results not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Prepare filtered data for response
-    const filteredData = {
+    const filteredData: Record<string, unknown> = {
       fullName: results.fullName,
       dateOfBirth: results.dateOfBirth,
       phoneFromNimc: results.phoneFromNimc,
@@ -68,9 +68,13 @@ export async function GET(request: NextRequest) {
     };
 
     // Add conditional fields based on data layer
-    if (sessionDetails.dataLayerSelected === "biometric" || sessionDetails.dataLayerSelected === "full") {
+    if (
+      sessionDetails.dataLayerSelected === "biometric" ||
+      sessionDetails.dataLayerSelected === "full"
+    ) {
       if (results.photoUrl) filteredData.photoUrl = results.photoUrl;
-      if (results.signatureUrl) filteredData.signatureUrl = results.signatureUrl;
+      if (results.signatureUrl)
+        filteredData.signatureUrl = results.signatureUrl;
     }
 
     if (sessionDetails.dataLayerSelected === "full") {
@@ -84,9 +88,9 @@ export async function GET(request: NextRequest) {
 
     // Get printable document data
     const printableData = DataLayerFilter.getPrintableData(
-      filteredData as any,
+      filteredData as unknown as import("@/lib/data-layer-filter").FilteredVerificationData,
       sessionDetails.ninMasked!,
-      session.sessionId
+      session.sessionId,
     );
 
     return NextResponse.json({
@@ -101,12 +105,11 @@ export async function GET(request: NextRequest) {
         verificationDate: sessionDetails.completedAt,
       },
     });
-
   } catch (error) {
-    console.error("Result retrieval error:", error);
+    logger.error("Result retrieval error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

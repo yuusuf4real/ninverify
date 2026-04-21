@@ -16,7 +16,9 @@ export default function AdminSessionsPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Sessions
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,234</div>
@@ -25,19 +27,19 @@ export default function AdminSessionsPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Completed Today
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">89</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from yesterday
-            </p>
+            <p className="text-xs text-muted-foreground">+12% from yesterday</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
@@ -49,7 +51,7 @@ export default function AdminSessionsPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Revenue Today</CardTitle>

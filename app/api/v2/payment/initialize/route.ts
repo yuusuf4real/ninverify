@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SessionManager } from "@/lib/session-manager";
+import { logger } from "@/lib/security/secure-logger";
 import { nanoid } from "nanoid";
 
 const schema = z.object({
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Missing or invalid session token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -28,55 +29,75 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json(
         { error: "Invalid or expired session" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // Get session details to determine amount
-    const sessionDetails = await SessionManager.getSessionForAdmin(session.sessionId);
+    const sessionDetails = await SessionManager.getSessionForAdmin(
+      session.sessionId,
+    );
     if (!sessionDetails || !sessionDetails.dataLayerSelected) {
       return NextResponse.json(
-        { error: "Session not ready for payment. Please select data layer first." },
-        { status: 400 }
+        {
+          error:
+            "Session not ready for payment. Please select data layer first.",
+        },
+        { status: 400 },
       );
     }
 
     // Get amount based on data layer
     const { DataLayerFilter } = await import("@/lib/data-layer-filter");
-    const layerInfo = DataLayerFilter.getLayerDescription(sessionDetails.dataLayerSelected);
+    const layerInfo = DataLayerFilter.getLayerDescription(
+      sessionDetails.dataLayerSelected,
+    );
     const amountInKobo = layerInfo.price * 100; // Convert to kobo
 
     // Generate payment reference
     const paymentReference = `VN_${session.sessionId}_${nanoid(8)}`;
 
     // Initialize Paystack payment
-    const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email || `${session.phoneNumber.replace('+', '')}@verifynin.ng`,
-        amount: amountInKobo,
-        reference: paymentReference,
-        callback_url: callback_url || `${process.env.NEXT_PUBLIC_BASE_URL}/verification/result`,
-        metadata: {
-          sessionId: session.sessionId,
-          phoneNumber: session.phoneNumber,
-          ninMasked: sessionDetails.ninMasked,
-          dataLayer: sessionDetails.dataLayerSelected,
+    const paystackResponse = await fetch(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
         },
-        channels: ["card", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
-      }),
-    });
+        body: JSON.stringify({
+          email:
+            email || `${session.phoneNumber.replace("+", "")}@verifynin.ng`,
+          amount: amountInKobo,
+          reference: paymentReference,
+          callback_url:
+            callback_url ||
+            `${process.env.NEXT_PUBLIC_BASE_URL}/verification/result`,
+          metadata: {
+            sessionId: session.sessionId,
+            phoneNumber: session.phoneNumber,
+            ninMasked: sessionDetails.ninMasked,
+            dataLayer: sessionDetails.dataLayerSelected,
+          },
+          channels: [
+            "card",
+            "bank",
+            "ussd",
+            "qr",
+            "mobile_money",
+            "bank_transfer",
+          ],
+        }),
+      },
+    );
 
     if (!paystackResponse.ok) {
       const error = await paystackResponse.json();
-      console.error("Paystack initialization error:", error);
+      logger.error("Paystack initialization error:", error);
       return NextResponse.json(
         { error: "Payment initialization failed" },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -87,7 +108,7 @@ export async function POST(request: NextRequest) {
       session.sessionId,
       paymentReference,
       amountInKobo,
-      "pending"
+      "pending",
     );
 
     return NextResponse.json({
@@ -100,20 +121,19 @@ export async function POST(request: NextRequest) {
       amount: layerInfo.price,
       currency: "NGN",
     });
-
   } catch (error) {
-    console.error("Payment initialization error:", error);
-    
+    logger.error("Payment initialization error:", error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

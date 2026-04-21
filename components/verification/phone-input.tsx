@@ -19,25 +19,31 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
   const handlePhoneChange = (value: string) => {
     // Remove all non-digits
     const digits = value.replace(/\D/g, "");
-    
+
     // Format based on length
     let formatted = "";
     if (digits.startsWith("234")) {
       // International format
-      formatted = digits.replace(/(\d{3})(\d{3})(\d{4})(\d{0,4})/, (_, p1, p2, p3, p4) => {
-        if (p4) return `+${p1} ${p2} ${p3} ${p4}`;
-        if (p3) return `+${p1} ${p2} ${p3}`;
-        if (p2) return `+${p1} ${p2}`;
-        return `+${p1}`;
-      });
+      formatted = digits.replace(
+        /(\d{3})(\d{3})(\d{4})(\d{0,4})/,
+        (_, p1, p2, p3, p4) => {
+          if (p4) return `+${p1} ${p2} ${p3} ${p4}`;
+          if (p3) return `+${p1} ${p2} ${p3}`;
+          if (p2) return `+${p1} ${p2}`;
+          return `+${p1}`;
+        },
+      );
     } else if (digits.startsWith("0")) {
       // Local format starting with 0
-      formatted = digits.replace(/(\d{1})(\d{3})(\d{3})(\d{0,4})/, (_, p1, p2, p3, p4) => {
-        if (p4) return `${p1}${p2} ${p3} ${p4}`;
-        if (p3) return `${p1}${p2} ${p3}`;
-        if (p2) return `${p1}${p2}`;
-        return p1;
-      });
+      formatted = digits.replace(
+        /(\d{1})(\d{3})(\d{3})(\d{0,4})/,
+        (_, p1, p2, p3, p4) => {
+          if (p4) return `${p1}${p2} ${p3} ${p4}`;
+          if (p3) return `${p1}${p2} ${p3}`;
+          if (p2) return `${p1}${p2}`;
+          return p1;
+        },
+      );
     } else if (digits.length > 0) {
       // Assume local format without leading 0
       formatted = digits.replace(/(\d{3})(\d{3})(\d{0,4})/, (_, p1, p2, p3) => {
@@ -52,18 +58,18 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
 
   const validatePhone = (phone: string): boolean => {
     const digits = phone.replace(/\D/g, "");
-    
+
     // Check various valid formats
     if (digits.startsWith("234") && digits.length === 13) return true; // +234XXXXXXXXXX
-    if (digits.startsWith("0") && digits.length === 11) return true;   // 0XXXXXXXXXX
-    if (digits.length === 10) return true;                             // XXXXXXXXXX
-    
+    if (digits.startsWith("0") && digits.length === 11) return true; // 0XXXXXXXXXX
+    if (digits.length === 10) return true; // XXXXXXXXXX
+
     return false;
   };
 
   const normalizePhone = (phone: string): string => {
     const digits = phone.replace(/\D/g, "");
-    
+
     if (digits.startsWith("234") && digits.length === 13) {
       return `+${digits}`;
     } else if (digits.startsWith("0") && digits.length === 11) {
@@ -71,13 +77,13 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
     } else if (digits.length === 10) {
       return `+234${digits}`;
     }
-    
+
     return phone;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validatePhone(phone)) {
       setError("Please enter a valid Nigerian phone number");
       return;
@@ -112,7 +118,7 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
         </div>
         <h2 className="text-2xl font-bold">Enter Your Phone Number</h2>
         <p className="text-muted-foreground">
-          We'll send you a verification code to confirm your identity
+          We&apos;ll send you a verification code to confirm your identity
         </p>
       </div>
 
@@ -133,9 +139,7 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
             maxLength={18}
           />
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">
-              Nigerian numbers only
-            </span>
+            <span className="text-muted-foreground">Nigerian numbers only</span>
             {isValid && (
               <div className="flex items-center gap-1 text-emerald-600">
                 <div className="w-2 h-2 rounded-full bg-emerald-600" />
@@ -179,7 +183,7 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
 
       {/* Info */}
       <div className="text-center text-xs text-muted-foreground">
-        <p>
+        <p className="text-sm text-muted-foreground">
           By continuing, you agree to our{" "}
           <a href="/terms" className="text-primary hover:underline">
             Terms of Service

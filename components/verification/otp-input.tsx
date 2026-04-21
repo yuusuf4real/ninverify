@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Smartphone, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { Smartphone, RefreshCw, AlertCircle } from "lucide-react";
 
 interface OTPInputProps {
   phoneNumber: string;
@@ -31,8 +31,11 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
 
   // Send initial OTP
   useEffect(() => {
-    sendOTP();
-  }, []);
+    const initializeOTP = async () => {
+      await sendOTP();
+    };
+    initializeOTP();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendOTP = async () => {
     try {
@@ -73,7 +76,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
     }
 
     // Auto-verify when all digits entered
-    if (newOtp.every(digit => digit !== "") && !loading) {
+    if (newOtp.every((digit) => digit !== "") && !loading) {
       verifyOTP(newOtp.join(""));
     }
   };
@@ -117,7 +120,10 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const maskedPhone = phoneNumber.replace(/(\+234)(\d{3})(\d{4})(\d{4})/, "$1 $2 ***$4");
+  const maskedPhone = phoneNumber.replace(
+    /(\+234)(\d{3})(\d{4})(\d{4})/,
+    "$1 $2 ***$4",
+  );
 
   return (
     <motion.div
@@ -145,7 +151,9 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
           {otp.map((digit, index) => (
             <Input
               key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
+              ref={(el) => {
+                inputRefs.current[index] = el;
+              }}
               type="text"
               inputMode="numeric"
               maxLength={1}
@@ -192,7 +200,9 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
             disabled={resending || timeLeft > 540} // Allow resend after 1 minute
             className="gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${resending ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${resending ? "animate-spin" : ""}`}
+            />
             {resending ? "Sending..." : "Resend Code"}
           </Button>
         </div>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { SessionManager } from "@/lib/session-manager";
 import { DataLayerFilter } from "@/lib/data-layer-filter";
 import { isValidNin, maskNin, normalizeNin } from "@/lib/nin";
+import { logger } from "@/lib/security/secure-logger";
 
 const schema = z.object({
   nin: z.string(),
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Missing or invalid session token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json(
         { error: "Invalid or expired session" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!isValidNin(cleanNin)) {
       return NextResponse.json(
         { error: "Please enter a valid 11-digit NIN" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     await SessionManager.updateSessionWithNIN(
       session.sessionId,
       maskedNin,
-      dataLayer
+      dataLayer,
     );
 
     // Get pricing for selected data layer
@@ -62,20 +63,19 @@ export async function POST(request: NextRequest) {
       amount: layerInfo.price,
       message: "NIN and data layer saved. Proceed to payment.",
     });
-
   } catch (error) {
-    console.error("Verification submit error:", error);
-    
+    logger.error("Verification submit error:", error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

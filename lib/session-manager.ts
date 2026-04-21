@@ -2,10 +2,10 @@ import { nanoid } from "nanoid";
 import { SignJWT, jwtVerify } from "jose";
 import { db } from "@/db/client";
 import { verificationSessions, otpSessions } from "@/db/new-schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, lt } from "drizzle-orm";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-secret-key"
+  process.env.JWT_SECRET || "your-secret-key",
 );
 
 export interface SessionData {
@@ -25,7 +25,7 @@ export class SessionManager {
     phoneNumber: string,
     otpSessionId: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<{ sessionId: string; sessionToken: string }> {
     const sessionId = nanoid();
     const expiresAt = new Date(Date.now() + this.SESSION_DURATION);
@@ -74,7 +74,7 @@ export class SessionManager {
       const session = await db.query.verificationSessions.findFirst({
         where: and(
           eq(verificationSessions.id, sessionId),
-          gt(verificationSessions.expiresAt, new Date())
+          gt(verificationSessions.expiresAt, new Date()),
         ),
       });
 
@@ -97,9 +97,9 @@ export class SessionManager {
   static async updateSessionStatus(
     sessionId: string,
     status: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status,
       updatedAt: new Date(),
     };
@@ -124,7 +124,7 @@ export class SessionManager {
   static async updateSessionWithNIN(
     sessionId: string,
     ninMasked: string,
-    dataLayer: "demographic" | "biometric" | "full"
+    dataLayer: "demographic" | "biometric" | "full",
   ): Promise<void> {
     await db
       .update(verificationSessions)
@@ -144,9 +144,9 @@ export class SessionManager {
     sessionId: string,
     paymentReference: string,
     amount: number,
-    status: "pending" | "completed" | "failed" = "pending"
+    status: "pending" | "completed" | "failed" = "pending",
   ): Promise<void> {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       paymentReference,
       paymentAmount: amount,
       paymentStatus: status,
@@ -169,19 +169,19 @@ export class SessionManager {
    */
   static async cleanupExpiredSessions(): Promise<void> {
     const now = new Date();
-    
+
     // Delete expired sessions
     await db
       .delete(verificationSessions)
-      .where(and(
-        eq(verificationSessions.status, "expired"),
-        gt(now, verificationSessions.expiresAt)
-      ));
+      .where(
+        and(
+          eq(verificationSessions.status, "expired"),
+          lt(verificationSessions.expiresAt, now),
+        ),
+      );
 
     // Delete expired OTP sessions
-    await db
-      .delete(otpSessions)
-      .where(gt(now, otpSessions.expiresAt));
+    await db.delete(otpSessions).where(lt(otpSessions.expiresAt, now));
   }
 
   /**
