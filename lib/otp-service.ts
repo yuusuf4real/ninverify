@@ -110,7 +110,7 @@ class TermiiProvider implements OTPProvider {
   }
 }
 
-// Twilio Provider (Backup)
+// Twilio Provider (Backup/Alternative)
 class TwilioProvider implements OTPProvider {
   private accountSid: string;
   private authToken: string;
@@ -124,6 +124,28 @@ class TwilioProvider implements OTPProvider {
 
   async sendOTP(phoneNumber: string, code: string): Promise<boolean> {
     try {
+      // Validate configuration
+      if (!this.accountSid || !this.authToken || !this.fromNumber) {
+        logger.error("Twilio configuration incomplete", {
+          hasAccountSid: !!this.accountSid,
+          hasAuthToken: !!this.authToken,
+          hasFromNumber: !!this.fromNumber,
+        });
+        return false;
+      }
+
+      const payload = {
+        From: this.fromNumber,
+        To: phoneNumber,
+        Body: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
+      };
+
+      logger.info("Sending OTP via Twilio", {
+        to: phoneNumber.substring(0, 8) + "***", // Masked phone number
+        from: this.fromNumber,
+        accountSid: this.accountSid.substring(0, 8) + "***",
+      });
+
       const response = await fetch(
         `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Messages.json`,
         {
@@ -132,17 +154,70 @@ class TwilioProvider implements OTPProvider {
             "Content-Type": "application/x-www-form-urlencoded",
             Authorization: `Basic ${Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64")}`,
           },
-          body: new URLSearchParams({
-            From: this.fromNumber,
-            To: phoneNumber,
-            Body: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
-          }),
+          body: new URLSearchParams(payload),
         },
       );
 
-      return response.ok;
+      const result = await response.json();
+
+      logger.info("Twilio API response", {
+        status: response.status,
+        success: response.ok,
+        sid: result.sid,
+        status_twilio: result.status,
+        errorCode: result.error_code,
+        errorMessage: result.error_message,
+      });
+
+      if (!response.ok) {
+        logger.error("Twilio API error", {
+          status: response.status,
+          statusText: response.statusText,
+          errorCode: result.error_code,
+          errorMessage: result.error_message,
+          moreInfo: result.more_info,
+        });
+
+        // Handle specific Twilio error cases
+        if (result.error_code === 21211) {
+          logger.error("Invalid Twilio phone number", {
+            fromNumber: this.fromNumber,
+            suggestion: "Verify your Twilio phone number is correct and verified",
+          });
+        }
+
+        if (result.error_code === 21608) {
+          logger.error("Unverified phone number", {
+            toNumber: phoneNumber.substring(0, 8) + "***",
+            suggestion: "Phone number may not be verified for trial account",
+          });
+        }
+
+        if (result.error_code === 20003) {
+          logger.error("Twilio authentication failed", {
+            suggestion: "Check your Account SID and Auth Token",
+          });
+        }
+
+        return false;
+      }
+
+      // Check if message was successfully queued/sent
+      const success = result.sid && (result.status === "queued" || result.status === "sent");
+      
+      if (!success) {
+        logger.error("Twilio message not queued", {
+          result,
+          expected: "sid present and status='queued' or 'sent'",
+        });
+      }
+
+      return success;
     } catch (error) {
-      logger.error("Twilio SMS error:", error);
+      logger.error("Twilio SMS network error", {
+        error: error instanceof Error ? error.message : String(error),
+        phoneNumber: phoneNumber.substring(0, 8) + "***",
+      });
       return false;
     }
   }
@@ -150,16 +225,34 @@ class TwilioProvider implements OTPProvider {
 
 export class OTPService {
   private provider: OTPProvider;
+  private fallbackProvider: OTPProvider | null = null;
   private static OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
   private static MAX_ATTEMPTS = 3;
   private isDevelopment = process.env.NODE_ENV === "development";
 
   constructor() {
-    // Use Termii for Nigerian numbers, Twilio as backup
-    this.provider =
-      process.env.OTP_PROVIDER === "twilio"
-        ? new TwilioProvider()
-        : new TermiiProvider();
+    const primaryProvider = process.env.OTP_PROVIDER || "termii";
+    
+    // Set primary provider
+    if (primaryProvider === "twilio") {
+      this.provider = new TwilioProvider();
+      // Set Termii as fallback if configured
+      if (process.env.TERMII_API_KEY) {
+        this.fallbackProvider = new TermiiProvider();
+      }
+    } else {
+      this.provider = new TermiiProvider();
+      // Set Twilio as fallback if configured
+      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+        this.fallbackProvider = new TwilioProvider();
+      }
+    }
+
+    logger.info("OTP Service initialized", {
+      primaryProvider,
+      hasFallback: !!this.fallbackProvider,
+      isDevelopment: this.isDevelopment
+    });
   }
 
   /**
@@ -228,7 +321,22 @@ export class OTPService {
       }
 
       // Send OTP via provider in production
-      const sent = await this.provider.sendOTP(normalizedPhone, otpCode);
+      let sent = await this.provider.sendOTP(normalizedPhone, otpCode);
+
+      // Try fallback provider if primary fails and fallback is available
+      if (!sent && this.fallbackProvider) {
+        logger.info("Primary OTP provider failed, trying fallback", {
+          phoneNumber: normalizedPhone.substring(0, 8) + "***"
+        });
+        
+        sent = await this.fallbackProvider.sendOTP(normalizedPhone, otpCode);
+        
+        if (sent) {
+          logger.info("Fallback OTP provider succeeded", {
+            phoneNumber: normalizedPhone.substring(0, 8) + "***"
+          });
+        }
+      }
 
       if (!sent) {
         // Mark as failed
@@ -237,9 +345,13 @@ export class OTPService {
           .set({ status: "failed" })
           .where(eq(otpSessions.id, sessionId));
 
+        const errorMessage = this.fallbackProvider 
+          ? "Failed to send OTP via both primary and backup providers. Please try again."
+          : "Failed to send OTP. Please try again.";
+
         return {
           success: false,
-          error: "Failed to send OTP. Please try again.",
+          error: errorMessage,
         };
       }
 
