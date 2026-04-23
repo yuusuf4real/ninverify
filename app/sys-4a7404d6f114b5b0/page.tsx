@@ -13,7 +13,7 @@ export default async function AdminLoginPage() {
     if (session.role === "admin" || session.role === "super_admin") {
       redirect("/admin");
     }
-    redirect("/dashboard");
+    redirect("/");
   }
 
   return (

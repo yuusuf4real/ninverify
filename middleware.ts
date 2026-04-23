@@ -22,9 +22,9 @@ const adminRateLimitStore = new Map<
 const ADMIN_IP_WHITELIST = process.env.ADMIN_IP_WHITELIST?.split(",") || [];
 
 function getSecret() {
-  const secret = process.env.AUTH_SECRET;
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error("AUTH_SECRET is not configured");
+    throw new Error("JWT_SECRET is not configured");
   }
   return new TextEncoder().encode(secret);
 }
@@ -96,7 +96,27 @@ function isAdminIPAllowed(ip: string): boolean {
     return true;
   }
 
-  return ADMIN_IP_WHITELIST.includes(ip);
+  // Normalize IP address for comparison
+  let normalizedIP = ip;
+
+  // Handle IPv6-mapped IPv4 addresses (::ffff:127.0.0.1 -> 127.0.0.1)
+  if (ip.startsWith("::ffff:")) {
+    normalizedIP = ip.substring(7);
+  }
+
+  // Check both original and normalized IP
+  const ipsToCheck = [ip, normalizedIP];
+
+  // Also check common localhost variations
+  if (
+    normalizedIP === "127.0.0.1" ||
+    ip === "::1" ||
+    ip === "::ffff:127.0.0.1"
+  ) {
+    ipsToCheck.push("127.0.0.1", "::1", "::ffff:127.0.0.1", "localhost");
+  }
+
+  return ipsToCheck.some((checkIP) => ADMIN_IP_WHITELIST.includes(checkIP));
 }
 
 export async function middleware(request: NextRequest) {
@@ -129,12 +149,12 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
     if (session && session.role === "user") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
-  // Require authentication for dashboard and admin routes
-  if (pathname.startsWith("/dashboard") || isAdminRoute) {
+  // Require authentication for admin routes
+  if (isAdminRoute) {
     if (!token) {
       const url = request.nextUrl.clone();
       url.pathname = isAdminRoute ? ADMIN_LOGIN_PATH : USER_LOGIN_PATH;
@@ -159,9 +179,9 @@ export async function middleware(request: NextRequest) {
           `Unauthorized admin access attempt by user ${session.userId} (${session.email}) from IP ${clientIP}`,
         );
 
-        // Redirect non-admin users to dashboard with clear error
+        // Redirect non-admin users to home page with clear error
         const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
+        url.pathname = "/";
         url.searchParams.set("error", "unauthorized_admin_access");
         return NextResponse.redirect(url);
       }
@@ -188,25 +208,11 @@ export async function middleware(request: NextRequest) {
         );
       }
     }
-
-    // User route protection - prevent admin users from accessing user dashboard
-    if (pathname.startsWith("/dashboard") && !isAdminRoute) {
-      if (session.role === "admin" || session.role === "super_admin") {
-        // Redirect admin users to admin dashboard
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/dashboard",
-    "/dashboard/:path*",
-    "/admin",
-    "/admin/:path*",
-    "/sys-4a7404d6f114b5b0",
-  ],
+  matcher: ["/admin", "/admin/:path*", "/sys-4a7404d6f114b5b0"],
 };

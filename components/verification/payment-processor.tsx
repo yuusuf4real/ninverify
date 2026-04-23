@@ -125,11 +125,6 @@ export function PaymentProcessor({
       setLoading(true);
       setError("");
 
-      // Check if Paystack is loaded
-      if (!paystackLoaded || !window.PaystackPop) {
-        throw new Error("Payment system is loading. Please try again.");
-      }
-
       const response = await fetch("/api/v2/payment/initialize", {
         method: "POST",
         headers: {
@@ -150,24 +145,48 @@ export function PaymentProcessor({
 
       setPaymentReference(data.reference);
 
-      // Initialize Paystack inline popup
-      const handler = window.PaystackPop.setup({
-        key: data.publicKey, // Paystack public key from backend
-        email: data.email, // Customer email from backend
-        amount: amount, // Amount in kobo
-        ref: data.reference, // Payment reference
-        onClose: function () {
-          setLoading(false);
-          setError("Payment was cancelled. Please try again.");
-        },
-        callback: function (response: { reference: string }) {
-          // Payment successful, verify it
-          verifyPayment(response.reference);
-        },
-      });
+      // Store session token for callback page
+      localStorage.setItem("sessionToken", sessionToken);
+      sessionStorage.setItem("sessionToken", sessionToken);
 
-      // Open the Paystack modal
-      handler.openIframe();
+      // Try inline first, fallback to redirect if it fails
+      if (paystackLoaded && window.PaystackPop) {
+        try {
+          // Initialize Paystack inline popup
+          const handler = window.PaystackPop.setup({
+            key: data.publicKey,
+            email: data.email,
+            amount: amount,
+            ref: data.reference,
+            onClose: function () {
+              setLoading(false);
+              setError("Payment was cancelled. Please try again.");
+            },
+            callback: function (response: { reference: string }) {
+              console.log("Payment successful:", response);
+              // Payment successful, verify it
+              verifyPayment(response.reference);
+            },
+          });
+
+          // Open the Paystack modal
+          handler.openIframe();
+        } catch (inlineError) {
+          console.warn(
+            "Inline payment failed, falling back to redirect:",
+            inlineError,
+          );
+          // Fallback to redirect with callback URL
+          const callbackUrl = `${window.location.origin}/verification/callback`;
+          const redirectUrl = `${data.authorizationUrl}&callback_url=${encodeURIComponent(callbackUrl)}`;
+          window.location.href = redirectUrl;
+        }
+      } else {
+        // Paystack not loaded, use redirect with callback
+        const callbackUrl = `${window.location.origin}/verification/callback`;
+        const redirectUrl = `${data.authorizationUrl}&callback_url=${encodeURIComponent(callbackUrl)}`;
+        window.location.href = redirectUrl;
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Payment initialization failed",
@@ -343,18 +362,13 @@ export function PaymentProcessor({
 
         <Button
           onClick={initializePayment}
-          disabled={loading || verifying || !paystackLoaded}
+          disabled={loading || verifying}
           className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
         >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Processing...
-            </>
-          ) : !paystackLoaded ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading...
             </>
           ) : (
             <>

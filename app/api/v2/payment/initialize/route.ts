@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
           reference: paymentReference,
           callback_url:
             callback_url ||
-            `${process.env.NEXT_PUBLIC_BASE_URL}/verification/result`,
+            `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/verification/callback`,
           metadata: {
             sessionId: session.sessionId,
             phoneNumber: session.phoneNumber,

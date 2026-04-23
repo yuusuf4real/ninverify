@@ -262,7 +262,7 @@ YOUVERIFY_TOKEN="your-youverify-token"
 
 ## API Testing
 
-Use the verification flow component at `/verify` to test the complete workflow, or test individual endpoints:
+Use the verification flow component at `/` (home page) to test the complete workflow, or test individual endpoints:
 
 ```bash
 # 1. Send OTP

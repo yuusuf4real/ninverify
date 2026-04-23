@@ -126,6 +126,8 @@ function getStatusMessage(status: string): string {
       return "Payment is being processed";
     case "payment_completed":
       return "Payment successful. Verifying with NIMC...";
+    case "verification_in_progress":
+      return "Verifying your NIN with NIMC. Please wait...";
     case "verification_completed":
       return "Verification completed successfully";
     case "failed":

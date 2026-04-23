@@ -4,6 +4,7 @@ import { SessionManager } from "@/lib/session-manager";
 import { DataLayerFilter } from "@/lib/data-layer-filter";
 import { isValidNin, maskNin, normalizeNin } from "@/lib/nin";
 import { logger } from "@/lib/security/secure-logger";
+import { encrypt } from "@/lib/security/encryption";
 
 const schema = z.object({
   nin: z.string(),
@@ -45,11 +46,15 @@ export async function POST(request: NextRequest) {
 
     const maskedNin = maskNin(cleanNin);
 
+    // Encrypt and temporarily store the actual NIN for verification
+    const encryptedNin = encrypt(cleanNin);
+
     // Update session with NIN and data layer
     await SessionManager.updateSessionWithNIN(
       session.sessionId,
       maskedNin,
       dataLayer,
+      encryptedNin, // Store encrypted NIN temporarily
     );
 
     // Get pricing for selected data layer

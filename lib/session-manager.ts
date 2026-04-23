@@ -125,15 +125,22 @@ export class SessionManager {
     sessionId: string,
     ninMasked: string,
     dataLayer: "demographic" | "biometric" | "full",
+    encryptedNin?: string,
   ): Promise<void> {
+    const updateData: Record<string, unknown> = {
+      ninMasked,
+      dataLayerSelected: dataLayer,
+      status: "nin_entered",
+      updatedAt: new Date(),
+    };
+
+    if (encryptedNin) {
+      updateData.encryptedNin = encryptedNin;
+    }
+
     await db
       .update(verificationSessions)
-      .set({
-        ninMasked,
-        dataLayerSelected: dataLayer,
-        status: "nin_entered",
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(verificationSessions.id, sessionId));
   }
 

@@ -120,7 +120,11 @@ const staggerItem = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onStartVerification?: () => void;
+}
+
+export function HeroSection({ onStartVerification }: HeroSectionProps) {
   const [currentNameIndex, setCurrentNameIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
@@ -196,12 +200,10 @@ export function HeroSection() {
           >
             <Button
               size="sm"
-              asChild
+              onClick={onStartVerification}
               className="hover:scale-105 transition-transform"
             >
-              <Link href="/verify">
-                Verify NIN <ArrowRight className="h-4 w-4" />
-              </Link>
+              Verify NIN <ArrowRight className="h-4 w-4" />
             </Button>
           </motion.div>
 
@@ -287,13 +289,15 @@ export function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <Button size="sm" asChild className="w-full justify-center">
-                    <Link
-                      href="/verify"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Verify NIN <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
+                  <Button
+                    size="sm"
+                    className="w-full justify-center"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onStartVerification?.();
+                    }}
+                  >
+                    Verify NIN <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </motion.div>
               </motion.div>
@@ -340,13 +344,11 @@ export function HeroSection() {
             <motion.div variants={staggerItem} className="flex flex-wrap gap-4">
               <Button
                 size="lg"
-                asChild
+                onClick={onStartVerification}
                 className="group hover:shadow-glow transition-all"
               >
-                <Link href="/verify">
-                  Verify NIN Now
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                Verify NIN Now
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </motion.div>
           </motion.div>

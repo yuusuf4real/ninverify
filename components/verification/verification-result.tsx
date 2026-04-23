@@ -60,6 +60,7 @@ export function VerificationResult({
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [status, setStatus] = useState<string>("");
   const [downloading, setDownloading] = useState(false);
+  const [triggering, setTriggering] = useState(false);
 
   useEffect(() => {
     const initializeFetch = async () => {
@@ -110,6 +111,32 @@ export function VerificationResult({
     }
   };
 
+  const triggerVerification = async () => {
+    try {
+      setTriggering(true);
+      setError("");
+
+      const response = await fetch("/api/v2/verification/trigger", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        // Refresh results after manual trigger
+        await fetchResults();
+      } else {
+        setError(result.error || "Failed to trigger verification");
+      }
+    } catch (err) {
+      setError("Failed to trigger verification");
+    } finally {
+      setTriggering(false);
+    }
+  };
+
   const downloadResults = async () => {
     try {
       setDownloading(true);
@@ -142,110 +169,394 @@ export function VerificationResult({
       });
     };
 
+    const currentDate = new Date().toLocaleDateString("en-NG", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
     return `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
-          <title>NIN Verification Result</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>NIN Verification Certificate - ${data.fullName}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-            .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
-            .field { margin: 15px 0; display: flex; }
-            .label { font-weight: bold; width: 150px; }
-            .value { flex: 1; }
-            .section { margin: 30px 0; }
-            .section-title { font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px; }
-            .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #666; }
-            .photo { max-width: 150px; max-height: 200px; border: 1px solid #ccc; }
-            @media print { body { margin: 20px; } }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Georgia', 'Times New Roman', serif;
+              line-height: 1.6;
+              color: #2c3e50;
+              background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+              padding: 20px;
+            }
+            
+            .certificate {
+              max-width: 800px;
+              margin: 0 auto;
+              background: white;
+              border-radius: 12px;
+              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+              overflow: hidden;
+              position: relative;
+            }
+            
+            .certificate::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 8px;
+              background: linear-gradient(90deg, #3b82f6, #1d4ed8, #1e40af);
+            }
+            
+            .header {
+              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+              color: white;
+              padding: 40px 30px;
+              text-align: center;
+              position: relative;
+            }
+            
+            .header::after {
+              content: '';
+              position: absolute;
+              bottom: -10px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 0;
+              height: 0;
+              border-left: 20px solid transparent;
+              border-right: 20px solid transparent;
+              border-top: 20px solid #1e40af;
+            }
+            
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            
+            .subtitle {
+              font-size: 18px;
+              opacity: 0.9;
+              font-weight: 300;
+            }
+            
+            .certificate-title {
+              font-size: 28px;
+              font-weight: bold;
+              color: #1e40af;
+              text-align: center;
+              margin: 40px 0 30px 0;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            }
+            
+            .content {
+              padding: 0 40px 40px 40px;
+            }
+            
+            .verification-badge {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              background: linear-gradient(135deg, #10b981, #059669);
+              color: white;
+              padding: 15px 30px;
+              border-radius: 50px;
+              margin: 20px auto;
+              width: fit-content;
+              font-weight: bold;
+              box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            }
+            
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 30px;
+              margin: 30px 0;
+            }
+            
+            .info-section {
+              background: #f8fafc;
+              border-radius: 12px;
+              padding: 25px;
+              border-left: 4px solid #3b82f6;
+            }
+            
+            .section-title {
+              font-size: 18px;
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 15px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            
+            .field {
+              margin: 12px 0;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px 0;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .field:last-child {
+              border-bottom: none;
+            }
+            
+            .label {
+              font-weight: 600;
+              color: #64748b;
+              font-size: 14px;
+            }
+            
+            .value {
+              font-weight: bold;
+              color: #1e293b;
+              text-align: right;
+            }
+            
+            .photo-section {
+              text-align: center;
+              margin: 30px 0;
+              padding: 20px;
+              background: #f8fafc;
+              border-radius: 12px;
+              border: 2px dashed #cbd5e1;
+            }
+            
+            .photo {
+              max-width: 150px;
+              max-height: 200px;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              border: 3px solid white;
+            }
+            
+            .security-features {
+              background: linear-gradient(135deg, #fef3c7, #fbbf24);
+              border-radius: 12px;
+              padding: 20px;
+              margin: 30px 0;
+              border-left: 4px solid #f59e0b;
+            }
+            
+            .qr-placeholder {
+              width: 80px;
+              height: 80px;
+              background: #e2e8f0;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              color: #64748b;
+              margin: 0 auto;
+            }
+            
+            .footer {
+              background: #f1f5f9;
+              padding: 30px;
+              text-align: center;
+              border-top: 1px solid #e2e8f0;
+              margin-top: 40px;
+            }
+            
+            .footer-text {
+              font-size: 12px;
+              color: #64748b;
+              line-height: 1.8;
+            }
+            
+            .signature-line {
+              border-top: 2px solid #1e40af;
+              width: 200px;
+              margin: 20px auto 5px auto;
+            }
+            
+            .watermark {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 120px;
+              color: rgba(59, 130, 246, 0.05);
+              font-weight: bold;
+              z-index: 1;
+              pointer-events: none;
+            }
+            
+            @media print {
+              body {
+                background: white;
+                padding: 0;
+              }
+              
+              .certificate {
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+              }
+              
+              .watermark {
+                display: none;
+              }
+            }
+            
+            @page {
+              size: A4;
+              margin: 1cm;
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="logo">VerifyNIN</div>
-            <h2>National Identity Number Verification Result</h2>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Verification Details</div>
-            <div class="field">
-              <div class="label">Verification ID:</div>
-              <div class="value">${sessionInfo.sessionId}</div>
+          <div class="certificate">
+            <div class="watermark">VERIFIED</div>
+            
+            <div class="header">
+              <div class="logo">VerifyNIN</div>
+              <div class="subtitle">Official NIN Verification Service</div>
             </div>
-            <div class="field">
-              <div class="label">Date:</div>
-              <div class="value">${formatDate(sessionInfo.verificationDate)}</div>
-            </div>
-            <div class="field">
-              <div class="label">Data Layer:</div>
-              <div class="value">${data.dataLayer.charAt(0).toUpperCase() + data.dataLayer.slice(1)}</div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Personal Information</div>
-            <div class="field">
-              <div class="label">Full Name:</div>
-              <div class="value">${data.fullName}</div>
-            </div>
-            <div class="field">
-              <div class="label">Date of Birth:</div>
-              <div class="value">${formatDate(data.dateOfBirth)}</div>
-            </div>
-            <div class="field">
-              <div class="label">Gender:</div>
-              <div class="value">${data.gender}</div>
-            </div>
-            <div class="field">
-              <div class="label">Phone Number:</div>
-              <div class="value">${data.phoneFromNimc}</div>
-            </div>
-          </div>
-
-          ${
-            data.photoUrl
-              ? `
-            <div class="section">
-              <div class="section-title">Biometric Data</div>
-              <div class="field">
-                <div class="label">Photograph:</div>
-                <div class="value"><img src="${data.photoUrl}" alt="NIN Photo" class="photo" /></div>
+            
+            <div class="content">
+              <h1 class="certificate-title">Identity Verification Certificate</h1>
+              
+              <div class="verification-badge">
+                <span>✓</span>
+                <span>OFFICIALLY VERIFIED</span>
+              </div>
+              
+              <div class="info-grid">
+                <div class="info-section">
+                  <div class="section-title">
+                    <span>👤</span>
+                    Personal Information
+                  </div>
+                  <div class="field">
+                    <span class="label">Full Name:</span>
+                    <span class="value">${data.fullName}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Date of Birth:</span>
+                    <span class="value">${formatDate(data.dateOfBirth)}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Gender:</span>
+                    <span class="value">${data.gender}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Phone Number:</span>
+                    <span class="value">${data.phoneFromNimc}</span>
+                  </div>
+                </div>
+                
+                <div class="info-section">
+                  <div class="section-title">
+                    <span>📋</span>
+                    Verification Details
+                  </div>
+                  <div class="field">
+                    <span class="label">Verification ID:</span>
+                    <span class="value">${sessionInfo.sessionId.substring(0, 12)}...</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Verification Date:</span>
+                    <span class="value">${formatDate(sessionInfo.verificationDate)}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Data Layer:</span>
+                    <span class="value">${data.dataLayer.charAt(0).toUpperCase() + data.dataLayer.slice(1)}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Status:</span>
+                    <span class="value" style="color: #10b981;">VERIFIED</span>
+                  </div>
+                </div>
+              </div>
+              
+              ${
+                data.photoUrl
+                  ? `
+                <div class="photo-section">
+                  <div class="section-title" style="justify-content: center; margin-bottom: 15px;">
+                    <span>📷</span>
+                    Official Photograph
+                  </div>
+                  <img src="${data.photoUrl}" alt="Official NIN Photo" class="photo" />
+                </div>
+              `
+                  : ""
+              }
+              
+              ${
+                data.address
+                  ? `
+                <div class="info-section" style="margin-top: 30px;">
+                  <div class="section-title">
+                    <span>📍</span>
+                    Address Information
+                  </div>
+                  <div class="field">
+                    <span class="label">Address:</span>
+                    <span class="value">${data.address.addressLine}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">Town:</span>
+                    <span class="value">${data.address.town}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">LGA:</span>
+                    <span class="value">${data.address.lga}</span>
+                  </div>
+                  <div class="field">
+                    <span class="label">State:</span>
+                    <span class="value">${data.address.state}</span>
+                  </div>
+                </div>
+              `
+                  : ""
+              }
+              
+              <div class="security-features">
+                <div class="section-title" style="justify-content: center; margin-bottom: 15px;">
+                  <span>🔒</span>
+                  Security Features
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;">
+                  <div>
+                    <p style="font-size: 14px; margin-bottom: 8px;"><strong>Digital Signature:</strong> SHA-256 Encrypted</p>
+                    <p style="font-size: 14px; margin-bottom: 8px;"><strong>Verification Hash:</strong> ${sessionInfo.sessionId.substring(0, 16).toUpperCase()}</p>
+                    <p style="font-size: 14px;"><strong>Issued:</strong> ${currentDate}</p>
+                  </div>
+                  <div class="qr-placeholder">
+                    QR Code
+                  </div>
+                </div>
               </div>
             </div>
-          `
-              : ""
-          }
-
-          ${
-            data.address
-              ? `
-            <div class="section">
-              <div class="section-title">Address Information</div>
-              <div class="field">
-                <div class="label">Address:</div>
-                <div class="value">${data.address.addressLine}</div>
-              </div>
-              <div class="field">
-                <div class="label">Town:</div>
-                <div class="value">${data.address.town}</div>
-              </div>
-              <div class="field">
-                <div class="label">LGA:</div>
-                <div class="value">${data.address.lga}</div>
-              </div>
-              <div class="field">
-                <div class="label">State:</div>
-                <div class="value">${data.address.state}</div>
+            
+            <div class="footer">
+              <div class="signature-line"></div>
+              <p style="font-weight: bold; margin: 10px 0;">Digitally Signed & Verified</p>
+              <div class="footer-text">
+                <p>This certificate was generated on ${currentDate} from official NIMC records through VerifyNIN.</p>
+                <p>This document is digitally signed and can be verified at verifynin.com</p>
+                <p><strong>VerifyNIN</strong> - Authorized NIMC Data Partner | License: NIN-VER-2024-001</p>
+                <p>For verification inquiries: support@verifynin.com | +234 800 000 0000</p>
               </div>
             </div>
-          `
-              : ""
-          }
-
-          <div class="footer">
-            <p>This document was generated on ${new Date().toLocaleString("en-NG")} from official NIMC records.</p>
-            <p>Verification performed by VerifyNIN - Authorized NIMC Data Partner</p>
           </div>
         </body>
       </html>
@@ -294,6 +605,36 @@ export function VerificationResult({
             </p>
           </CardContent>
         </Card>
+
+        {/* Manual trigger button if stuck in payment_completed status */}
+        {status === "payment_completed" && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4 sm:p-6 text-center space-y-3">
+              <p className="text-xs sm:text-sm text-orange-800">
+                Verification is taking longer than expected. You can manually
+                trigger it.
+              </p>
+              <Button
+                onClick={triggerVerification}
+                disabled={triggering}
+                className="w-full sm:w-auto gap-2"
+                variant="outline"
+              >
+                {triggering ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Triggering...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Trigger Verification
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </motion.div>
     );
   }

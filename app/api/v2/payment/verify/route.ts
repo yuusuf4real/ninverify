@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SessionManager } from "@/lib/session-manager";
+import { VerificationService } from "@/lib/verification-service";
 import { logger } from "@/lib/security/secure-logger";
 
 export async function POST(request: NextRequest) {
@@ -79,13 +80,33 @@ export async function POST(request: NextRequest) {
       "completed",
     );
 
-    return NextResponse.json({
-      success: true,
-      status: "completed",
-      amount: data.amount,
-      reference: paymentReference,
-      message: "Payment verified successfully. Processing verification...",
-    });
+    // Trigger NIN verification process
+    try {
+      // Start verification in background (don't await to avoid timeout)
+      VerificationService.processVerification(session.sessionId).catch(
+        (error) => {
+          logger.error("Background verification failed:", error);
+        },
+      );
+
+      return NextResponse.json({
+        success: true,
+        status: "completed",
+        amount: data.amount,
+        reference: paymentReference,
+        message: "Payment verified successfully. Processing verification...",
+      });
+    } catch (verificationError) {
+      logger.error("Verification initiation failed:", verificationError);
+
+      return NextResponse.json({
+        success: true,
+        status: "completed",
+        amount: data.amount,
+        reference: paymentReference,
+        message: "Payment successful. Verification will be processed shortly.",
+      });
+    }
   } catch (error) {
     logger.error("Payment verification error:", error);
     return NextResponse.json(

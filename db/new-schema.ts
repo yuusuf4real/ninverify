@@ -31,6 +31,7 @@ export const sessionStatus = pgEnum("session_status", [
   "nin_entered",
   "payment_pending",
   "payment_completed",
+  "verification_in_progress",
   "verification_completed",
   "expired",
   "failed",
@@ -83,6 +84,7 @@ export const verificationSessions = pgTable(
 
     // NIN & Data Selection
     ninMasked: text("nin_masked"), // masked NIN for audit
+    encryptedNin: text("encrypted_nin"), // temporarily encrypted actual NIN for verification
     dataLayerSelected: dataLayer("data_layer_selected"),
 
     // Payment
