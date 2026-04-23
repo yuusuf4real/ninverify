@@ -87,6 +87,8 @@ export function DataLayerSelector({
   const [nin, setNin] = useState("");
   const [selectedLayer, setSelectedLayer] = useState<DataLayer | null>(null);
   const [loading, setLoading] = useState(false);
+  const [validatingNin, setValidatingNin] = useState(false);
+  const [ninValidated, setNinValidated] = useState(false);
   const [error, setError] = useState("");
 
   // Format NIN input
@@ -101,11 +103,68 @@ export function DataLayerSelector({
       },
     );
     setNin(formatted);
+
+    // Reset validation state when NIN changes
+    if (ninValidated) {
+      setNinValidated(false);
+    }
+    setError("");
+  };
+
+  // Validate NIN before allowing payment
+  const validateNin = async () => {
+    const cleanNin = nin.replace(/\s/g, "");
+
+    if (cleanNin.length !== 11) {
+      setError("Please enter a valid 11-digit NIN");
+      return;
+    }
+
+    try {
+      setValidatingNin(true);
+      setError("");
+
+      const response = await fetch("/api/v2/nin/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nin: cleanNin }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError(
+            "This NIN does not exist in the NIMC database. Please verify your NIN and try again.",
+          );
+        } else {
+          setError(data.error || "Unable to validate NIN. Please try again.");
+        }
+        return;
+      }
+
+      if (data.exists) {
+        setNinValidated(true);
+        setError("");
+      } else {
+        setError(
+          "This NIN does not exist in the NIMC database. Please verify your NIN and try again.",
+        );
+      }
+    } catch (err) {
+      setError(
+        "Network error during NIN validation. Please check your connection and try again.",
+      );
+    } finally {
+      setValidatingNin(false);
+    }
   };
 
   const handleSubmit = async () => {
-    if (!selectedLayer || nin.replace(/\s/g, "").length !== 11) {
-      setError("Please enter a valid 11-digit NIN and select a data layer");
+    if (!selectedLayer || !ninValidated) {
+      setError("Please validate your NIN and select a data layer");
       return;
     }
 
@@ -148,7 +207,7 @@ export function DataLayerSelector({
 
   const normalizedNin = nin.replace(/\s/g, "");
   const isNinValid = normalizedNin.length === 11;
-  const canSubmit = isNinValid && selectedLayer && !loading;
+  const canSubmit = ninValidated && selectedLayer && !loading;
 
   return (
     <motion.div
@@ -188,23 +247,70 @@ export function DataLayerSelector({
                 onChange={(e) => handleNinChange(e.target.value)}
                 placeholder="123 4567 8901"
                 maxLength={13}
-                className="h-12 sm:h-14 text-base sm:text-lg tracking-wider text-center touch-manipulation"
-                disabled={loading}
+                className={`h-12 sm:h-14 text-base sm:text-lg tracking-wider text-center touch-manipulation ${
+                  ninValidated ? "border-emerald-500 bg-emerald-50" : ""
+                }`}
+                disabled={loading || validatingNin}
               />
-              <div className="flex items-center justify-between text-xs mt-2">
-                <span
-                  className={
-                    isNinValid
-                      ? "text-emerald-600 font-medium"
-                      : "text-muted-foreground"
-                  }
-                >
-                  {normalizedNin.length}/11 digits
-                </span>
-                {isNinValid && (
-                  <div className="flex items-center gap-1 text-emerald-600">
-                    <Check className="h-3 w-3" />
-                    <span className="font-medium">Valid format</span>
+
+              {/* NIN Status and Validation */}
+              <div className="space-y-3 mt-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span
+                    className={
+                      isNinValid
+                        ? "text-emerald-600 font-medium"
+                        : "text-muted-foreground"
+                    }
+                  >
+                    {normalizedNin.length}/11 digits
+                  </span>
+                  {isNinValid && !ninValidated && (
+                    <div className="flex items-center gap-1 text-emerald-600">
+                      <Check className="h-3 w-3" />
+                      <span className="font-medium">Valid format</span>
+                    </div>
+                  )}
+                  {ninValidated && (
+                    <div className="flex items-center gap-1 text-emerald-600">
+                      <Check className="h-3 w-3" />
+                      <span className="font-medium">NIN verified</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Validation Button */}
+                {isNinValid && !ninValidated && (
+                  <Button
+                    onClick={validateNin}
+                    disabled={validatingNin}
+                    className="w-full h-10 touch-manipulation"
+                    variant="outline"
+                  >
+                    {validatingNin ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
+                        Validating NIN...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Validate NIN
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {/* Validation Success Message */}
+                {ninValidated && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-emerald-700">
+                      <Check className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        NIN verified successfully! This NIN exists in the NIMC
+                        database.
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

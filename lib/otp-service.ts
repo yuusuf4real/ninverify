@@ -17,38 +17,94 @@ class TermiiProvider implements OTPProvider {
   constructor() {
     this.apiKey = process.env.TERMII_API_KEY || "";
     // Use "N-Alert" as default - it's a pre-approved generic sender ID in Termii
+    // Custom sender IDs like "VerifyNIN" need to be registered first
     this.senderId = process.env.TERMII_SENDER_ID || "N-Alert";
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<boolean> {
     try {
+      // Validate API key
+      if (!this.apiKey) {
+        logger.error("Termii API key not configured");
+        return false;
+      }
+
+      const payload = {
+        to: phoneNumber,
+        from: this.senderId,
+        sms: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
+        type: "plain",
+        api_key: this.apiKey,
+        channel: "dnd", // Use DND route for OTP messages (transactional)
+      };
+
+      logger.info("Sending OTP via Termii", {
+        to: phoneNumber.substring(0, 8) + "***", // Masked phone number
+        from: this.senderId,
+        channel: "dnd",
+      });
+
       const response = await fetch("https://api.ng.termii.com/api/sms/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          to: phoneNumber,
-          from: this.senderId,
-          sms: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
-          type: "plain",
-          api_key: this.apiKey,
-          channel: "dnd",
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
 
+      logger.info("Termii API response", {
+        status: response.status,
+        success: response.ok,
+        messageId: result.message_id,
+        code: result.code,
+        message: result.message,
+      });
+
       if (!response.ok) {
         logger.error("Termii API error", {
           status: response.status,
+          statusText: response.statusText,
           body: result,
+          payload: { ...payload, api_key: "[REDACTED]" },
+        });
+
+        // Handle specific Termii error cases
+        if (result.message?.includes("Sender ID")) {
+          logger.error("Sender ID issue - may need registration", {
+            senderId: this.senderId,
+            suggestion: "Try using 'N-Alert' or register custom sender ID",
+          });
+        }
+
+        if (result.message?.includes("DND")) {
+          logger.error("DND route not activated", {
+            suggestion:
+              "Contact Termii support to activate DND route for transactional messages",
+          });
+        }
+
+        return false;
+      }
+
+      // Check if message was successfully queued
+      const success =
+        result.message_id && (result.code === "ok" || response.status === 200);
+
+      if (!success) {
+        logger.error("Termii message not queued", {
+          result,
+          expected: "message_id and code='ok'",
         });
       }
 
-      return response.ok && result.message_id;
+      return success;
     } catch (error) {
-      logger.error("Termii SMS error:", error);
+      logger.error("Termii SMS network error", {
+        error: error instanceof Error ? error.message : String(error),
+        phoneNumber: phoneNumber.substring(0, 8) + "***",
+      });
       return false;
     }
   }
