@@ -23,6 +23,8 @@
     "db:migrate": "drizzle-kit migrate",
     "admin:create": "tsx scripts/create-super-admin.ts",
     "test:twilio-otp": "tsx scripts/test-twilio-otp.ts",
+    "test:free-sms": "tsx scripts/test-free-sms-providers.ts",
+    "test:termii-dnd": "tsx scripts/test-termii-dnd-route.ts",
     "setup:twilio": "tsx scripts/setup-twilio.ts",
     "security:audit": "npm audit --audit-level=moderate",
     "security:scan": "npm run lint:security && npm run test:security",

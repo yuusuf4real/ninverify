@@ -9,16 +9,162 @@ export interface OTPProvider {
   sendOTP(phoneNumber: string, code: string): Promise<boolean>;
 }
 
-// Termii SMS Provider (Nigerian)
-class TermiiProvider implements OTPProvider {
+// TextBelt Provider (Completely Free - 1 SMS per day per IP)
+class TextBeltProvider implements OTPProvider {
   private apiKey: string;
+
+  constructor() {
+    // Use "textbelt" for free tier (1 SMS/day) or your paid key
+    this.apiKey = process.env.TEXTBELT_API_KEY || "textbelt";
+  }
+
+  async sendOTP(phoneNumber: string, code: string): Promise<boolean> {
+    try {
+      logger.info("Sending OTP via TextBelt", {
+        to: phoneNumber.substring(0, 8) + "***",
+        apiKey: this.apiKey === "textbelt" ? "free-tier" : "paid-key",
+      });
+
+      const response = await fetch("https://textbelt.com/text", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          message: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
+          key: this.apiKey,
+        }),
+      });
+
+      const result = await response.json();
+
+      logger.info("TextBelt API response", {
+        success: result.success,
+        quotaRemaining: result.quotaRemaining,
+        textId: result.textId,
+        error: result.error,
+      });
+
+      if (!response.ok || !result.success) {
+        logger.error("TextBelt API error", {
+          status: response.status,
+          error: result.error,
+          quotaRemaining: result.quotaRemaining,
+        });
+
+        // Handle specific TextBelt errors
+        if (result.error?.includes("Out of quota")) {
+          logger.error("TextBelt quota exceeded", {
+            suggestion: "Upgrade to paid plan or wait for quota reset",
+          });
+        }
+
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logger.error("TextBelt SMS network error", {
+        error: error instanceof Error ? error.message : String(error),
+        phoneNumber: phoneNumber.substring(0, 8) + "***",
+      });
+      return false;
+    }
+  }
+}
+
+// BulkSMS Nigeria Provider (50 Free SMS + Affordable Paid)
+class BulkSMSNigeriaProvider implements OTPProvider {
+  private apiToken: string;
   private senderId: string;
 
   constructor() {
+    this.apiToken = process.env.BULKSMS_NIGERIA_API_TOKEN || "";
+    this.senderId = process.env.BULKSMS_NIGERIA_SENDER_ID || "VerifyNIN";
+  }
+
+  async sendOTP(phoneNumber: string, code: string): Promise<boolean> {
+    try {
+      if (!this.apiToken) {
+        logger.error("BulkSMS Nigeria API token not configured");
+        return false;
+      }
+
+      logger.info("Sending OTP via BulkSMS Nigeria", {
+        to: phoneNumber.substring(0, 8) + "***",
+        sender: this.senderId,
+      });
+
+      const response = await fetch(
+        "https://www.bulksmsnigeria.com/api/v2/sms",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.apiToken}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            sender: this.senderId,
+            message: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
+            recipients: phoneNumber,
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      logger.info("BulkSMS Nigeria API response", {
+        status: response.status,
+        success: result.status === "success",
+        messageId: result.data?.message_id,
+        cost: result.data?.total_cost,
+        balance: result.data?.balance_after,
+      });
+
+      if (!response.ok || result.status !== "success") {
+        logger.error("BulkSMS Nigeria API error", {
+          status: response.status,
+          error: result.message,
+          errorCode: result.error_code,
+        });
+
+        // Handle specific BulkSMS errors
+        if (result.error_code === "INSUFFICIENT_CREDITS") {
+          logger.error("BulkSMS Nigeria insufficient credits", {
+            required: result.data?.required,
+            available: result.data?.available,
+            suggestion: "Top up your account balance",
+          });
+        }
+
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logger.error("BulkSMS Nigeria network error", {
+        error: error instanceof Error ? error.message : String(error),
+        phoneNumber: phoneNumber.substring(0, 8) + "***",
+      });
+      return false;
+    }
+  }
+}
+
+// Termii SMS Provider (Nigerian) - Enhanced for Production OTP
+class TermiiProvider implements OTPProvider {
+  private apiKey: string;
+  private senderId: string;
+  private baseUrl: string;
+
+  constructor() {
     this.apiKey = process.env.TERMII_API_KEY || "";
-    // Use "N-Alert" as default - it's a pre-approved generic sender ID in Termii
-    // Custom sender IDs like "VerifyNIN" need to be registered first
+    // Use "N-Alert" as default - it's pre-approved for DND route
+    // Custom sender IDs like "VerifyNIN" need to be registered and whitelisted for DND
     this.senderId = process.env.TERMII_SENDER_ID || "N-Alert";
+    this.baseUrl = process.env.TERMII_BASE_URL || "https://api.ng.termii.com";
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<boolean> {
@@ -35,16 +181,17 @@ class TermiiProvider implements OTPProvider {
         sms: `Your VerifyNIN verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
         type: "plain",
         api_key: this.apiKey,
-        channel: "dnd", // Use DND route for OTP messages (transactional)
+        channel: "dnd", // ✅ CRITICAL: Use DND route for OTP (bypasses DND restrictions)
       };
 
-      logger.info("Sending OTP via Termii", {
+      logger.info("Sending OTP via Termii DND route", {
         to: phoneNumber.substring(0, 8) + "***", // Masked phone number
         from: this.senderId,
-        channel: "dnd",
+        channel: "dnd", // Confirm DND route usage
+        baseUrl: this.baseUrl,
       });
 
-      const response = await fetch("https://api.ng.termii.com/api/sms/send", {
+      const response = await fetch(`${this.baseUrl}/api/sms/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,34 +201,71 @@ class TermiiProvider implements OTPProvider {
 
       const result = await response.json();
 
-      logger.info("Termii API response", {
+      logger.info("Termii DND API response", {
         status: response.status,
         success: response.ok,
         messageId: result.message_id,
         code: result.code,
         message: result.message,
+        balance: result.balance,
       });
 
       if (!response.ok) {
-        logger.error("Termii API error", {
+        logger.error("Termii DND API error", {
           status: response.status,
           statusText: response.statusText,
           body: result,
           payload: { ...payload, api_key: "[REDACTED]" },
         });
 
-        // Handle specific Termii error cases
-        if (result.message?.includes("Sender ID")) {
-          logger.error("Sender ID issue - may need registration", {
+        // Enhanced error handling for DND route issues
+        if (
+          result.message?.includes("DND route not activated") ||
+          result.message?.includes("dnd route") ||
+          result.message?.includes("transactional route")
+        ) {
+          logger.error("❌ DND route not activated on Termii account", {
             senderId: this.senderId,
-            suggestion: "Try using 'N-Alert' or register custom sender ID",
+            solution: "Contact Termii support to activate DND route",
+            supportEmail: "support@termii.com",
+            supportPhone: "+234 803 644 2972",
+            urgentAction:
+              "Email support@termii.com with DND activation request",
           });
         }
 
-        if (result.message?.includes("DND")) {
-          logger.error("DND route not activated", {
+        if (
+          result.message?.includes("Sender ID") ||
+          result.message?.includes("sender not whitelisted")
+        ) {
+          logger.error("❌ Sender ID not whitelisted for DND route", {
+            senderId: this.senderId,
             suggestion:
-              "Contact Termii support to activate DND route for transactional messages",
+              "Use 'N-Alert' (pre-approved) or request sender ID whitelisting",
+            supportEmail: "support@termii.com",
+            preApprovedSender: "N-Alert",
+          });
+        }
+
+        if (
+          result.message?.includes("insufficient") ||
+          result.message?.includes("balance")
+        ) {
+          logger.error("❌ Insufficient Termii account balance", {
+            currentBalance: result.balance,
+            suggestion: "Top up your Termii account balance",
+            dashboardUrl: "https://accounts.termii.com",
+          });
+        }
+
+        if (
+          result.message?.includes("invalid number") ||
+          result.message?.includes("phone number")
+        ) {
+          logger.error("❌ Invalid phone number format", {
+            phoneNumber: phoneNumber.substring(0, 8) + "***",
+            expectedFormat: "+234XXXXXXXXXX",
+            suggestion: "Ensure phone number is in international format",
           });
         }
 
@@ -89,21 +273,31 @@ class TermiiProvider implements OTPProvider {
       }
 
       // Check if message was successfully queued
-      const success =
-        result.message_id && (result.code === "ok" || response.status === 200);
+      const success = result.code === "ok" && result.message_id;
 
       if (!success) {
-        logger.error("Termii message not queued", {
+        logger.error("Termii DND message not queued", {
           result,
-          expected: "message_id and code='ok'",
+          expected: "code='ok' and message_id present",
+          troubleshooting:
+            "Check DND route activation and sender ID whitelisting",
+        });
+      } else {
+        logger.info("✅ Termii DND OTP sent successfully", {
+          messageId: result.message_id,
+          balance: result.balance,
+          phoneNumber: phoneNumber.substring(0, 8) + "***",
+          route: "DND (transactional)",
         });
       }
 
       return success;
     } catch (error) {
-      logger.error("Termii SMS network error", {
+      logger.error("Termii DND SMS network error", {
         error: error instanceof Error ? error.message : String(error),
         phoneNumber: phoneNumber.substring(0, 8) + "***",
+        baseUrl: this.baseUrl,
+        suggestion: "Check network connectivity and API endpoint",
       });
       return false;
     }
@@ -182,7 +376,8 @@ class TwilioProvider implements OTPProvider {
         if (result.error_code === 21211) {
           logger.error("Invalid Twilio phone number", {
             fromNumber: this.fromNumber,
-            suggestion: "Verify your Twilio phone number is correct and verified",
+            suggestion:
+              "Verify your Twilio phone number is correct and verified",
           });
         }
 
@@ -203,8 +398,9 @@ class TwilioProvider implements OTPProvider {
       }
 
       // Check if message was successfully queued/sent
-      const success = result.sid && (result.status === "queued" || result.status === "sent");
-      
+      const success =
+        result.sid && (result.status === "queued" || result.status === "sent");
+
       if (!success) {
         logger.error("Twilio message not queued", {
           result,
@@ -224,35 +420,89 @@ class TwilioProvider implements OTPProvider {
 }
 
 export class OTPService {
-  private provider: OTPProvider;
-  private fallbackProvider: OTPProvider | null = null;
+  private providers: OTPProvider[] = [];
   private static OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
   private static MAX_ATTEMPTS = 3;
   private isDevelopment = process.env.NODE_ENV === "development";
 
   constructor() {
-    const primaryProvider = process.env.OTP_PROVIDER || "termii";
-    
-    // Set primary provider
-    if (primaryProvider === "twilio") {
-      this.provider = new TwilioProvider();
-      // Set Termii as fallback if configured
-      if (process.env.TERMII_API_KEY) {
-        this.fallbackProvider = new TermiiProvider();
-      }
-    } else {
-      this.provider = new TermiiProvider();
-      // Set Twilio as fallback if configured
-      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-        this.fallbackProvider = new TwilioProvider();
+    // Initialize all available providers based on configuration
+    this.initializeProviders();
+
+    logger.info("OTP Service initialized", {
+      totalProviders: this.providers.length,
+      isDevelopment: this.isDevelopment,
+      availableProviders: this.getAvailableProviderNames(),
+    });
+  }
+
+  private initializeProviders() {
+    const providerPriority =
+      process.env.OTP_PROVIDER_PRIORITY || "textbelt,bulksms,twilio,termii";
+    const priorities = providerPriority.split(",").map((p) => p.trim());
+
+    // Initialize providers in priority order
+    for (const providerName of priorities) {
+      try {
+        switch (providerName.toLowerCase()) {
+          case "textbelt":
+            // TextBelt: Free tier (1 SMS/day) - highest priority for cost
+            this.providers.push(new TextBeltProvider());
+            break;
+
+          case "bulksms":
+          case "bulksms-nigeria":
+            // BulkSMS Nigeria: 50 free SMS + affordable paid
+            if (process.env.BULKSMS_NIGERIA_API_TOKEN) {
+              this.providers.push(new BulkSMSNigeriaProvider());
+            }
+            break;
+
+          case "twilio":
+            // Twilio: $15 free credit + reliable paid
+            if (
+              process.env.TWILIO_ACCOUNT_SID &&
+              process.env.TWILIO_AUTH_TOKEN
+            ) {
+              this.providers.push(new TwilioProvider());
+            }
+            break;
+
+          case "termii":
+            // Termii: Nigerian provider (requires DND route activation)
+            if (process.env.TERMII_API_KEY) {
+              this.providers.push(new TermiiProvider());
+            }
+            break;
+        }
+      } catch (error) {
+        logger.warn(`Failed to initialize ${providerName} provider`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
-    logger.info("OTP Service initialized", {
-      primaryProvider,
-      hasFallback: !!this.fallbackProvider,
-      isDevelopment: this.isDevelopment
-    });
+    // Fallback: If no providers configured, add TextBelt (always available)
+    if (this.providers.length === 0) {
+      logger.warn("No SMS providers configured, using TextBelt free tier");
+      this.providers.push(new TextBeltProvider());
+    }
+  }
+
+  private getAvailableProviderNames(): string[] {
+    const names: string[] = [];
+
+    // Check which providers are available
+    if (this.providers.some((p) => p instanceof TextBeltProvider))
+      names.push("TextBelt");
+    if (this.providers.some((p) => p instanceof BulkSMSNigeriaProvider))
+      names.push("BulkSMS-Nigeria");
+    if (this.providers.some((p) => p instanceof TwilioProvider))
+      names.push("Twilio");
+    if (this.providers.some((p) => p instanceof TermiiProvider))
+      names.push("Termii");
+
+    return names;
   }
 
   /**
@@ -320,20 +570,41 @@ export class OTPService {
         return { success: true, sessionId };
       }
 
-      // Send OTP via provider in production
-      let sent = await this.provider.sendOTP(normalizedPhone, otpCode);
+      // Send OTP via providers in production (try all providers until success)
+      let sent = false;
+      let lastError = "";
 
-      // Try fallback provider if primary fails and fallback is available
-      if (!sent && this.fallbackProvider) {
-        logger.info("Primary OTP provider failed, trying fallback", {
-          phoneNumber: normalizedPhone.substring(0, 8) + "***"
-        });
-        
-        sent = await this.fallbackProvider.sendOTP(normalizedPhone, otpCode);
-        
-        if (sent) {
-          logger.info("Fallback OTP provider succeeded", {
-            phoneNumber: normalizedPhone.substring(0, 8) + "***"
+      for (let i = 0; i < this.providers.length && !sent; i++) {
+        const provider = this.providers[i];
+        const providerName = provider.constructor.name;
+
+        try {
+          logger.info(`Attempting OTP via ${providerName}`, {
+            phoneNumber: normalizedPhone.substring(0, 8) + "***",
+            attempt: i + 1,
+            totalProviders: this.providers.length,
+          });
+
+          sent = await provider.sendOTP(normalizedPhone, otpCode);
+
+          if (sent) {
+            logger.info(`OTP sent successfully via ${providerName}`, {
+              phoneNumber: normalizedPhone.substring(0, 8) + "***",
+              providerUsed: providerName,
+              attemptNumber: i + 1,
+            });
+            break;
+          } else {
+            logger.warn(`${providerName} failed, trying next provider`, {
+              phoneNumber: normalizedPhone.substring(0, 8) + "***",
+              remainingProviders: this.providers.length - i - 1,
+            });
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : String(error);
+          logger.error(`${providerName} threw error`, {
+            error: lastError,
+            phoneNumber: normalizedPhone.substring(0, 8) + "***",
           });
         }
       }
@@ -345,9 +616,16 @@ export class OTPService {
           .set({ status: "failed" })
           .where(eq(otpSessions.id, sessionId));
 
-        const errorMessage = this.fallbackProvider 
-          ? "Failed to send OTP via both primary and backup providers. Please try again."
-          : "Failed to send OTP. Please try again.";
+        const errorMessage =
+          this.providers.length > 1
+            ? `Failed to send OTP via all ${this.providers.length} providers. Please try again.`
+            : "Failed to send OTP. Please try again.";
+
+        logger.error("All OTP providers failed", {
+          phoneNumber: normalizedPhone.substring(0, 8) + "***",
+          totalProviders: this.providers.length,
+          lastError,
+        });
 
         return {
           success: false,
@@ -495,11 +773,39 @@ export class OTPService {
         })
         .where(eq(otpSessions.id, sessionId));
 
-      // Send new OTP
-      const sent = await this.provider.sendOTP(session.phoneNumber, otpCode);
+      // Send new OTP using multi-provider system
+      let sent = false;
+
+      for (let i = 0; i < this.providers.length && !sent; i++) {
+        const provider = this.providers[i];
+        const providerName = provider.constructor.name;
+
+        try {
+          logger.info(`Resending OTP via ${providerName}`, {
+            phoneNumber: session.phoneNumber.substring(0, 8) + "***",
+            attempt: i + 1,
+          });
+
+          sent = await provider.sendOTP(session.phoneNumber, otpCode);
+
+          if (sent) {
+            logger.info(`OTP resent successfully via ${providerName}`, {
+              phoneNumber: session.phoneNumber.substring(0, 8) + "***",
+            });
+            break;
+          }
+        } catch (error) {
+          logger.error(`${providerName} failed during resend`, {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
 
       if (!sent) {
-        return { success: false, error: "Failed to send OTP" };
+        return {
+          success: false,
+          error: "Failed to resend OTP via all providers",
+        };
       }
 
       return { success: true };
