@@ -20,9 +20,20 @@ const nextConfig = {
   headers: async () => {
     const isDev = process.env.NODE_ENV === "development";
 
-    // Skip CSP in development to avoid blocking API calls
+    // In development, use more permissive CSP to avoid blocking legitimate scripts
     if (isDev) {
-      return [];
+      return [
+        {
+          source: "/:path*",
+          headers: [
+            {
+              key: "Content-Security-Policy",
+              value:
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https:;",
+            },
+          ],
+        },
+      ];
     }
 
     // Comprehensive Paystack domains and required sources
@@ -44,8 +55,17 @@ const nextConfig = {
       "https://applepay.cdn-apple.com/jsapi/v1.1.0/apple-pay-sdk.js",
       "https://www.googletagmanager.com/debug/",
       "https://www.google-analytics.com",
-      "'unsafe-inline'",
-      ...(isDev ? ["'unsafe-eval'"] : []),
+      "'unsafe-inline'", // Allow inline scripts for flexibility
+      "'unsafe-eval'", // Allow eval for dynamic scripts
+      // Required hashes for specific inline scripts
+      "'sha256-wT8A7+MN/p4Bz/w+R+COOHf9HZ+xYskWOIu/JDwIvkg='",
+      "'sha384-QQMs28J0n8Mw4Q1CHlPa/iPNoI8cHTH141eSbWme69K7V+4TvvHzfFm+PuE4JpxF'",
+      "'sha384-kYN1NbScnNOnyvDqahb4am4uYrSJh/+eDDN9ipiMT/Xx6ivmTHrN4Eh1JD6JZ2Ek'",
+      // Allow browser extension scripts (common sources)
+      "chrome-extension:",
+      "moz-extension:",
+      "safari-extension:",
+      "ms-browser-extension:",
     ].join(" ");
 
     const connectSrc = [
