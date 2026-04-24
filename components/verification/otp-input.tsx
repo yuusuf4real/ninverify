@@ -42,13 +42,31 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
       setResending(true);
       setError("");
 
-      const response = await fetch("/api/v2/otp/send", {
+      console.log("🔍 DEBUG: Starting OTP request");
+      console.log("🔍 DEBUG: Phone number:", phoneNumber);
+      console.log("🔍 DEBUG: Request URL:", "/api/v2/otp/send");
+
+      // Try with absolute URL first
+      const baseUrl = window.location.origin;
+      const fullUrl = `${baseUrl}/api/v2/otp/send`;
+
+      console.log("🔍 DEBUG: Full URL:", fullUrl);
+
+      const response = await fetch(fullUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({ phoneNumber }),
+        credentials: "same-origin", // Include cookies
       });
 
+      console.log("🔍 DEBUG: Response status:", response.status);
+      console.log("🔍 DEBUG: Response ok:", response.ok);
+
       const data = await response.json();
+      console.log("🔍 DEBUG: Response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to send OTP");
@@ -56,8 +74,27 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
 
       setSessionId(data.sessionId);
       setTimeLeft(600); // Reset timer
+      console.log(
+        "🔍 DEBUG: OTP sent successfully, sessionId:",
+        data.sessionId,
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send OTP");
+      console.error("🔍 DEBUG: OTP send error:", err);
+      if (err instanceof Error) {
+        console.error("🔍 DEBUG: Error type:", err.constructor.name);
+        console.error("🔍 DEBUG: Error message:", err.message);
+      }
+
+      // Show more helpful error message
+      let errorMessage = "Failed to send OTP";
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        errorMessage =
+          "Network connection error. Please check your internet connection and try again.";
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setResending(false);
     }

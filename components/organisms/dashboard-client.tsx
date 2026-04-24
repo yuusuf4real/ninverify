@@ -52,7 +52,6 @@ export function DashboardClient() {
     status: "success" | "error" | "info";
     message: string;
     verificationId?: string;
-    requiresVNin?: boolean;
   } | null>(null);
 
   const loadBalance = async () => {

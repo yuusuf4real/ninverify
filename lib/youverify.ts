@@ -65,7 +65,6 @@ export type YouVerifyNinResponse = {
     mobileIntFormat?: string;
     gender?: string;
     image?: string;
-    vNIN?: string;
     idNumber?: string;
     type?: string;
     address?: {
