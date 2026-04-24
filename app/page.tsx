@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { HeroSection } from "@/components/sections/hero-section";
 import { HowItWorksSection } from "@/components/sections/how-it-works";
 import { FooterSection } from "@/components/sections/footer-section";
@@ -20,7 +20,18 @@ export default function HomePage() {
   if (showVerification) {
     return (
       <main className="relative">
-        <VerificationFlow onComplete={handleBackToHome} />
+        <Suspense
+          fallback={
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              </div>
+            </div>
+          }
+        >
+          <VerificationFlow onComplete={handleBackToHome} />
+        </Suspense>
       </main>
     );
   }

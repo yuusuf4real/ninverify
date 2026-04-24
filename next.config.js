@@ -91,7 +91,7 @@ const nextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src ${scriptSrc}; script-src-elem ${scriptSrc}; style-src ${styleSrc}; style-src-elem ${styleSrc}; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${connectSrc}; frame-src ${paystackDomains.join(" ")}; object-src 'none'; base-uri 'self'; form-action 'self';`,
+            value: `default-src 'self'; script-src ${scriptSrc}; style-src ${styleSrc}; style-src-elem ${styleSrc}; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${connectSrc}; frame-src ${paystackDomains.join(" ")}; object-src 'none'; base-uri 'self'; form-action 'self';`,
           },
           {
             key: "Referrer-Policy",
