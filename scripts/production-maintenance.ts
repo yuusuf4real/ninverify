@@ -8,7 +8,11 @@
  */
 
 import { db } from "@/db/client";
-import { adminAuditLogs, verificationSessions, otpSessions } from "@/db/new-schema";
+import {
+  adminAuditLogs,
+  verificationSessions,
+  otpSessions,
+} from "@/db/new-schema";
 import { lt, eq, and, sql } from "drizzle-orm";
 import { logger } from "@/lib/security/secure-logger";
 import { auditLogger } from "@/lib/security/enhanced-audit-logger";
@@ -424,11 +428,11 @@ class ProductionMaintenanceService {
       // Check if the application is responding
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch("http://localhost:3000/api/health", {
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (response.ok) {
@@ -497,7 +501,10 @@ class ProductionMaintenanceService {
     const recentSecurityEvents = await db.query.adminAuditLogs.findMany({
       where: and(
         eq(adminAuditLogs.action, "security_alert"),
-        lt(adminAuditLogs.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)),
+        lt(
+          adminAuditLogs.createdAt,
+          new Date(Date.now() - 24 * 60 * 60 * 1000),
+        ),
       ),
       limit: 10,
     });
@@ -836,7 +843,10 @@ class ProductionMaintenanceService {
   private async getSecurityStatus(): Promise<Record<string, any>> {
     const recentEvents = await db.query.adminAuditLogs.findMany({
       where: and(
-        lt(adminAuditLogs.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)),
+        lt(
+          adminAuditLogs.createdAt,
+          new Date(Date.now() - 24 * 60 * 60 * 1000),
+        ),
       ),
       limit: 100,
     });

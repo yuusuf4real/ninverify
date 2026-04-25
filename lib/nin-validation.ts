@@ -1,6 +1,6 @@
 /**
  * Basic NIN Format Validation Service
- * 
+ *
  * Simple client-side NIN format validation without pre-payment verification.
  * This maintains the original workflow where users can proceed to payment
  * with any properly formatted NIN.
