@@ -10,6 +10,10 @@ const nextConfig = {
     // your project has TypeScript errors.
     ignoreBuildErrors: true,
   },
+  // Disable experimental features that may cause streaming issues
+  experimental: {
+    ppr: false, // Disable Partial Prerendering
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
