@@ -1,5 +1,5 @@
 import "server-only";
-import { neon, NeonQueryFunction } from "@neondatabase/serverless";
+import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 import * as newSchema from "./new-schema";
@@ -9,25 +9,17 @@ const DATABASE_URL =
   process.env.DATABASE_URL ||
   "postgresql://placeholder:placeholder@localhost:5432/placeholder";
 
-// Configure Neon client with proper connection settings for Next.js 15
-// This prevents "Connection closed" errors in production
-let sqlClient: NeonQueryFunction<false, false> | null = null;
-
-function getSqlClient() {
-  if (!sqlClient) {
-    sqlClient = neon(DATABASE_URL, {
-      fetchOptions: {
-        cache: "no-store", // Disable caching to prevent stale connections
-      },
-      // Add connection timeout and retry settings
-      fullResults: false,
-    });
-  }
-  return sqlClient;
-}
+// Create SQL client with proper configuration for Next.js 15
+// Using neon-http adapter which is designed for serverless environments
+const sql = neon(DATABASE_URL, {
+  fetchOptions: {
+    cache: "no-store", // Prevent caching issues in Next.js 15
+  },
+  fullResults: false, // Optimize for performance
+});
 
 // Use both old and new schema for transition period
-export const db = drizzle(getSqlClient(), {
+export const db = drizzle(sql, {
   schema: { ...schema, ...newSchema },
 });
 
