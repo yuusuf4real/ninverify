@@ -24,6 +24,30 @@ const nextConfig = {
   headers: async () => {
     const isDev = process.env.NODE_ENV === "development";
 
+    /**
+     * Content Security Policy (CSP) Configuration
+     *
+     * IMPORTANT: We use 'unsafe-inline' WITHOUT hash values for Next.js 15 compatibility.
+     *
+     * Why no hashes?
+     * - When hashes are present alongside 'unsafe-inline', browsers IGNORE 'unsafe-inline'
+     * - Next.js 15 generates dynamic inline scripts with changing hashes
+     * - Static hashes in config don't match runtime scripts, causing CSP violations
+     *
+     * Options considered:
+     * 1. Nonce-based CSP: Most secure but forces ALL pages to dynamic rendering (performance impact)
+     * 2. Remove hashes: Allows 'unsafe-inline' to work, maintains static generation (CURRENT)
+     * 3. Experimental SRI: Unstable, webpack-only, not production-ready
+     *
+     * Current approach balances security and performance:
+     * - Still restricts external script sources to trusted domains
+     * - Allows Next.js framework scripts to execute
+     * - Maintains static generation and CDN caching
+     * - Can upgrade to nonce-based CSP in future if needed
+     *
+     * See: PRODUCTION_ERRORS_ANALYSIS.md for detailed analysis
+     */
+
     // In development, use more permissive CSP to avoid blocking legitimate scripts
     if (isDev) {
       return [
@@ -59,15 +83,8 @@ const nextConfig = {
       "https://applepay.cdn-apple.com/jsapi/v1.1.0/apple-pay-sdk.js",
       "https://www.googletagmanager.com/debug/",
       "https://www.google-analytics.com",
-      "'unsafe-inline'", // Allow inline scripts for flexibility
+      "'unsafe-inline'", // Allow inline scripts - required for Next.js 15 without nonce-based CSP
       "'unsafe-eval'", // Allow eval for dynamic scripts
-      // Required hashes for specific inline scripts
-      "'sha256-wT8A7+MN/p4Bz/w+R+COOHf9HZ+xYskWOIu/JDwIvkg='",
-      "'sha384-QQMs28J0n8Mw4Q1CHlPa/iPNoI8cHTH141eSbWme69K7V+4TvvHzfFm+PuE4JpxF'",
-      "'sha384-kYN1NbScnNOnyvDqahb4am4uYrSJh/+eDDN9ipiMT/Xx6ivmTHrN4Eh1JD6JZ2Ek'",
-      // Additional hashes suggested by browser
-      "'sha256-nxe+84Sc1onrukVrcAE8E6muNe9ck6wnJtjP16ywLjg='",
-      "'sha256-uPFcq4d4DccCX5vpbwhR8eQZeiQJayR2e0XPVCcyOJw='",
       // Allow browser extension scripts (common sources)
       "chrome-extension:",
       "moz-extension:",
