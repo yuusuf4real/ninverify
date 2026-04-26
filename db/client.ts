@@ -87,7 +87,10 @@ function getPool(): Pool {
   }
 
   // Allow build to succeed without DATABASE_URL
-  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("placeholder")) {
+  if (
+    !process.env.DATABASE_URL ||
+    process.env.DATABASE_URL.includes("placeholder")
+  ) {
     // Return a dummy pool that will fail if actually used
     // This allows the module to be imported during build
     return null as any;
