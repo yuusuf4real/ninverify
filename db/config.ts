@@ -51,8 +51,13 @@ export function getDatabaseConfig(): DatabaseConfig {
     process.env.DATABASE_URL ||
     "postgresql://placeholder:placeholder@localhost:5432/placeholder";
 
-  // Validate configuration
-  validateConfig(connectionString);
+  // Allow placeholder during build time
+  const isPlaceholder = connectionString.includes("placeholder");
+
+  // Only validate if not using placeholder
+  if (!isPlaceholder) {
+    validateConfig(connectionString);
+  }
 
   // Parse pool configuration with serverless-optimized defaults
   const pool: PoolConfig = {
@@ -87,7 +92,7 @@ export function getDatabaseConfig(): DatabaseConfig {
   // Detect provider (can be overridden)
   const provider =
     (process.env.DB_PROVIDER as ProviderType) ||
-    detectProvider(connectionString);
+    (isPlaceholder ? "local" : detectProvider(connectionString));
 
   return {
     connectionString,
@@ -101,7 +106,7 @@ export function getDatabaseConfig(): DatabaseConfig {
  * Validate database configuration
  */
 function validateConfig(connectionString: string): void {
-  if (!connectionString || connectionString.includes("placeholder")) {
+  if (!connectionString) {
     throw new DatabaseConfigError(
       "DATABASE_URL environment variable is required and must be a valid PostgreSQL connection string",
     );

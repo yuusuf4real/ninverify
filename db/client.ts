@@ -259,9 +259,24 @@ export function ensureDatabaseConfigured(): void {
   }
 }
 
-// Create Drizzle instance with both schemas
-export const db = drizzle(getPool(), {
-  schema: { ...schema, ...newSchema },
+// Create Drizzle instance with lazy pool initialization
+// The pool is only created when the first query is executed
+let drizzleInstance: ReturnType<typeof drizzle> | null = null;
+
+function getDrizzleInstance() {
+  if (!drizzleInstance) {
+    drizzleInstance = drizzle(getPool(), {
+      schema: { ...schema, ...newSchema },
+    });
+  }
+  return drizzleInstance;
+}
+
+// Export a proxy that lazily initializes the connection
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(target, prop) {
+    return getDrizzleInstance()[prop as keyof ReturnType<typeof drizzle>];
+  },
 });
 
 // Register shutdown handlers
