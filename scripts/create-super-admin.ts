@@ -1,5 +1,5 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
@@ -29,8 +29,8 @@ if (!FIRST_SUPER_ADMIN_PASSWORD) {
   process.exit(1);
 }
 
-const sql = neon(DATABASE_URL);
-const db = drizzle(sql, { schema });
+const pool = new Pool({ connectionString: DATABASE_URL });
+const db = drizzle(pool, { schema });
 
 async function createSuperAdmin() {
   try {
@@ -98,11 +98,13 @@ async function createSuperAdmin() {
 
 // Run the script
 createSuperAdmin()
-  .then(() => {
+  .then(async () => {
     console.log("\n✅ Script completed successfully");
+    await pool.end();
     process.exit(0);
   })
-  .catch((error) => {
+  .catch(async (error) => {
     console.error("\n❌ Script failed:", error);
+    await pool.end();
     process.exit(1);
   });

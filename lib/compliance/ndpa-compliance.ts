@@ -7,7 +7,7 @@
 
 import { db } from "@/db/client";
 import { adminAuditLogs, verificationSessions } from "@/db/new-schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { logger } from "@/lib/security/secure-logger";
 import { nanoid } from "nanoid";
 
@@ -146,12 +146,9 @@ export class NDPAComplianceService {
       });
 
       // Get audit logs for this phone number
+      const maskedPhone = phoneNumber.substring(0, 8) + "***";
       const auditEntries = await db.query.adminAuditLogs.findMany({
-        where: and(
-          eq(adminAuditLogs.details, {
-            phoneNumber: phoneNumber.substring(0, 8) + "***",
-          }),
-        ),
+        where: sql`${adminAuditLogs.details}::text LIKE ${`%${maskedPhone}%`}`,
         orderBy: (logs, { desc }) => [desc(logs.createdAt)],
         limit: 100,
       });
@@ -162,7 +159,7 @@ export class NDPAComplianceService {
           sessionId: session.id,
           status: session.status,
           createdAt: session.createdAt,
-          dataLayer: session.dataLayer,
+          dataLayerSelected: session.dataLayerSelected,
           // NIN is encrypted, don't include in access request
           hasNIN: !!session.encryptedNin,
         })),
@@ -235,7 +232,7 @@ export class NDPAComplianceService {
         ),
       });
 
-      if (recentSessions.some((s) => s.status === "completed")) {
+      if (recentSessions.some((s) => s.status === "verification_completed")) {
         // Cannot delete recent completed verifications due to legal obligations
         await this.logDataSubjectRequest({
           requestId: nanoid(),
