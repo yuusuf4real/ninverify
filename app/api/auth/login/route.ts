@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     request.headers.get("x-forwarded-for") ||
     request.headers.get("x-real-ip") ||
     "unknown";
+  const userAgent = request.headers.get("user-agent") || undefined;
 
   // Apply rate limiting
   const rateLimitResult = rateLimitMiddleware(
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
         timestamp: new Date().toISOString(),
         eventType: "user.login",
         ipAddress: ip,
-        userAgent: request.headers.get("user-agent") || undefined,
+        userAgent: userAgent,
         resource: "user",
         action: "login",
         status: "failure",
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
         eventType: "user.login",
         userId: user.id,
         ipAddress: ip,
-        userAgent: request.headers.get("user-agent") || undefined,
+        userAgent: userAgent,
         resource: "user",
         action: "login",
         status: "failure",
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
         eventType: "security.unauthorized_admin_access",
         userId: user.id,
         ipAddress: ip,
-        userAgent: request.headers.get("user-agent") || undefined,
+        userAgent: userAgent,
         resource: "admin_portal",
         action: "login_attempt",
         status: "blocked",
@@ -144,7 +145,7 @@ export async function POST(request: Request) {
         eventType: "security.admin_user_portal_access",
         userId: user.id,
         ipAddress: ip,
-        userAgent: request.headers.get("user-agent") || undefined,
+        userAgent: userAgent,
         resource: "user_portal",
         action: "login_attempt",
         status: "blocked",
@@ -165,7 +166,7 @@ export async function POST(request: Request) {
       userId: user.id,
       email: user.email,
       fullName: user.fullName,
-      role: user.role,
+      role: user.role as "admin" | "super_admin" | "user",
     });
 
     // Log successful login
@@ -174,7 +175,7 @@ export async function POST(request: Request) {
       eventType: "user.login",
       userId: user.id,
       ipAddress: ip,
-      userAgent: request.headers.get("user-agent") || undefined,
+      userAgent: userAgent,
       resource: "user",
       action: "login",
       status: "success",
@@ -190,6 +191,7 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
       eventType: "api.error",
       ipAddress: ip,
+      userAgent: userAgent,
       resource: "/api/auth/login",
       action: "login",
       status: "failure",
