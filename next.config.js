@@ -65,6 +65,9 @@ const nextConfig = {
       "'sha256-wT8A7+MN/p4Bz/w+R+COOHf9HZ+xYskWOIu/JDwIvkg='",
       "'sha384-QQMs28J0n8Mw4Q1CHlPa/iPNoI8cHTH141eSbWme69K7V+4TvvHzfFm+PuE4JpxF'",
       "'sha384-kYN1NbScnNOnyvDqahb4am4uYrSJh/+eDDN9ipiMT/Xx6ivmTHrN4Eh1JD6JZ2Ek'",
+      // Additional hashes suggested by browser
+      "'sha256-nxe+84Sc1onrukVrcAE8E6muNe9ck6wnJtjP16ywLjg='",
+      "'sha256-uPFcq4d4DccCX5vpbwhR8eQZeiQJayR2e0XPVCcyOJw='",
       // Allow browser extension scripts (common sources)
       "chrome-extension:",
       "moz-extension:",
