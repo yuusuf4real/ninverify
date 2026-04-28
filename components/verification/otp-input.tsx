@@ -1,25 +1,37 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Smartphone, RefreshCw, AlertCircle } from "lucide-react";
+import { useVerificationStore } from "@/store/verification-store";
+import { useToast } from "@/store/ui-store";
 
-interface OTPInputProps {
-  phoneNumber: string;
-  onVerified: (sessionToken: string) => void;
-  onBack: () => void;
-}
+export const OTPInput = memo(function OTPInput() {
+  // Store
+  const phoneNumber = useVerificationStore((state) => state.phoneNumber);
+  const setSessionToken = useVerificationStore(
+    (state) => state.setSessionToken,
+  );
+  const setSessionId = useVerificationStore((state) => state.setSessionId);
+  const goToNextStep = useVerificationStore((state) => state.goToNextStep);
+  const goToPreviousStep = useVerificationStore(
+    (state) => state.goToPreviousStep,
+  );
 
-export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
+  // Toast
+  const toast = useToast();
+
+  // Local state
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
-  const [sessionId, setSessionId] = useState("");
+  const [localSessionId, setLocalSessionId] = useState("");
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const otpSentRef = useRef(false); // Prevent double send in Strict Mode
 
   // Countdown timer
   useEffect(() => {
@@ -29,76 +41,57 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
     }
   }, [timeLeft]);
 
-  // Send initial OTP
+  // Send initial OTP - with ref to prevent double send in Strict Mode
   useEffect(() => {
-    const initializeOTP = async () => {
-      await sendOTP();
-    };
-    initializeOTP();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    let mounted = true;
 
-  const sendOTP = async () => {
+    const initializeOTP = async () => {
+      // Only send if not already sent (prevents double send in React Strict Mode)
+      if (mounted && !otpSentRef.current) {
+        otpSentRef.current = true;
+        await sendOTP();
+      }
+    };
+
+    initializeOTP();
+
+    return () => {
+      mounted = false;
+    };
+  }, [phoneNumber]);
+
+  const sendOTP = useCallback(async () => {
     try {
       setResending(true);
       setError("");
 
-      console.log("🔍 DEBUG: Starting OTP request");
-      console.log("🔍 DEBUG: Phone number:", phoneNumber);
-      console.log("🔍 DEBUG: Request URL:", "/api/v2/otp/send");
-
-      // Try with absolute URL first
-      const baseUrl = window.location.origin;
-      const fullUrl = `${baseUrl}/api/v2/otp/send`;
-
-      console.log("🔍 DEBUG: Full URL:", fullUrl);
-
-      const response = await fetch(fullUrl, {
+      const response = await fetch("/api/v2/otp/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
         body: JSON.stringify({ phoneNumber }),
-        credentials: "same-origin", // Include cookies
       });
 
-      console.log("🔍 DEBUG: Response status:", response.status);
-      console.log("🔍 DEBUG: Response ok:", response.ok);
-
       const data = await response.json();
-      console.log("🔍 DEBUG: Response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to send OTP");
       }
 
+      setLocalSessionId(data.sessionId);
       setSessionId(data.sessionId);
       setTimeLeft(600); // Reset timer
-      console.log(
-        "🔍 DEBUG: OTP sent successfully, sessionId:",
-        data.sessionId,
-      );
+
+      toast.success("OTP sent successfully!");
     } catch (err) {
-      console.error("🔍 DEBUG: OTP send error:", err);
-      if (err instanceof Error) {
-        console.error("🔍 DEBUG: Error type:", err.constructor.name);
-        console.error("🔍 DEBUG: Error message:", err.message);
-      }
-
-      // Show more helpful error message
-      let errorMessage = "Failed to send OTP";
-      if (err instanceof TypeError && err.message.includes("fetch")) {
-        errorMessage =
-          "Network connection error. Please check your internet connection and try again.";
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-
-      setError(errorMessage);
+      const message = err instanceof Error ? err.message : "Failed to send OTP";
+      setError(message);
+      toast.error(message);
     } finally {
       setResending(false);
     }
-  };
+  }, [phoneNumber, setSessionId, toast]);
 
   const handleOTPChange = (index: number, value: string) => {
     if (value.length > 1) return; // Prevent multiple characters
@@ -124,6 +117,27 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
     }
   };
 
+  // Handle paste event - distribute pasted content across all fields
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").trim();
+
+    // Only process if it's a 6-digit number
+    if (/^\d{6}$/.test(pastedData)) {
+      const digits = pastedData.split("");
+      setOtp(digits);
+
+      // Focus the last input
+      inputRefs.current[5]?.focus();
+
+      // Auto-submit
+      toast.info("OTP pasted, verifying...");
+      verifyOTP(pastedData);
+    } else {
+      toast.warning("Please paste a valid 6-digit OTP code");
+    }
+  };
+
   const verifyOTP = async (otpCode: string) => {
     try {
       setLoading(true);
@@ -132,7 +146,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
       const response = await fetch("/api/v2/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, otpCode }),
+        body: JSON.stringify({ sessionId: localSessionId, otpCode }),
       });
 
       const data = await response.json();
@@ -141,9 +155,14 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
         throw new Error(data.error || "Invalid OTP");
       }
 
-      onVerified(data.sessionToken);
+      setSessionToken(data.sessionToken);
+      toast.success("Phone verified successfully!");
+      goToNextStep();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
+      const message =
+        err instanceof Error ? err.message : "Verification failed";
+      setError(message);
+      toast.error(message);
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
@@ -180,6 +199,9 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
           We sent a 6-digit code to <br />
           <span className="font-semibold text-foreground">{maskedPhone}</span>
         </p>
+        <p className="text-xs text-muted-foreground">
+          💡 Tip: You can paste your OTP code directly
+        </p>
       </div>
 
       {/* OTP Input */}
@@ -197,6 +219,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
               value={digit}
               onChange={(e) => handleOTPChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
+              onPaste={index === 0 ? handlePaste : undefined}
               className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold touch-manipulation"
               disabled={loading}
             />
@@ -247,7 +270,7 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
         {/* Back Button */}
         <Button
           variant="outline"
-          onClick={onBack}
+          onClick={goToPreviousStep}
           disabled={loading}
           className="w-full"
         >
@@ -268,4 +291,4 @@ export function OTPInput({ phoneNumber, onVerified, onBack }: OTPInputProps) {
       )}
     </motion.div>
   );
-}
+});

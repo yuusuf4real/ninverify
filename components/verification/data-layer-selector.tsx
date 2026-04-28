@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,8 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
-
-interface DataLayerSelectorProps {
-  sessionToken: string;
-  onSubmit: (nin: string, dataLayer: string, amount: number) => void;
-  onBack: () => void;
-}
+import { useVerificationStore } from "@/store/verification-store";
+import { useToast } from "@/store/ui-store";
 
 type DataLayer = "demographic" | "biometric" | "full";
 
@@ -79,11 +75,19 @@ const dataLayers = [
   },
 ];
 
-export function DataLayerSelector({
-  sessionToken,
-  onSubmit,
-  onBack,
-}: DataLayerSelectorProps) {
+export const DataLayerSelector = memo(function DataLayerSelector() {
+  // Store
+  const sessionToken = useVerificationStore((state) => state.sessionToken);
+  const setPaymentData = useVerificationStore((state) => state.setPaymentData);
+  const goToNextStep = useVerificationStore((state) => state.goToNextStep);
+  const goToPreviousStep = useVerificationStore(
+    (state) => state.goToPreviousStep,
+  );
+
+  // Toast
+  const toast = useToast();
+
+  // Local state
   const [nin, setNin] = useState("");
   const [selectedLayer, setSelectedLayer] = useState<DataLayer | null>(null);
   const [loading, setLoading] = useState(false);
@@ -106,7 +110,9 @@ export function DataLayerSelector({
 
   const handleSubmit = async () => {
     if (!selectedLayer || !isNinValid) {
-      setError("Please enter a valid NIN and select a data layer");
+      const errorMsg = "Please enter a valid NIN and select a data layer";
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
@@ -135,13 +141,20 @@ export function DataLayerSelector({
       const selectedLayerInfo = dataLayers.find(
         (layer) => layer.id === selectedLayer,
       );
-      onSubmit(
-        data.maskedNin,
-        selectedLayer,
-        selectedLayerInfo?.price || 50000,
-      );
+
+      // Store payment data
+      setPaymentData({
+        nin: data.maskedNin,
+        dataLayer: selectedLayer,
+        amount: selectedLayerInfo?.price || 50000,
+      });
+
+      toast.success("NIN validated! Proceeding to payment...");
+      goToNextStep();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Submission failed");
+      const errorMsg = err instanceof Error ? err.message : "Submission failed";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -325,7 +338,7 @@ export function DataLayerSelector({
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button
           variant="outline"
-          onClick={onBack}
+          onClick={goToPreviousStep}
           disabled={loading}
           className="w-full sm:flex-1 h-11 sm:h-12 touch-manipulation"
         >
@@ -351,4 +364,4 @@ export function DataLayerSelector({
       </div>
     </motion.div>
   );
-}
+});

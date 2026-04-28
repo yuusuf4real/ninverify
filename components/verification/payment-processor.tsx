@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,9 @@ import {
   Loader2,
   ArrowLeft,
 } from "lucide-react";
+import { useVerificationStore } from "@/store/verification-store";
+import { useToast } from "@/store/ui-store";
+import { useUIStore } from "@/store/ui-store";
 
 // Declare Paystack types
 declare global {
@@ -31,28 +34,36 @@ declare global {
   }
 }
 
-interface PaymentProcessorProps {
-  sessionToken: string;
-  nin: string;
-  dataLayer: string;
-  amount: number;
-  onComplete: () => void;
-  onBack: () => void;
-}
+export const PaymentProcessor = memo(function PaymentProcessor() {
+  // Store
+  const sessionToken = useVerificationStore((state) => state.sessionToken);
+  const paymentData = useVerificationStore((state) => state.paymentData);
+  const setPaymentReference = useVerificationStore(
+    (state) => state.setPaymentReference,
+  );
+  const setPaymentStatus = useVerificationStore(
+    (state) => state.setPaymentStatus,
+  );
+  const goToNextStep = useVerificationStore((state) => state.goToNextStep);
+  const goToPreviousStep = useVerificationStore(
+    (state) => state.goToPreviousStep,
+  );
 
-export function PaymentProcessor({
-  sessionToken,
-  nin,
-  dataLayer,
-  amount,
-  onComplete,
-  onBack,
-}: PaymentProcessorProps) {
+  // Toast & Loading
+  const toast = useToast();
+  const setGlobalLoading = useUIStore((state) => state.setGlobalLoading);
+
+  // Local state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
+  const [localPaymentReference, setLocalPaymentReference] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [paystackLoaded, setPaystackLoaded] = useState(false);
+
+  // Get payment data from store
+  const nin = paymentData?.nin || "";
+  const dataLayer = paymentData?.dataLayer || "";
+  const amount = paymentData?.amount || 0;
 
   // Load Paystack script
   useEffect(() => {
@@ -123,18 +134,13 @@ export function PaymentProcessor({
   const initializePayment = async () => {
     try {
       setLoading(true);
+      setGlobalLoading(true, "Initializing payment...");
       setError("");
 
       // Validate session token exists
       if (!sessionToken) {
         throw new Error("Session expired. Please start over.");
       }
-
-      console.log(
-        "[Payment] Initializing payment with token:",
-        sessionToken.substring(0, 20) + "...",
-      );
-      console.log("[Payment] Amount:", amount, "Data layer:", dataLayer);
 
       const response = await fetch("/api/v2/payment/initialize", {
         method: "POST",
@@ -148,20 +154,22 @@ export function PaymentProcessor({
         }),
       });
 
-      console.log("[Payment] Response status:", response.status);
-
       const data = await response.json();
-      console.log("[Payment] Response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Payment initialization failed");
       }
 
+      setLocalPaymentReference(data.reference);
       setPaymentReference(data.reference);
+      setPaymentStatus("pending");
 
       // Store session token for callback page
       localStorage.setItem("sessionToken", sessionToken);
       sessionStorage.setItem("sessionToken", sessionToken);
+
+      setGlobalLoading(false);
+      toast.info("Redirecting to payment gateway...");
 
       // Try inline first, fallback to redirect if it fails
       if (paystackLoaded && window.PaystackPop) {
@@ -174,11 +182,12 @@ export function PaymentProcessor({
             ref: data.reference,
             onClose: function () {
               setLoading(false);
-              setError("Payment was cancelled. Please try again.");
+              const errorMsg = "Payment was cancelled. Please try again.";
+              setError(errorMsg);
+              toast.warning(errorMsg);
             },
             callback: function (response: { reference: string }) {
-              console.log("Payment successful:", response);
-              // Payment successful, verify it
+              toast.success("Payment successful! Verifying...");
               verifyPayment(response.reference);
             },
           });
@@ -186,10 +195,6 @@ export function PaymentProcessor({
           // Open the Paystack modal
           handler.openIframe();
         } catch (inlineError) {
-          console.warn(
-            "Inline payment failed, falling back to redirect:",
-            inlineError,
-          );
           // Fallback to redirect with callback URL
           const callbackUrl = `${window.location.origin}/verification/callback`;
           const redirectUrl = `${data.authorizationUrl}&callback_url=${encodeURIComponent(callbackUrl)}`;
@@ -202,17 +207,21 @@ export function PaymentProcessor({
         window.location.href = redirectUrl;
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Payment initialization failed",
-      );
+      const errorMsg =
+        err instanceof Error ? err.message : "Payment initialization failed";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const verifyPayment = async (reference: string) => {
     try {
       setVerifying(true);
+      setGlobalLoading(true, "Verifying payment...");
       setError("");
+      setPaymentStatus("processing");
 
       const response = await fetch("/api/v2/payment/verify", {
         method: "POST",
@@ -232,15 +241,20 @@ export function PaymentProcessor({
       }
 
       if (data.success && data.status === "completed") {
-        // Payment successful, proceed to results
-        onComplete();
+        setPaymentStatus("completed");
+        toast.success("Payment verified! Loading results...");
+        setGlobalLoading(false);
+        goToNextStep();
       } else {
-        setError("Payment was not successful. Please try again.");
+        throw new Error("Payment was not successful. Please try again.");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Payment verification failed",
-      );
+      const errorMsg =
+        err instanceof Error ? err.message : "Payment verification failed";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setPaymentStatus("failed");
+      setGlobalLoading(false);
     } finally {
       setVerifying(false);
     }
@@ -366,7 +380,7 @@ export function PaymentProcessor({
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button
           variant="outline"
-          onClick={onBack}
+          onClick={goToPreviousStep}
           disabled={loading || verifying}
           className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation"
         >
@@ -394,11 +408,11 @@ export function PaymentProcessor({
       </div>
 
       {/* Payment Reference */}
-      {paymentReference && (
+      {localPaymentReference && (
         <div className="text-center text-xs text-muted-foreground break-all px-4 sm:px-0">
-          <p>Payment Reference: {paymentReference}</p>
+          <p>Payment Reference: {localPaymentReference}</p>
         </div>
       )}
     </motion.div>
   );
-}
+});

@@ -1,16 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Smartphone, ArrowRight, AlertCircle } from "lucide-react";
+import { useVerificationStore } from "@/store/verification-store";
+import { useToast } from "@/store/ui-store";
 
-interface PhoneInputProps {
-  onSubmit: (phoneNumber: string) => void;
-}
+export const PhoneInput = memo(function PhoneInput() {
+  // Store
+  const setPhoneNumber = useVerificationStore((state) => state.setPhoneNumber);
+  const goToNextStep = useVerificationStore((state) => state.goToNextStep);
 
-export function PhoneInput({ onSubmit }: PhoneInputProps) {
+  // Toast
+  const toast = useToast();
+
+  // Local state
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -85,7 +91,9 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
     e.preventDefault();
 
     if (!validatePhone(phone)) {
-      setError("Please enter a valid Nigerian phone number");
+      const errorMsg = "Please enter a valid Nigerian phone number";
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
@@ -94,9 +102,13 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
 
     try {
       const normalizedPhone = normalizePhone(phone);
-      onSubmit(normalizedPhone);
+      setPhoneNumber(normalizedPhone);
+      toast.success("Phone number validated!");
+      goToNextStep();
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      const errorMsg = "Something went wrong. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
@@ -198,4 +210,4 @@ export function PhoneInput({ onSubmit }: PhoneInputProps) {
       </div>
     </motion.div>
   );
-}
+});

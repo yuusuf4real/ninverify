@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,12 +17,9 @@ import {
   Loader2,
   RotateCcw,
 } from "lucide-react";
-
-interface VerificationResultProps {
-  sessionToken: string;
-  onStartOver: () => void;
-  onComplete?: () => void;
-}
+import { generateNINCertificate } from "@/lib/print-templates/nin-certificate";
+import { useVerificationStore } from "@/store/verification-store";
+import { useToast } from "@/store/ui-store";
 
 interface VerificationData {
   fullName: string;
@@ -49,11 +46,21 @@ interface SessionInfo {
   verificationDate: string;
 }
 
-export function VerificationResult({
-  sessionToken,
-  onStartOver,
+interface VerificationResultProps {
+  onComplete?: () => void;
+}
+
+export const VerificationResult = memo(function VerificationResult({
   onComplete,
 }: VerificationResultProps) {
+  // Store
+  const sessionToken = useVerificationStore((state) => state.sessionToken);
+  const reset = useVerificationStore((state) => state.reset);
+
+  // Toast
+  const toast = useToast();
+
+  // Local state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<VerificationData | null>(null);
@@ -63,20 +70,70 @@ export function VerificationResult({
   const [triggering, setTriggering] = useState(false);
 
   useEffect(() => {
-    const initializeFetch = async () => {
-      await fetchResults();
-    };
-    initializeFetch();
+    let mounted = true;
+    let interval: NodeJS.Timeout | null = null;
 
-    // Poll for results if still processing
-    const interval = setInterval(async () => {
-      if (status && status !== "completed") {
-        await fetchResults();
+    const fetchResults = async () => {
+      if (!mounted) return;
+
+      try {
+        setError("");
+
+        const response = await fetch("/api/v2/verification/result", {
+          headers: {
+            Authorization: `Bearer ${sessionToken}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (!mounted) return;
+
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to fetch results");
+        }
+
+        setStatus(result.status);
+
+        if (result.status === "completed" && result.data) {
+          setData(result.data);
+          setSessionInfo(result.sessionInfo);
+          setLoading(false);
+          toast.success("Verification completed successfully!");
+          // Stop polling when completed
+          if (interval) clearInterval(interval);
+        } else if (result.status === "failed") {
+          setError("Verification failed. Please try again.");
+          setLoading(false);
+          toast.error("Verification failed. Please try again.");
+          // Stop polling on failure
+          if (interval) clearInterval(interval);
+        }
+        // Continue loading for other statuses
+      } catch (err) {
+        if (!mounted) return;
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch results",
+        );
+        setLoading(false);
+        // Stop polling on error
+        if (interval) clearInterval(interval);
       }
+    };
+
+    // Initial fetch
+    fetchResults();
+
+    // Start polling - will auto-stop when completed/failed
+    interval = setInterval(() => {
+      fetchResults();
     }, 3000);
 
-    return () => clearInterval(interval);
-  }, [sessionToken, status]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      mounted = false;
+      if (interval) clearInterval(interval);
+    };
+  }, [sessionToken]);
 
   const fetchResults = async () => {
     try {
@@ -140,6 +197,7 @@ export function VerificationResult({
   const downloadResults = async () => {
     try {
       setDownloading(true);
+      toast.info("Preparing certificate for download...");
 
       // Create printable document
       const printWindow = window.open("", "_blank");
@@ -151,8 +209,12 @@ export function VerificationResult({
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.print();
+
+      toast.success("Certificate ready for download!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Download failed");
+      const errorMsg = err instanceof Error ? err.message : "Download failed";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setDownloading(false);
     }
@@ -160,407 +222,7 @@ export function VerificationResult({
 
   const generatePrintableDocument = () => {
     if (!data || !sessionInfo) return "";
-
-    const formatDate = (dateString: string) => {
-      return new Date(dateString).toLocaleDateString("en-NG", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    };
-
-    const currentDate = new Date().toLocaleDateString("en-NG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>NIN Verification Certificate - ${data.fullName}</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: 'Georgia', 'Times New Roman', serif;
-              line-height: 1.6;
-              color: #2c3e50;
-              background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-              padding: 20px;
-            }
-            
-            .certificate {
-              max-width: 800px;
-              margin: 0 auto;
-              background: white;
-              border-radius: 12px;
-              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-              overflow: hidden;
-              position: relative;
-            }
-            
-            .certificate::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 8px;
-              background: linear-gradient(90deg, #3b82f6, #1d4ed8, #1e40af);
-            }
-            
-            .header {
-              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-              color: white;
-              padding: 40px 30px;
-              text-align: center;
-              position: relative;
-            }
-            
-            .header::after {
-              content: '';
-              position: absolute;
-              bottom: -10px;
-              left: 50%;
-              transform: translateX(-50%);
-              width: 0;
-              height: 0;
-              border-left: 20px solid transparent;
-              border-right: 20px solid transparent;
-              border-top: 20px solid #1e40af;
-            }
-            
-            .logo {
-              font-size: 32px;
-              font-weight: bold;
-              margin-bottom: 8px;
-              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            }
-            
-            .subtitle {
-              font-size: 18px;
-              opacity: 0.9;
-              font-weight: 300;
-            }
-            
-            .certificate-title {
-              font-size: 28px;
-              font-weight: bold;
-              color: #1e40af;
-              text-align: center;
-              margin: 40px 0 30px 0;
-              text-transform: uppercase;
-              letter-spacing: 2px;
-            }
-            
-            .content {
-              padding: 0 40px 40px 40px;
-            }
-            
-            .verification-badge {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 10px;
-              background: linear-gradient(135deg, #10b981, #059669);
-              color: white;
-              padding: 15px 30px;
-              border-radius: 50px;
-              margin: 20px auto;
-              width: fit-content;
-              font-weight: bold;
-              box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-            }
-            
-            .info-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 30px;
-              margin: 30px 0;
-            }
-            
-            .info-section {
-              background: #f8fafc;
-              border-radius: 12px;
-              padding: 25px;
-              border-left: 4px solid #3b82f6;
-            }
-            
-            .section-title {
-              font-size: 18px;
-              font-weight: bold;
-              color: #1e40af;
-              margin-bottom: 15px;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            
-            .field {
-              margin: 12px 0;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 8px 0;
-              border-bottom: 1px solid #e2e8f0;
-            }
-            
-            .field:last-child {
-              border-bottom: none;
-            }
-            
-            .label {
-              font-weight: 600;
-              color: #64748b;
-              font-size: 14px;
-            }
-            
-            .value {
-              font-weight: bold;
-              color: #1e293b;
-              text-align: right;
-            }
-            
-            .photo-section {
-              text-align: center;
-              margin: 30px 0;
-              padding: 20px;
-              background: #f8fafc;
-              border-radius: 12px;
-              border: 2px dashed #cbd5e1;
-            }
-            
-            .photo {
-              max-width: 150px;
-              max-height: 200px;
-              border-radius: 8px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-              border: 3px solid white;
-            }
-            
-            .security-features {
-              background: linear-gradient(135deg, #fef3c7, #fbbf24);
-              border-radius: 12px;
-              padding: 20px;
-              margin: 30px 0;
-              border-left: 4px solid #f59e0b;
-            }
-            
-            .qr-placeholder {
-              width: 80px;
-              height: 80px;
-              background: #e2e8f0;
-              border-radius: 8px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 12px;
-              color: #64748b;
-              margin: 0 auto;
-            }
-            
-            .footer {
-              background: #f1f5f9;
-              padding: 30px;
-              text-align: center;
-              border-top: 1px solid #e2e8f0;
-              margin-top: 40px;
-            }
-            
-            .footer-text {
-              font-size: 12px;
-              color: #64748b;
-              line-height: 1.8;
-            }
-            
-            .signature-line {
-              border-top: 2px solid #1e40af;
-              width: 200px;
-              margin: 20px auto 5px auto;
-            }
-            
-            .watermark {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%) rotate(-45deg);
-              font-size: 120px;
-              color: rgba(59, 130, 246, 0.05);
-              font-weight: bold;
-              z-index: 1;
-              pointer-events: none;
-            }
-            
-            @media print {
-              body {
-                background: white;
-                padding: 0;
-              }
-              
-              .certificate {
-                box-shadow: none;
-                border: 1px solid #e2e8f0;
-              }
-              
-              .watermark {
-                display: none;
-              }
-            }
-            
-            @page {
-              size: A4;
-              margin: 1cm;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="certificate">
-            <div class="watermark">VERIFIED</div>
-            
-            <div class="header">
-              <div class="logo">VerifyNIN</div>
-              <div class="subtitle">Official NIN Verification Service</div>
-            </div>
-            
-            <div class="content">
-              <h1 class="certificate-title">Identity Verification Certificate</h1>
-              
-              <div class="verification-badge">
-                <span>✓</span>
-                <span>OFFICIALLY VERIFIED</span>
-              </div>
-              
-              <div class="info-grid">
-                <div class="info-section">
-                  <div class="section-title">
-                    <span>👤</span>
-                    Personal Information
-                  </div>
-                  <div class="field">
-                    <span class="label">Full Name:</span>
-                    <span class="value">${data.fullName}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Date of Birth:</span>
-                    <span class="value">${formatDate(data.dateOfBirth)}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Gender:</span>
-                    <span class="value">${data.gender}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Phone Number:</span>
-                    <span class="value">${data.phoneFromNimc}</span>
-                  </div>
-                </div>
-                
-                <div class="info-section">
-                  <div class="section-title">
-                    <span>📋</span>
-                    Verification Details
-                  </div>
-                  <div class="field">
-                    <span class="label">Verification ID:</span>
-                    <span class="value">${sessionInfo.sessionId.substring(0, 12)}...</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Verification Date:</span>
-                    <span class="value">${formatDate(sessionInfo.verificationDate)}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Data Layer:</span>
-                    <span class="value">${data.dataLayer.charAt(0).toUpperCase() + data.dataLayer.slice(1)}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Status:</span>
-                    <span class="value" style="color: #10b981;">VERIFIED</span>
-                  </div>
-                </div>
-              </div>
-              
-              ${
-                data.photoUrl
-                  ? `
-                <div class="photo-section">
-                  <div class="section-title" style="justify-content: center; margin-bottom: 15px;">
-                    <span>📷</span>
-                    Official Photograph
-                  </div>
-                  <img src="${data.photoUrl}" alt="Official NIN Photo" class="photo" />
-                </div>
-              `
-                  : ""
-              }
-              
-              ${
-                data.address
-                  ? `
-                <div class="info-section" style="margin-top: 30px;">
-                  <div class="section-title">
-                    <span>📍</span>
-                    Address Information
-                  </div>
-                  <div class="field">
-                    <span class="label">Address:</span>
-                    <span class="value">${data.address.addressLine}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">Town:</span>
-                    <span class="value">${data.address.town}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">LGA:</span>
-                    <span class="value">${data.address.lga}</span>
-                  </div>
-                  <div class="field">
-                    <span class="label">State:</span>
-                    <span class="value">${data.address.state}</span>
-                  </div>
-                </div>
-              `
-                  : ""
-              }
-              
-              <div class="security-features">
-                <div class="section-title" style="justify-content: center; margin-bottom: 15px;">
-                  <span>🔒</span>
-                  Security Features
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;">
-                  <div>
-                    <p style="font-size: 14px; margin-bottom: 8px;"><strong>Digital Signature:</strong> SHA-256 Encrypted</p>
-                    <p style="font-size: 14px; margin-bottom: 8px;"><strong>Verification Hash:</strong> ${sessionInfo.sessionId.substring(0, 16).toUpperCase()}</p>
-                    <p style="font-size: 14px;"><strong>Issued:</strong> ${currentDate}</p>
-                  </div>
-                  <div class="qr-placeholder">
-                    QR Code
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="footer">
-              <div class="signature-line"></div>
-              <p style="font-weight: bold; margin: 10px 0;">Digitally Signed & Verified</p>
-              <div class="footer-text">
-                <p>This certificate was generated on ${currentDate} from official NIMC records through VerifyNIN.</p>
-                <p>This document is digitally signed and can be verified at verifynin.com</p>
-                <p><strong>VerifyNIN</strong> - Authorized NIMC Data Partner | License: NIN-VER-2024-001</p>
-                <p>For verification inquiries: support@verifynin.com | +234 800 000 0000</p>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    return generateNINCertificate(data, sessionInfo);
   };
 
   const getStatusMessage = (status: string) => {
@@ -669,7 +331,10 @@ export function VerificationResult({
             Retry
           </Button>
           <Button
-            onClick={onStartOver}
+            onClick={() => {
+              reset();
+              toast.info("Starting new verification...");
+            }}
             className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation"
           >
             <RotateCcw className="h-4 w-4" />
@@ -885,7 +550,10 @@ export function VerificationResult({
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button
           variant="outline"
-          onClick={onStartOver}
+          onClick={() => {
+            reset();
+            toast.info("Starting new verification...");
+          }}
           className="w-full sm:flex-1 h-11 sm:h-12 gap-2 touch-manipulation text-sm sm:text-base"
         >
           <RotateCcw className="h-4 w-4" />
@@ -920,4 +588,4 @@ export function VerificationResult({
       )}
     </motion.div>
   );
-}
+});

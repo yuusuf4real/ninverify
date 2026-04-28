@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,8 +16,10 @@ import { OTPInput } from "./otp-input";
 import { DataLayerSelector } from "./data-layer-selector";
 import { PaymentProcessor } from "./payment-processor";
 import { VerificationResult } from "./verification-result";
-
-type FlowStep = "phone" | "otp" | "data-selection" | "payment" | "result";
+import {
+  useVerificationStore,
+  useCurrentStep,
+} from "@/store/verification-store";
 
 interface VerificationFlowProps {
   onComplete?: () => void;
@@ -25,14 +27,11 @@ interface VerificationFlowProps {
 
 export function VerificationFlow({ onComplete }: VerificationFlowProps) {
   const searchParams = useSearchParams();
-  const [currentStep, setCurrentStep] = useState<FlowStep>("phone");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [sessionToken, setSessionToken] = useState("");
-  const [paymentData, setPaymentData] = useState<{
-    nin: string;
-    dataLayer: string;
-    amount: number;
-  } | null>(null);
+  const currentStep = useCurrentStep();
+  const setStep = useVerificationStore((state) => state.setStep);
+  const setSessionToken = useVerificationStore(
+    (state) => state.setSessionToken,
+  );
 
   // Handle URL parameters for direct navigation (e.g., from callback)
   useEffect(() => {
@@ -42,69 +41,50 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
       const storedToken = localStorage.getItem("sessionToken");
       if (storedToken) {
         setSessionToken(storedToken);
-        setCurrentStep("result");
+        setStep("result");
       }
     }
-  }, [searchParams]);
-
-  const handlePhoneSubmit = (phone: string) => {
-    setPhoneNumber(phone);
-    setCurrentStep("otp");
-  };
-
-  const handleOTPVerified = (token: string) => {
-    setSessionToken(token);
-    // Store session token for callback page
-    localStorage.setItem("sessionToken", token);
-    setCurrentStep("data-selection");
-  };
-
-  const handleDataSubmit = (nin: string, dataLayer: string, amount: number) => {
-    setPaymentData({ nin, dataLayer, amount });
-    setCurrentStep("payment");
-  };
-
-  const handlePaymentComplete = () => {
-    setCurrentStep("result");
-  };
-
-  const handleStartOver = () => {
-    setCurrentStep("phone");
-    setPhoneNumber("");
-    setSessionToken("");
-    setPaymentData(null);
-    // Clear stored session token
-    localStorage.removeItem("sessionToken");
-    sessionStorage.removeItem("sessionToken");
-  };
-
-  const handleBackToPhone = () => {
-    setCurrentStep("phone");
-    setPhoneNumber("");
-    setSessionToken("");
-    setPaymentData(null);
-    // Clear stored session token
-    localStorage.removeItem("sessionToken");
-    sessionStorage.removeItem("sessionToken");
-  };
-
-  const handleBackToOTP = () => {
-    setCurrentStep("otp");
-    setSessionToken("");
-    setPaymentData(null);
-    // Clear stored session token
-    localStorage.removeItem("sessionToken");
-    sessionStorage.removeItem("sessionToken");
-  };
-
-  const handleBackToDataSelection = () => {
-    setCurrentStep("data-selection");
-    setPaymentData(null);
-  };
+  }, [searchParams, setSessionToken, setStep]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-4 sm:py-8 px-3 sm:px-4">
       <div className="container mx-auto max-w-6xl">
+        {/* Back to Home Button */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6"
+        >
+          <button
+            onClick={() => {
+              if (onComplete) {
+                onComplete();
+              } else {
+                window.location.href = "/";
+              }
+            }}
+            className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 hover:border-primary/30 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <svg
+              className="w-5 h-5 text-gray-600 group-hover:text-primary transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            <span className="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors">
+              Back to Home
+            </span>
+          </button>
+        </motion.div>
+
         {/* Enhanced Progress Indicator */}
         <div className="mb-8 sm:mb-12">
           {/* Desktop Progress */}
@@ -292,7 +272,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                <PhoneInput onSubmit={handlePhoneSubmit} />
+                <PhoneInput />
               </motion.div>
             )}
 
@@ -304,11 +284,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                <OTPInput
-                  phoneNumber={phoneNumber}
-                  onVerified={handleOTPVerified}
-                  onBack={handleBackToPhone}
-                />
+                <OTPInput />
               </motion.div>
             )}
 
@@ -320,15 +296,11 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                <DataLayerSelector
-                  sessionToken={sessionToken}
-                  onSubmit={handleDataSubmit}
-                  onBack={handleBackToOTP}
-                />
+                <DataLayerSelector />
               </motion.div>
             )}
 
-            {currentStep === "payment" && paymentData && (
+            {currentStep === "payment" && (
               <motion.div
                 key="payment"
                 initial={{ opacity: 0, x: 20 }}
@@ -336,14 +308,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                <PaymentProcessor
-                  sessionToken={sessionToken}
-                  nin={paymentData.nin}
-                  dataLayer={paymentData.dataLayer}
-                  amount={paymentData.amount}
-                  onComplete={handlePaymentComplete}
-                  onBack={handleBackToDataSelection}
-                />
+                <PaymentProcessor />
               </motion.div>
             )}
 
@@ -355,11 +320,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                <VerificationResult
-                  sessionToken={sessionToken}
-                  onStartOver={handleStartOver}
-                  onComplete={onComplete}
-                />
+                <VerificationResult onComplete={onComplete} />
               </motion.div>
             )}
           </AnimatePresence>

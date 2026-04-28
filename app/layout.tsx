@@ -2,17 +2,22 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Sora, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { AppProviders } from "@/components/providers/app-providers";
 
 const sora = Sora({
   subsets: ["latin"],
   variable: "--font-heading",
-  display: "swap",
+  display: "optional", // Changed from "swap" for faster load
+  preload: true,
+  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
 });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-sans",
-  display: "swap",
+  display: "optional", // Changed from "swap" for faster load
+  preload: true,
+  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -77,7 +82,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen antialiased" suppressHydrationWarning>
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
