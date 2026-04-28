@@ -68,94 +68,101 @@ export function generateNINCertificate(
           
           body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            line-height: 1.5;
+            line-height: 1.4;
             color: #1a1a1a;
             background: #f5f5f5;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
           }
           
           .certificate {
-            max-width: 210mm; /* A4 width */
-            min-height: 297mm; /* A4 height */
+            width: 210mm; /* A4 width */
+            height: 297mm; /* A4 height */
             margin: 0 auto;
             background: white;
             position: relative;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
           }
           
           /* Nigerian Flag Border - Green, White, Green */
           .flag-border-top {
-            height: 12px;
+            height: 8px;
             background: linear-gradient(to right, 
               #008751 0%, #008751 33.33%, 
               white 33.33%, white 66.66%, 
               #008751 66.66%, #008751 100%);
+            flex-shrink: 0;
           }
           
           .flag-border-bottom {
-            height: 12px;
+            height: 8px;
             background: linear-gradient(to right, 
               #008751 0%, #008751 33.33%, 
               white 33.33%, white 66.66%, 
               #008751 66.66%, #008751 100%);
+            flex-shrink: 0;
           }
           
           /* Header with Nigerian Coat of Arms Style */
           .header {
             background: linear-gradient(135deg, #008751 0%, #006B3F 100%);
             color: white;
-            padding: 30px 40px;
+            padding: 18px 30px;
             text-align: center;
             position: relative;
+            flex-shrink: 0;
           }
           
           .coat-of-arms {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 15px;
+            width: 45px;
+            height: 45px;
+            margin: 0 auto 10px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           }
           
           .header-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
           }
           
           .header-subtitle {
-            font-size: 14px;
+            font-size: 12px;
             opacity: 0.95;
             font-weight: 400;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
           }
           
           /* Certificate Title */
           .certificate-title {
             text-align: center;
-            padding: 30px 40px 20px;
-            border-bottom: 3px solid #008751;
-            margin-bottom: 30px;
+            padding: 15px 30px 12px;
+            border-bottom: 2px solid #008751;
+            margin-bottom: 15px;
+            flex-shrink: 0;
           }
           
           .certificate-title h1 {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             color: #008751;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
           }
           
           .certificate-number {
-            font-size: 13px;
+            font-size: 11px;
             color: #666;
             font-weight: 500;
           }
@@ -164,39 +171,42 @@ export function generateNINCertificate(
           .verification-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             background: #008751;
             color: white;
-            padding: 10px 24px;
+            padding: 6px 18px;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 14px;
-            margin: 0 auto 30px;
+            font-size: 11px;
+            margin: 0 auto 15px;
             display: flex;
             width: fit-content;
-            box-shadow: 0 2px 8px rgba(0, 135, 81, 0.3);
+            box-shadow: 0 2px 6px rgba(0, 135, 81, 0.3);
           }
           
           .verification-badge svg {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
           }
           
           /* Main Content */
           .content {
-            padding: 0 40px 40px;
+            padding: 0 30px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
           }
           
           /* Photo and Personal Info Side by Side */
           .main-info {
             display: grid;
-            grid-template-columns: 180px 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-            padding: 25px;
+            grid-template-columns: 140px 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding: 15px;
             background: #f9fafb;
-            border-radius: 8px;
-            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            border: 1.5px solid #e5e7eb;
           }
           
           .photo-container {
@@ -204,32 +214,32 @@ export function generateNINCertificate(
           }
           
           .photo {
-            width: 150px;
-            height: 180px;
+            width: 120px;
+            height: 145px;
             object-fit: cover;
-            border-radius: 4px;
-            border: 3px solid #008751;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 3px;
+            border: 2px solid #008751;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
             background: white;
           }
           
           .photo-label {
-            font-size: 11px;
+            font-size: 9px;
             color: #666;
-            margin-top: 8px;
+            margin-top: 6px;
             font-weight: 500;
           }
           
           .personal-details {
             display: grid;
-            gap: 15px;
+            gap: 10px;
           }
           
           .detail-row {
             display: grid;
-            grid-template-columns: 140px 1fr;
-            gap: 15px;
-            padding: 12px 0;
+            grid-template-columns: 110px 1fr;
+            gap: 12px;
+            padding: 8px 0;
             border-bottom: 1px solid #e5e7eb;
           }
           
@@ -238,71 +248,71 @@ export function generateNINCertificate(
           }
           
           .detail-label {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             color: #6b7280;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
           }
           
           .detail-value {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 600;
             color: #1a1a1a;
           }
           
           /* Address Section */
           .address-section {
-            margin-bottom: 30px;
-            padding: 25px;
+            margin-bottom: 15px;
+            padding: 15px;
             background: #f9fafb;
-            border-radius: 8px;
-            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            border: 1.5px solid #e5e7eb;
           }
           
           .section-header {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             color: #008751;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #008751;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid #008751;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
           }
           
           .address-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
           }
           
           /* Verification Info */
           .verification-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 12px;
+            margin-bottom: 15px;
           }
           
           .info-box {
-            padding: 20px;
+            padding: 12px;
             background: white;
-            border-radius: 8px;
-            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            border: 1.5px solid #e5e7eb;
           }
           
           .info-box-title {
-            font-size: 13px;
+            font-size: 10px;
             font-weight: 600;
             color: #6b7280;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
           }
           
           .info-box-value {
-            font-size: 15px;
+            font-size: 12px;
             font-weight: 600;
             color: #1a1a1a;
           }
@@ -311,71 +321,73 @@ export function generateNINCertificate(
             color: #008751;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
           }
           
           /* Security Strip */
           .security-strip {
             background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            padding: 20px 25px;
-            border-radius: 8px;
-            border-left: 4px solid #008751;
-            margin-bottom: 30px;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border-left: 3px solid #008751;
+            margin-bottom: 15px;
           }
           
           .security-title {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 700;
             color: #008751;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
           }
           
           .security-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
           }
           
           .security-item {
-            font-size: 12px;
+            font-size: 10px;
             color: #4b5563;
           }
           
           .security-item strong {
             display: block;
             color: #1a1a1a;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
+            font-size: 10px;
           }
           
           /* Footer */
           .footer {
             background: #f9fafb;
-            padding: 25px 40px;
-            border-top: 3px solid #008751;
+            padding: 15px 30px;
+            border-top: 2px solid #008751;
             text-align: center;
+            flex-shrink: 0;
           }
           
           .footer-logo {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 700;
             color: #008751;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
           }
           
           .footer-text {
-            font-size: 11px;
+            font-size: 9px;
             color: #6b7280;
-            line-height: 1.6;
-            margin-bottom: 8px;
+            line-height: 1.5;
+            margin-bottom: 5px;
           }
           
           .footer-contact {
-            font-size: 11px;
+            font-size: 9px;
             color: #4b5563;
             font-weight: 500;
-            margin-top: 12px;
+            margin-top: 6px;
           }
           
           /* Watermark */
@@ -384,17 +396,20 @@ export function generateNINCertificate(
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 140px;
-            color: rgba(0, 135, 81, 0.03);
+            font-size: 120px;
+            color: rgba(0, 135, 81, 0.025);
             font-weight: 900;
             z-index: 0;
             pointer-events: none;
-            letter-spacing: 10px;
+            letter-spacing: 8px;
           }
           
           .content-wrapper {
             position: relative;
             z-index: 1;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
           }
           
           /* Print Styles */
@@ -402,16 +417,23 @@ export function generateNINCertificate(
             body {
               background: white;
               padding: 0;
+              margin: 0;
             }
             
             .certificate {
               box-shadow: none;
-              max-width: 100%;
-              min-height: auto;
+              width: 100%;
+              height: 100%;
+              page-break-after: avoid;
+              page-break-inside: avoid;
             }
             
             .watermark {
-              opacity: 0.5;
+              opacity: 0.4;
+            }
+            
+            .content {
+              page-break-inside: avoid;
             }
           }
           
