@@ -67,8 +67,12 @@ export class SessionManager {
    */
   static async verifySession(token: string): Promise<SessionData | null> {
     try {
+      console.log("[Session] Verifying token...");
+
       const { payload } = await jwtVerify(token, JWT_SECRET);
       const sessionId = payload.sessionId as string;
+
+      console.log("[Session] Token verified, sessionId:", sessionId);
 
       // Check if session exists and is not expired
       const session = await db.query.verificationSessions.findFirst({
@@ -78,7 +82,16 @@ export class SessionManager {
         ),
       });
 
-      if (!session) return null;
+      if (!session) {
+        console.log("[Session] Session not found or expired:", sessionId);
+        return null;
+      }
+
+      console.log("[Session] Session verified successfully:", {
+        sessionId: session.id,
+        status: session.status,
+        expiresAt: session.expiresAt,
+      });
 
       return {
         sessionId: session.id,
@@ -87,6 +100,10 @@ export class SessionManager {
         expiresAt: session.expiresAt,
       };
     } catch (error) {
+      console.error("[Session] Verification error:", {
+        error: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : "Unknown",
+      });
       return null;
     }
   }

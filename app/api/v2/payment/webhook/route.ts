@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { SessionManager } from "@/lib/session-manager";
-import { verifyNinWithYouVerify } from "@/lib/youverify";
-import { DataLayerFilter } from "@/lib/data-layer-filter";
-import { db } from "@/db/client";
-import { verificationResults } from "@/db/new-schema";
+import { VerificationService } from "@/lib/verification-service";
 import { logger } from "@/lib/security/secure-logger";
 
 export async function POST(request: NextRequest) {
@@ -50,79 +47,23 @@ export async function POST(request: NextRequest) {
       "completed",
     );
 
-    // Get session details for NIMC API call
-    const session = await SessionManager.getSessionForAdmin(sessionId);
-    if (!session) {
-      logger.error("Session not found:", sessionId);
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
-    }
-
-    // Extract NIN from masked format for API call
-    // Note: In production, you'd need to store the actual NIN temporarily or use a different approach
-    // For now, we'll assume the NIN is reconstructable or stored securely
-
+    // Trigger verification using VerificationService
+    // This will decrypt the NIN and call YouVerify API
     try {
-      // Call NIMC API via YouVerify
-      logger.info("Calling NIMC API for session:", sessionId);
-
-      // Note: This is a placeholder - you'll need to implement secure NIN storage/retrieval
-      // For demo purposes, we'll simulate the API call
-      const mockNin = "12345678901"; // This should come from secure temporary storage
-
-      const nimcResponse = await verifyNinWithYouVerify(mockNin);
-
-      // Update session with API call timestamp
-      await SessionManager.updateSessionStatus(
-        sessionId,
-        "verification_completed",
-        {
-          apiCallMadeAt: new Date(),
-          apiResponseStatus: "success",
-          providerReference: nimcResponse.data?.id,
-        },
-      );
-
-      // Filter response based on selected data layer
-      const filteredData = DataLayerFilter.filterResponse(
-        nimcResponse as unknown as import("@/lib/data-layer-filter").NIMCApiResponse, // Type assertion for compatibility
-        session.dataLayerSelected!,
-        sessionId,
-      );
-
-      // Store filtered results
-      await db.insert(verificationResults).values({
-        id: sessionId,
-        sessionId,
-        fullName: filteredData.fullName,
-        dateOfBirth: filteredData.dateOfBirth,
-        phoneFromNimc: filteredData.phoneFromNimc,
-        gender: filteredData.gender,
-        photoUrl: filteredData.photoUrl,
-        signatureUrl: filteredData.signatureUrl,
-        addressLine: filteredData.addressLine,
-        town: filteredData.town,
-        lga: filteredData.lga,
-        state: filteredData.state,
-        rawApiResponse: nimcResponse as unknown as Record<string, unknown>,
-      });
-
+      logger.info("Triggering verification for session:", sessionId);
+      await VerificationService.processVerification(sessionId);
       logger.info(
         "Verification completed successfully for session:",
         sessionId,
       );
     } catch (apiError) {
-      logger.error("NIMC API error:", apiError);
-
-      // Update session with error status
-      await SessionManager.updateSessionStatus(sessionId, "failed", {
-        apiCallMadeAt: new Date(),
-        apiResponseStatus: "failed",
-        errorMessage:
-          apiError instanceof Error ? apiError.message : "API call failed",
+      logger.error("Verification failed for session:", {
+        sessionId,
+        error: apiError instanceof Error ? apiError.message : String(apiError),
       });
 
+      // Session status is already updated to 'failed' by VerificationService
       // Note: In production, you might want to initiate a refund here
-      // or provide alternative resolution paths
     }
 
     return NextResponse.json({ message: "Webhook processed successfully" });

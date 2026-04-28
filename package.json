@@ -27,6 +27,8 @@
     "test:termii-dnd": "tsx scripts/test-termii-dnd-route.ts",
     "test:termii-production": "node scripts/test-termii-sms.js",
     "test:otp-production": "node scripts/test-otp-service.js",
+    "test:youverify-config": "tsx scripts/test-youverify-config.ts",
+    "get-otp": "tsx scripts/get-latest-otp.ts",
     "maintenance": "tsx scripts/production-maintenance.ts",
     "maintenance:hourly": "tsx scripts/production-maintenance.ts run hourly",
     "maintenance:daily": "tsx scripts/production-maintenance.ts run daily",

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SessionManager } from "@/lib/session-manager";
+import { VerificationService } from "@/lib/verification-service";
 import { logger } from "@/lib/security/secure-logger";
 
 export async function POST(request: NextRequest) {
@@ -44,63 +45,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, let's simulate the verification process since we don't have the encrypted NIN
-    // In a real scenario, this would call the NIMC API
+    // Trigger real verification using VerificationService
     logger.info("Manually triggering verification for session:", {
       sessionId: session.sessionId,
     });
 
-    // Simulate successful verification with mock data
-    const mockVerificationData = {
-      fullName: "JOHN DOE EXAMPLE",
-      dateOfBirth: "1990-01-01",
-      phoneFromNimc: sessionDetails.phoneNumber,
-      gender: "Male",
-      photoUrl: null,
-      signatureUrl: null,
-      addressLine: "123 Example Street",
-      town: "Example Town",
-      lga: "Example LGA",
-      state: "Example State",
-    };
+    try {
+      await VerificationService.processVerification(session.sessionId);
 
-    // Update session status to completed
-    await SessionManager.updateSessionStatus(
-      session.sessionId,
-      "verification_completed",
-      {
-        apiCallMadeAt: new Date(),
-        apiResponseStatus: "success",
-        providerReference: `mock_${session.sessionId}`,
-      },
-    );
-
-    // Store mock results in database
-    const { db } = await import("@/db/client");
-    const { verificationResults } = await import("@/db/new-schema");
-
-    await db.insert(verificationResults).values({
-      id: session.sessionId,
-      sessionId: session.sessionId,
-      fullName: mockVerificationData.fullName,
-      dateOfBirth: mockVerificationData.dateOfBirth,
-      phoneFromNimc: mockVerificationData.phoneFromNimc,
-      gender: mockVerificationData.gender,
-      photoUrl: mockVerificationData.photoUrl,
-      signatureUrl: mockVerificationData.signatureUrl,
-      addressLine: mockVerificationData.addressLine,
-      town: mockVerificationData.town,
-      lga: mockVerificationData.lga,
-      state: mockVerificationData.state,
-      rawApiResponse: { mock: true, data: mockVerificationData },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Verification triggered successfully",
-      sessionId: session.sessionId,
-      status: "verification_completed",
-    });
+      return NextResponse.json({
+        success: true,
+        message: "Verification triggered successfully",
+        sessionId: session.sessionId,
+        status: "verification_completed",
+      });
+    } catch (error) {
+      logger.error("Verification failed:", error);
+      return NextResponse.json(
+        {
+          error: error instanceof Error ? error.message : "Verification failed",
+        },
+        { status: 500 },
+      );
+    }
   } catch (error) {
     logger.error("Manual verification trigger failed:", error);
     return NextResponse.json(

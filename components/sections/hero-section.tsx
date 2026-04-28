@@ -1,20 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  AnimatePresence,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, CheckCircle2, Sparkles, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AnimatedLogo } from "@/components/animations/animated-logo";
-import { EnhancedLogo } from "@/components/animations/enhanced-logo";
-import { FloatingShapes } from "@/components/animations/floating-shapes";
-import { useOptimizedAnimations } from "@/hooks/use-optimized-animations";
 
 // Diverse Nigerian names representing different ethnic groups and dual citizenship
 const nigerianNames = [
@@ -127,11 +118,25 @@ interface HeroSectionProps {
 export function HeroSection({ onStartVerification }: HeroSectionProps) {
   const [currentNameIndex, setCurrentNameIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 300], [0, 50]);
 
-  // Performance optimization
-  const { shouldUseGSAP } = useOptimizedAnimations();
+  // Memoize current name to prevent unnecessary re-renders
+  const currentName = useMemo(
+    () => nigerianNames[currentNameIndex],
+    [currentNameIndex],
+  );
+
+  // Memoize callback to prevent re-creating function
+  const handleStartVerification = useCallback(() => {
+    onStartVerification?.();
+  }, [onStartVerification]);
+
+  const handleMenuToggle = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
 
   // Rotate through names every 3 seconds
   useEffect(() => {
@@ -143,7 +148,7 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
 
   return (
     <section className="relative overflow-hidden pb-20 pt-6">
-      <FloatingShapes />
+      {/* Removed FloatingShapes for performance */}
 
       <div className="container relative z-10">
         {/* Navigation */}
@@ -154,11 +159,16 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
           className="flex items-center justify-between"
         >
           <Link href="/" className="flex items-center gap-3 group">
-            {shouldUseGSAP() ? (
-              <EnhancedLogo variant="glow" />
-            ) : (
-              <AnimatedLogo />
-            )}
+            {/* Static logo for better performance */}
+            <div className="relative h-10 w-10">
+              <Image
+                src="/icon.png"
+                alt="VerifyNIN Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+            </div>
             <div>
               <p className="text-lg font-semibold group-hover:text-primary transition-colors">
                 VerifyNIN
@@ -210,7 +220,7 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
           {/* Mobile Menu Button */}
           <motion.button
             className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg border border-border/60 bg-white/80 hover:bg-white/90 transition-colors"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={handleMenuToggle}
             initial={{ opacity: 1, x: 0 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
@@ -272,7 +282,7 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
                       key={item.label}
                       href={item.href}
                       className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={handleMenuClose}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 * i + 0.2 }}
@@ -293,8 +303,8 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
                     size="sm"
                     className="w-full justify-center"
                     onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      onStartVerification?.();
+                      handleMenuClose();
+                      handleStartVerification();
                     }}
                   >
                     Verify NIN <ArrowRight className="h-4 w-4 ml-2" />
@@ -312,7 +322,6 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
             initial="hidden"
             animate="show"
             className="space-y-8"
-            style={{ y }}
           >
             <motion.div variants={staggerItem}>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 border border-green-300 text-green-800">
@@ -344,7 +353,7 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
             <motion.div variants={staggerItem} className="flex flex-wrap gap-4">
               <Button
                 size="lg"
-                onClick={onStartVerification}
+                onClick={handleStartVerification}
                 className="group hover:shadow-glow transition-all"
               >
                 Verify NIN Now
@@ -360,36 +369,11 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
             className="relative perspective-1000 hidden lg:block"
           >
-            {/* Floating orbs */}
-            <motion.div
-              className="absolute -left-8 -top-8 h-40 w-40 rounded-full bg-primary/20 blur-3xl"
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.5, 0.3],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-            <motion.div
-              className="absolute -bottom-10 -right-6 h-40 w-40 rounded-full bg-accent/20 blur-3xl"
-              animate={{
-                scale: [1, 1.3, 1],
-                opacity: [0.3, 0.5, 0.3],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1,
-              }}
-            />
+            {/* Removed animated orbs for performance */}
 
             <motion.div
               className="glass relative space-y-6 rounded-[32px] p-8 shadow-card hover:shadow-glow transition-shadow"
-              whileHover={{ scale: 1.02, rotateY: 5 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Image
@@ -403,23 +387,16 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
               />
               <div className="flex items-center justify-between">
                 <div>
-                  <motion.p
-                    className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                     NIMC Snapshot
-                  </motion.p>
+                  </p>
                   <p className="text-xl font-bold mt-1">
                     Verification Document
                   </p>
                 </div>
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
+                <div>
                   <Sparkles className="h-6 w-6 text-secondary" />
-                </motion.div>
+                </div>
               </div>
 
               <div className="grid gap-4">
@@ -441,7 +418,7 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
                         transition={{ duration: 0.5, ease: "easeInOut" }}
                         className="text-lg font-bold absolute inset-0"
                       >
-                        {nigerianNames[currentNameIndex].name}
+                        {currentName.name}
                       </motion.p>
                     </AnimatePresence>
                   </div>
@@ -459,7 +436,7 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
                         }}
                         className="text-sm text-muted-foreground absolute inset-0"
                       >
-                        DOB: {nigerianNames[currentNameIndex].dob}
+                        DOB: {currentName.dob}
                       </motion.p>
                     </AnimatePresence>
                   </div>
@@ -471,17 +448,9 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <motion.div
-                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary"
-                    animate={{ rotate: [0, 360] }}
-                    transition={{
-                      duration: 20,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary">
                     <CheckCircle2 className="h-6 w-6" />
-                  </motion.div>
+                  </div>
                   <div>
                     <p className="text-sm font-bold">
                       NIN verified successfully
@@ -520,17 +489,9 @@ export function HeroSection({ onStartVerification }: HeroSectionProps) {
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <motion.div
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary"
-                animate={{ rotate: [0, 360] }}
-                transition={{
-                  duration: 20,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary">
                 <CheckCircle2 className="h-6 w-6" />
-              </motion.div>
+              </div>
               <div>
                 <p className="text-sm font-bold">NIN Verification Ready</p>
                 <p className="text-xs text-muted-foreground">

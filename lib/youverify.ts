@@ -110,9 +110,16 @@ export async function verifyNinWithYouVerify(nin: string) {
   // For sandbox environment, use test NIN data
   let apiNin = nin;
   if (config.environment === "STAGING") {
-    // Use YouVerify test NIN for sandbox
-    apiNin = "11111111111"; // Test NIN that returns success
-    logger.info("[YOUVERIFY] Using test NIN for sandbox environment");
+    // ⚠️ STAGING ONLY: Replace with YouVerify test NIN
+    // This is intentional for free testing in sandbox environment
+    // Production environment will use the actual NIN provided by user
+    apiNin = "11111111111"; // YouVerify's official test NIN
+    logger.warn("[YOUVERIFY] ⚠️ STAGING MODE: Using test NIN for sandbox", {
+      originalNinLength: nin.length,
+      testNin: "11111111111",
+      environment: config.environment,
+      note: "This is expected behavior in staging - production uses real NIDs",
+    });
   }
 
   let lastError: unknown;

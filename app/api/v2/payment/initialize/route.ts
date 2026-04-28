@@ -3,6 +3,7 @@ import { z } from "zod";
 import { SessionManager } from "@/lib/session-manager";
 import { logger } from "@/lib/security/secure-logger";
 import { nanoid } from "nanoid";
+import { getPoolMetrics } from "@/db/client";
 
 const schema = z.object({
   email: z.string().email().optional(),
@@ -11,12 +12,19 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Log pool metrics at start
+    const poolMetrics = getPoolMetrics();
+    console.log("[Payment] Pool metrics at start:", poolMetrics);
+
     const body = await request.json();
     const { email, callback_url } = schema.parse(body);
 
     // Get session from Authorization header
     const authHeader = request.headers.get("authorization");
+    console.log("[Payment] Authorization header present:", !!authHeader);
+
     if (!authHeader?.startsWith("Bearer ")) {
+      console.log("[Payment] Missing or invalid Authorization header");
       return NextResponse.json(
         { error: "Missing or invalid session token" },
         { status: 401 },
@@ -24,14 +32,25 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionToken = authHeader.substring(7);
+    console.log(
+      "[Payment] Session token received:",
+      sessionToken.substring(0, 20) + "...",
+    );
+
     const session = await SessionManager.verifySession(sessionToken);
 
     if (!session) {
+      console.log("[Payment] Session verification failed");
       return NextResponse.json(
         { error: "Invalid or expired session" },
         { status: 401 },
       );
     }
+
+    console.log("[Payment] Session verified:", {
+      sessionId: session.sessionId,
+      status: session.status,
+    });
 
     // Get session details to determine amount
     const sessionDetails = await SessionManager.getSessionForAdmin(

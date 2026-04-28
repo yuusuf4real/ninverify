@@ -125,6 +125,17 @@ export function PaymentProcessor({
       setLoading(true);
       setError("");
 
+      // Validate session token exists
+      if (!sessionToken) {
+        throw new Error("Session expired. Please start over.");
+      }
+
+      console.log(
+        "[Payment] Initializing payment with token:",
+        sessionToken.substring(0, 20) + "...",
+      );
+      console.log("[Payment] Amount:", amount, "Data layer:", dataLayer);
+
       const response = await fetch("/api/v2/payment/initialize", {
         method: "POST",
         headers: {
@@ -137,7 +148,10 @@ export function PaymentProcessor({
         }),
       });
 
+      console.log("[Payment] Response status:", response.status);
+
       const data = await response.json();
+      console.log("[Payment] Response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Payment initialization failed");

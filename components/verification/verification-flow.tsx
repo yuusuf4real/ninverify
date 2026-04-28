@@ -162,13 +162,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                       }`}
                     >
                       <Icon className="w-6 h-6" />
-                      {isActive && (
-                        <motion.div
-                          className="absolute inset-0 rounded-full border-2 border-primary"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        />
-                      )}
+                      {/* Removed infinite pulse animation for performance */}
                     </div>
                     <div className="mt-3 text-center">
                       <p
