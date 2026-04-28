@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Smartphone, ArrowRight, AlertCircle } from "lucide-react";
 import { useVerificationStore } from "@/store/verification-store";
 import { useToast } from "@/store/ui-store";
+import { getErrorDetails } from "@/lib/errors/error-messages";
 
 export const PhoneInput = memo(function PhoneInput() {
   // Store
@@ -91,9 +92,9 @@ export const PhoneInput = memo(function PhoneInput() {
     e.preventDefault();
 
     if (!validatePhone(phone)) {
-      const errorMsg = "Please enter a valid Nigerian phone number";
-      setError(errorMsg);
-      toast.error(errorMsg);
+      const errorDetails = getErrorDetails("INVALID_PHONE");
+      setError(errorDetails.message);
+      toast.error(errorDetails.message);
       return;
     }
 
@@ -106,9 +107,12 @@ export const PhoneInput = memo(function PhoneInput() {
       toast.success("Phone number validated!");
       goToNextStep();
     } catch (err) {
-      const errorMsg = "Something went wrong. Please try again.";
-      setError(errorMsg);
-      toast.error(errorMsg);
+      const errorDetails = getErrorDetails(
+        undefined,
+        err instanceof Error ? err.message : undefined,
+      );
+      setError(errorDetails.message);
+      toast.error(errorDetails.message);
       setLoading(false);
     }
   };

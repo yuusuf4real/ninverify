@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, Home, RefreshCw, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Home, RefreshCw, Mail, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatErrorForUser } from "@/lib/errors/error-messages";
 
 export default function Error({
   error,
@@ -12,6 +13,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const errorDetails = formatErrorForUser(error);
+
   useEffect(() => {
     // Log the error to an error reporting service
     console.error("Application error:", error);
@@ -30,37 +33,55 @@ export default function Error({
         <div className="mx-auto max-w-2xl text-center">
           {/* Error Visual */}
           <div className="mb-8">
-            <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-red-50 ring-8 ring-red-100">
-              <AlertTriangle className="h-16 w-16 text-red-600" />
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-red-50 ring-8 ring-red-100 sm:h-32 sm:w-32">
+              <AlertTriangle className="h-12 w-12 text-red-600 sm:h-16 sm:w-16" />
             </div>
           </div>
 
           {/* Message */}
-          <div className="space-y-4">
-            <h2 className="font-heading text-3xl font-bold sm:text-4xl">
-              Something Went Wrong
+          <div className="space-y-3 sm:space-y-4">
+            <h2 className="font-heading text-2xl font-bold sm:text-3xl md:text-4xl">
+              {errorDetails.title}
             </h2>
-            <p className="text-lg text-muted-foreground">
-              We encountered an unexpected error. Don&apos;t worry, our team has
-              been notified and we&apos;re working on it.
+            <p className="text-base text-muted-foreground sm:text-lg">
+              {errorDetails.message}
             </p>
-            {error.digest && (
+            {errorDetails.helpText && (
               <p className="text-sm text-muted-foreground">
-                Error ID:{" "}
-                <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
-                  {error.digest}
-                </code>
+                {errorDetails.helpText}
               </p>
+            )}
+            {error.digest && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Error ID:{" "}
+                  <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
+                    {error.digest}
+                  </code>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Please include this ID when contacting support
+                </p>
+              </div>
             )}
           </div>
 
           {/* Actions */}
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Button onClick={reset} size="lg" className="gap-2">
+          <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:justify-center sm:gap-4">
+            <Button
+              onClick={reset}
+              size="lg"
+              className="gap-2 touch-manipulation"
+            >
               <RefreshCw className="h-5 w-5" />
-              Try Again
+              {errorDetails.action || "Try Again"}
             </Button>
-            <Button asChild variant="outline" size="lg" className="gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="gap-2 touch-manipulation"
+            >
               <Link href="/">
                 <Home className="h-5 w-5" />
                 Go to Homepage
@@ -69,48 +90,62 @@ export default function Error({
           </div>
 
           {/* Helpful Information */}
-          <div className="mt-16 rounded-2xl border border-border/60 bg-white/80 p-6 sm:p-8">
-            <h3 className="mb-4 font-semibold">What you can do:</h3>
-            <div className="space-y-3 text-left text-sm text-muted-foreground">
+          <div className="mt-12 rounded-2xl border border-border/60 bg-white/80 p-6 text-left sm:mt-16 sm:p-8">
+            <div className="mb-4 flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">What you can do:</h3>
+            </div>
+            <div className="space-y-3 text-sm text-muted-foreground">
               <div className="flex gap-3">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                   1
                 </div>
-                <p>Click &quot;Try Again&quot; to reload the page</p>
+                <p>
+                  Click &quot;{errorDetails.action || "Try Again"}&quot; to
+                  retry the operation
+                </p>
               </div>
               <div className="flex gap-3">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                   2
                 </div>
-                <p>Check your internet connection</p>
+                <p>Check your internet connection and refresh the page</p>
               </div>
               <div className="flex gap-3">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                   3
                 </div>
-                <p>
-                  If the problem persists, contact{" "}
+                <p>Clear your browser cache and cookies</p>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  4
+                </div>
+                <div>
+                  <p>Still having issues? Contact our support team</p>
                   <a
                     href="mailto:support@verifynin.ng"
-                    className="font-semibold text-primary hover:underline"
+                    className="mt-1 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                   >
+                    <Mail className="h-3 w-3" />
                     support@verifynin.ng
                   </a>
-                </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Back Link */}
-          <div className="mt-8">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Link>
-          </div>
+          {/* Support Link */}
+          {errorDetails.supportLink && (
+            <div className="mt-6">
+              <Link
+                href={errorDetails.supportLink}
+                className="text-sm text-primary hover:underline"
+              >
+                Check System Status →
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

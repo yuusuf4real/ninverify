@@ -15,6 +15,7 @@ import {
 import { useVerificationStore } from "@/store/verification-store";
 import { useToast } from "@/store/ui-store";
 import { useUIStore } from "@/store/ui-store";
+import { getErrorDetails } from "@/lib/errors/error-messages";
 
 // Declare Paystack types
 declare global {
@@ -139,7 +140,8 @@ export const PaymentProcessor = memo(function PaymentProcessor() {
 
       // Validate session token exists
       if (!sessionToken) {
-        throw new Error("Session expired. Please start over.");
+        const errorDetails = getErrorDetails("SESSION_EXPIRED");
+        throw new Error(errorDetails.message);
       }
 
       const response = await fetch("/api/v2/payment/initialize", {
@@ -157,7 +159,11 @@ export const PaymentProcessor = memo(function PaymentProcessor() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Payment initialization failed");
+        const errorDetails = getErrorDetails(
+          data.code,
+          data.message || data.error,
+        );
+        throw new Error(errorDetails.message);
       }
 
       setLocalPaymentReference(data.reference);
@@ -182,9 +188,9 @@ export const PaymentProcessor = memo(function PaymentProcessor() {
             ref: data.reference,
             onClose: function () {
               setLoading(false);
-              const errorMsg = "Payment was cancelled. Please try again.";
-              setError(errorMsg);
-              toast.warning(errorMsg);
+              const errorDetails = getErrorDetails("PAYMENT_CANCELLED");
+              setError(errorDetails.message);
+              toast.warning(errorDetails.message);
             },
             callback: function (response: { reference: string }) {
               toast.success("Payment successful! Verifying...");
@@ -207,10 +213,12 @@ export const PaymentProcessor = memo(function PaymentProcessor() {
         window.location.href = redirectUrl;
       }
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Payment initialization failed";
-      setError(errorMsg);
-      toast.error(errorMsg);
+      const errorDetails = getErrorDetails(
+        undefined,
+        err instanceof Error ? err.message : undefined,
+      );
+      setError(errorDetails.message);
+      toast.error(errorDetails.message);
       setLoading(false);
       setGlobalLoading(false);
     }
@@ -237,7 +245,11 @@ export const PaymentProcessor = memo(function PaymentProcessor() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Payment verification failed");
+        const errorDetails = getErrorDetails(
+          data.code,
+          data.message || data.error,
+        );
+        throw new Error(errorDetails.message);
       }
 
       if (data.success && data.status === "completed") {
@@ -246,13 +258,16 @@ export const PaymentProcessor = memo(function PaymentProcessor() {
         setGlobalLoading(false);
         goToNextStep();
       } else {
-        throw new Error("Payment was not successful. Please try again.");
+        const errorDetails = getErrorDetails("PAYMENT_FAILED");
+        throw new Error(errorDetails.message);
       }
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Payment verification failed";
-      setError(errorMsg);
-      toast.error(errorMsg);
+      const errorDetails = getErrorDetails(
+        undefined,
+        err instanceof Error ? err.message : undefined,
+      );
+      setError(errorDetails.message);
+      toast.error(errorDetails.message);
       setPaymentStatus("failed");
       setGlobalLoading(false);
     } finally {

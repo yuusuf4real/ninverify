@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Smartphone, RefreshCw, AlertCircle } from "lucide-react";
 import { useVerificationStore } from "@/store/verification-store";
 import { useToast } from "@/store/ui-store";
+import { getErrorDetails } from "@/lib/errors/error-messages";
 
 export const OTPInput = memo(function OTPInput() {
   // Store
@@ -76,7 +77,11 @@ export const OTPInput = memo(function OTPInput() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send OTP");
+        const errorDetails = getErrorDetails(
+          data.code,
+          data.message || data.error,
+        );
+        throw new Error(errorDetails.message);
       }
 
       setLocalSessionId(data.sessionId);
@@ -85,9 +90,12 @@ export const OTPInput = memo(function OTPInput() {
 
       toast.success("OTP sent successfully!");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to send OTP";
-      setError(message);
-      toast.error(message);
+      const errorDetails = getErrorDetails(
+        undefined,
+        err instanceof Error ? err.message : undefined,
+      );
+      setError(errorDetails.message);
+      toast.error(errorDetails.message);
     } finally {
       setResending(false);
     }
@@ -152,17 +160,23 @@ export const OTPInput = memo(function OTPInput() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Invalid OTP");
+        const errorDetails = getErrorDetails(
+          data.code,
+          data.message || data.error,
+        );
+        throw new Error(errorDetails.message);
       }
 
       setSessionToken(data.sessionToken);
       toast.success("Phone verified successfully!");
       goToNextStep();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Verification failed";
-      setError(message);
-      toast.error(message);
+      const errorDetails = getErrorDetails(
+        undefined,
+        err instanceof Error ? err.message : undefined,
+      );
+      setError(errorDetails.message);
+      toast.error(errorDetails.message);
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {

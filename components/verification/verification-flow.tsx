@@ -20,6 +20,7 @@ import {
   useVerificationStore,
   useCurrentStep,
 } from "@/store/verification-store";
+import { ErrorBoundary } from "@/components/errors/error-boundary";
 
 interface VerificationFlowProps {
   onComplete?: () => void;
@@ -263,67 +264,69 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
 
         {/* Enhanced Step Content */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 md:p-10 backdrop-blur-sm">
-          <AnimatePresence mode="wait">
-            {currentStep === "phone" && (
-              <motion.div
-                key="phone"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <PhoneInput />
-              </motion.div>
-            )}
+          <ErrorBoundary>
+            <AnimatePresence mode="wait">
+              {currentStep === "phone" && (
+                <motion.div
+                  key="phone"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <PhoneInput />
+                </motion.div>
+              )}
 
-            {currentStep === "otp" && (
-              <motion.div
-                key="otp"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <OTPInput />
-              </motion.div>
-            )}
+              {currentStep === "otp" && (
+                <motion.div
+                  key="otp"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <OTPInput />
+                </motion.div>
+              )}
 
-            {currentStep === "data-selection" && (
-              <motion.div
-                key="data-selection"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <DataLayerSelector />
-              </motion.div>
-            )}
+              {currentStep === "data-selection" && (
+                <motion.div
+                  key="data-selection"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <DataLayerSelector />
+                </motion.div>
+              )}
 
-            {currentStep === "payment" && (
-              <motion.div
-                key="payment"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <PaymentProcessor />
-              </motion.div>
-            )}
+              {currentStep === "payment" && (
+                <motion.div
+                  key="payment"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <PaymentProcessor />
+                </motion.div>
+              )}
 
-            {currentStep === "result" && (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <VerificationResult onComplete={onComplete} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {currentStep === "result" && (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <VerificationResult onComplete={onComplete} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </ErrorBoundary>
         </div>
 
         {/* Enhanced Help Section */}
